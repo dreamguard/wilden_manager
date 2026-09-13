@@ -18,6 +18,70 @@
       return;
     }
 
+    function getSelectedColumns() {
+      if (config.storageKey && window.localStorage) {
+        try {
+          var stored = JSON.parse(window.localStorage.getItem(config.storageKey));
+          if (Array.isArray(stored) && stored.length) {
+            return stored;
+          }
+        } catch (error) {
+          window.localStorage.removeItem(config.storageKey);
+        }
+      }
+
+      return Array.isArray(config.selected) ? config.selected : [];
+    }
+
+    function applyColumns(ids) {
+      var $table = $('#order_grid_table');
+      if (!$table.length) {
+        return;
+      }
+
+      var managed = config.columns.map(function (column) { return column.id; });
+      managed.forEach(function (id) {
+        var visible = ids.indexOf(id) !== -1;
+        $table.find('thead [data-column-id="' + id + '"]').toggle(visible);
+        $table.find('tbody .column-' + id).toggle(visible);
+      });
+
+      var currentIds = [];
+      $table.find('thead tr.column-headers [data-column-id]').each(function () {
+        currentIds.push($(this).data('column-id'));
+      });
+      var orderedIds = [];
+      if (currentIds.indexOf('orders_bulk') !== -1) {
+        orderedIds.push('orders_bulk');
+      }
+      ids.forEach(function (id) {
+        if (currentIds.indexOf(id) !== -1 && orderedIds.indexOf(id) === -1) {
+          orderedIds.push(id);
+        }
+      });
+      currentIds.forEach(function (id) {
+        if (managed.indexOf(id) === -1 && id !== 'orders_bulk' && id !== 'actions') {
+          orderedIds.push(id);
+        }
+      });
+      if (currentIds.indexOf('actions') !== -1) {
+        orderedIds.push('actions');
+      }
+
+      $table.find('tr').each(function () {
+        var $row = $(this);
+        orderedIds.forEach(function (id) {
+          var $cell = $row.children('[data-column-id="' + id + '"], .column-' + id).first();
+          if ($cell.length) {
+            $row.append($cell);
+          }
+        });
+      });
+    }
+
+    config.selected = getSelectedColumns();
+    applyColumns(config.selected);
+
     var modalId = 'wm-native-columns-modal';
     var $modal = $('#' + modalId);
     if (!$modal.length) {
@@ -107,6 +171,11 @@
         data: { columns: columns }
       }).done(function (response) {
         if (response && response.success) {
+          config.selected = Array.isArray(response.columns) ? response.columns : columns;
+          if (config.storageKey && window.localStorage) {
+            window.localStorage.setItem(config.storageKey, JSON.stringify(config.selected));
+          }
+          applyColumns(config.selected);
           window.location.reload();
           return;
         }

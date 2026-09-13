@@ -20,7 +20,7 @@ require_once __DIR__ . '/classes/WmBulkOrderService.php';
 
 class Wilden_manager extends Module
 {
-    const VERSION = '1.2.0';
+    const VERSION = '1.2.1';
     const TAB_CLASS = 'AdminWildenManagerOrders';
     const MAX_BULK_ORDERS = 100;
 
@@ -139,6 +139,8 @@ class Wilden_manager extends Module
             'wildenManagerNativeColumns' => array(
                 'columns' => $columnOptions,
                 'selected' => array_values($selected),
+                'storageKey' => 'wilden_manager_order_columns_' .
+                    (int) $this->context->employee->id . '_' . (int) $this->context->shop->id,
                 'saveUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=saveNativeColumns',
                 'title' => $this->l('Configure order columns'),
                 'button' => $this->l('Columns'),

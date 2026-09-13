@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.1 - 2026-09-13
+
+- Fixed stale SQL caching that could discard a newly saved grid preference.
+- Added server-side read-after-write verification for column settings.
+- Applied visibility and ordering directly to the native grid DOM as a resilient fallback.
+
 ## 1.2.0 - 2026-09-13
 
 - Changed the integration to customize the real PrestaShop Orders grid.

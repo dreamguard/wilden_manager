@@ -222,8 +222,19 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
             )));
         }
 
+        $storedColumns = WmGridPreference::get(
+            (int) $this->context->employee->id,
+            (int) $this->context->shop->id
+        );
+        if ($storedColumns !== $columns) {
+            $this->ajaxDie(json_encode(array(
+                'success' => false,
+                'error' => $this->module->l('The saved column preference could not be verified.', 'AdminWildenManagerOrdersController'),
+            )));
+        }
+
         WmAuditLogger::log('native_order_columns_updated', array('columns' => $columns));
-        $this->ajaxDie(json_encode(array('success' => true)));
+        $this->ajaxDie(json_encode(array('success' => true, 'columns' => $storedColumns)));
     }
 
     private function saveNote()
