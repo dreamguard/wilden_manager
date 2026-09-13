@@ -92,11 +92,13 @@ class WmOrderRepository
     {
         return 'SELECT o.id_order, o.reference, o.date_add, o.total_paid_tax_incl,
                        o.current_state, o.payment, o.id_currency,
-                       osl.name AS state_name, osl.color AS state_color,
+                       osl.name AS state_name, os.color AS state_color,
                        CONCAT(c.firstname, CHAR(32), c.lastname) AS customer,
                        c.email, ca.name AS carrier_name, wn.note
                 FROM `' . _DB_PREFIX_ . 'orders` o
                 INNER JOIN `' . _DB_PREFIX_ . 'customer` c ON c.id_customer = o.id_customer
+                LEFT JOIN `' . _DB_PREFIX_ . 'order_state` os
+                   ON os.id_order_state = o.current_state
                 LEFT JOIN `' . _DB_PREFIX_ . 'order_state_lang` osl
                    ON osl.id_order_state = o.current_state
                   AND osl.id_lang = ' . (int) $this->context->language->id . '

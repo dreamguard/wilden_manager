@@ -19,7 +19,7 @@ require_once __DIR__ . '/classes/WmBulkOrderService.php';
 
 class Wilden_manager extends Module
 {
-    const VERSION = '1.0.0';
+    const VERSION = '1.0.1';
     const TAB_CLASS = 'AdminWildenManagerOrders';
     const MAX_BULK_ORDERS = 100;
 
