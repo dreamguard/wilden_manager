@@ -1,0 +1,6 @@
+/config_*.xml
+/.idea/
+/.vscode/
+/.DS_Store
+*.log
+*.zip
