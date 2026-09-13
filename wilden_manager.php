@@ -14,12 +14,13 @@ if (!defined('_PS_VERSION_')) {
 require_once __DIR__ . '/classes/WmAuditLogger.php';
 require_once __DIR__ . '/classes/WmOrderNote.php';
 require_once __DIR__ . '/classes/WmSavedView.php';
+require_once __DIR__ . '/classes/WmGridPreference.php';
 require_once __DIR__ . '/classes/WmOrderRepository.php';
 require_once __DIR__ . '/classes/WmBulkOrderService.php';
 
 class Wilden_manager extends Module
 {
-    const VERSION = '1.1.0';
+    const VERSION = '1.2.0';
     const TAB_CLASS = 'AdminWildenManagerOrders';
     const MAX_BULK_ORDERS = 100;
 
@@ -44,7 +45,9 @@ class Wilden_manager extends Module
     {
         return parent::install()
             && $this->installDatabase()
-            && $this->installTab();
+            && $this->installTab()
+            && $this->registerHook('actionOrderGridDefinitionModifier')
+            && $this->registerHook('displayBackOfficeHeader');
     }
 
     public function uninstall()
@@ -56,7 +59,95 @@ class Wilden_manager extends Module
 
     public function getContent()
     {
-        Tools::redirectAdmin($this->context->link->getAdminLink(self::TAB_CLASS));
+        Tools::redirectAdmin($this->context->link->getAdminLink('AdminOrders'));
+    }
+
+    public function getNativeOrderColumns()
+    {
+        return array(
+            'id_order' => $this->l('ID'),
+            'reference' => $this->l('Reference'),
+            'new' => $this->l('New client'),
+            'country_name' => $this->l('Delivery'),
+            'customer' => $this->l('Customer'),
+            'company' => $this->l('Company'),
+            'total_paid_tax_incl' => $this->l('Total'),
+            'payment' => $this->l('Payment'),
+            'osname' => $this->l('Status'),
+            'date_add' => $this->l('Date'),
+            'shop_name' => $this->l('Store'),
+        );
+    }
+
+    public function hookActionOrderGridDefinitionModifier(array $params)
+    {
+        if (empty($params['definition'])) {
+            return;
+        }
+
+        $definition = $params['definition'];
+        $columns = $definition->getColumns();
+        $filters = $definition->getFilters();
+        $available = $this->getNativeOrderColumns();
+        $selected = WmGridPreference::get(
+            (int) $this->context->employee->id,
+            (int) $this->context->shop->id
+        );
+
+        if (!$selected) {
+            $selected = array_keys($available);
+        }
+
+        $selected = array_values(array_intersect($selected, array_keys($available)));
+        foreach (array_keys($available) as $columnId) {
+            if (!in_array($columnId, $selected, true)) {
+                $columns->remove($columnId);
+                $filters->remove($columnId);
+            }
+        }
+
+        if (method_exists($columns, 'move')) {
+            $presentColumns = array_column($columns->toArray(), 'id');
+            $position = in_array('orders_bulk', $presentColumns, true) ? 1 : 0;
+            foreach ($selected as $columnId) {
+                if (in_array($columnId, $presentColumns, true)) {
+                    $columns->move($columnId, $position++);
+                }
+            }
+        }
+    }
+
+    public function hookDisplayBackOfficeHeader()
+    {
+        $available = $this->getNativeOrderColumns();
+        $selected = WmGridPreference::get(
+            (int) $this->context->employee->id,
+            (int) $this->context->shop->id
+        );
+        if (!$selected) {
+            $selected = array_keys($available);
+        }
+
+        $columnOptions = array();
+        foreach ($available as $id => $label) {
+            $columnOptions[] = array('id' => $id, 'label' => $label);
+        }
+
+        $this->context->controller->addJS($this->_path . 'views/js/native-order-columns.js');
+        $this->context->controller->addCSS($this->_path . 'views/css/native-order-columns.css');
+        Media::addJsDef(array(
+            'wildenManagerNativeColumns' => array(
+                'columns' => $columnOptions,
+                'selected' => array_values($selected),
+                'saveUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=saveNativeColumns',
+                'title' => $this->l('Configure order columns'),
+                'button' => $this->l('Columns'),
+                'save' => $this->l('Save and reload'),
+                'reset' => $this->l('Restore defaults'),
+                'cancel' => $this->l('Cancel'),
+                'error' => $this->l('The column preference could not be saved.'),
+            ),
+        ));
     }
 
     private function installDatabase()

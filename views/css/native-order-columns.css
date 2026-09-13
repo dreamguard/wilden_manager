@@ -1,0 +1,47 @@
+.wm-native-columns-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-right: 8px;
+}
+
+.wm-native-columns-button .material-icons,
+.wm-native-column-order .material-icons {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.wm-native-columns-list {
+  border: 1px solid #dbe1e8;
+  border-radius: 4px;
+}
+
+.wm-native-column-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 46px;
+  padding: 6px 10px;
+  border-bottom: 1px solid #dbe1e8;
+  background: #fff;
+}
+
+.wm-native-column-row:last-child {
+  border-bottom: 0;
+}
+
+.wm-native-column-row label {
+  flex: 1;
+  margin: 0;
+  cursor: pointer;
+}
+
+.wm-native-column-order {
+  display: flex;
+  gap: 4px;
+}
+
+.wm-native-columns-error {
+  margin-top: 12px;
+  margin-bottom: 0;
+}

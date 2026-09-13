@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.0 - 2026-09-13
+
+- Changed the integration to customize the real PrestaShop Orders grid.
+- Added per-employee and per-shop visibility and ordering preferences.
+- Added a Columns dialog directly to the native Orders page.
+- Kept PrestaShop's native filters, previews, row actions and bulk actions untouched.
+
 ## 1.1.0 - 2026-09-13
 
 - Reworked the main screen as a PrestaShop 8.2 native-style order grid.

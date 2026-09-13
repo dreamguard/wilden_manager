@@ -3,7 +3,7 @@
 Private order-management module developed from scratch for PrestaShop 8.2 and
 Wilden Militaria S.L.
 
-## Version 1.1.0
+## Version 1.2.0
 
 The initial version provides:
 
@@ -11,8 +11,8 @@ The initial version provides:
 - Employee-selectable columns.
 - Personal saved views and an optional default view.
 - Paginated order list and quick view.
-- Native-style PrestaShop 8.2 order grid with per-column filters.
-- Configurable native and extended order columns.
+- The real PrestaShop 8.2 Orders grid remains in use.
+- Native order columns can be shown, hidden and reordered per employee and shop.
 - Internal order notes.
 - CSV export protected against spreadsheet-formula injection.
 - Bulk order-state changes with a mandatory preview, signed confirmation,
@@ -30,8 +30,8 @@ Redsys, or any other third-party module.
 
 1. Upload `wilden_manager.zip` from the PrestaShop module manager.
 2. Install **Wilden Manager**.
-3. Open **Orders → Wilden Manager**.
-4. Grant view/edit permissions to the appropriate employee profiles.
+3. Open the native **Orders** page and use the **Columns** button.
+4. Choose and order the visible columns; the preference is saved per employee and shop.
 
 Always test state changes and customer emails in staging before deploying a
 new release to production.

@@ -71,6 +71,10 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
 
     public function initContent()
     {
+        if (!Tools::getValue('ajax')) {
+            Tools::redirectAdmin($this->context->link->getAdminLink('AdminOrders'));
+        }
+
         parent::initContent();
 
         $filters = $this->getFilters();
@@ -191,6 +195,35 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
 
         $html = $this->context->smarty->fetch($this->module->getLocalPath() . 'views/templates/admin/quick-view.tpl');
         $this->ajaxDie(json_encode(array('success' => true, 'html' => $html)));
+    }
+
+    public function ajaxProcessSaveNativeColumns()
+    {
+        $available = array_keys($this->module->getNativeOrderColumns());
+        $requested = Tools::getValue('columns', array());
+        $requested = is_array($requested) ? $requested : array();
+        $columns = array_values(array_unique(array_intersect($requested, $available)));
+
+        if (!$columns) {
+            $this->ajaxDie(json_encode(array(
+                'success' => false,
+                'error' => $this->module->l('Select at least one order column.', 'AdminWildenManagerOrdersController'),
+            )));
+        }
+
+        if (!WmGridPreference::save(
+            $columns,
+            (int) $this->context->employee->id,
+            (int) $this->context->shop->id
+        )) {
+            $this->ajaxDie(json_encode(array(
+                'success' => false,
+                'error' => $this->module->l('The column preference could not be saved.', 'AdminWildenManagerOrdersController'),
+            )));
+        }
+
+        WmAuditLogger::log('native_order_columns_updated', array('columns' => $columns));
+        $this->ajaxDie(json_encode(array('success' => true)));
     }
 
     private function saveNote()
