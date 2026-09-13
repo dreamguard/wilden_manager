@@ -220,3 +220,204 @@
     width: 100%;
   }
 }
+
+.wm-grid-card {
+  margin-bottom: 20px;
+  border: 1px solid #dbe1e8;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .06);
+}
+
+.wm-grid-header,
+.wm-grid-title,
+.wm-grid-actions,
+.wm-view-toolbar,
+.wm-grid-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.wm-grid-header,
+.wm-grid-footer {
+  justify-content: space-between;
+}
+
+.wm-grid-header {
+  min-height: 55px;
+  padding: 10px 16px;
+  border-bottom: 1px solid #dbe1e8;
+}
+
+.wm-grid-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.wm-grid-title .material-icons,
+.wm-grid-actions .material-icons,
+.wm-view-toolbar .material-icons,
+.wm-actions .material-icons,
+.wm-pagination .material-icons,
+.wm-bulk-controls .material-icons,
+.wm-audit-panel .material-icons {
+  font-size: 18px;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.wm-grid-actions {
+  margin-left: auto;
+}
+
+.wm-column-menu {
+  min-width: 230px;
+  max-height: 430px;
+  padding: 8px;
+  overflow-y: auto;
+}
+
+.wm-column-menu-title {
+  padding: 6px 12px;
+  color: #6c757d;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.wm-column-menu .dropdown-item {
+  display: block;
+  margin: 0;
+  padding: 6px 12px;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.wm-apply-columns {
+  width: 100%;
+}
+
+.wm-view-toolbar {
+  padding: 10px 16px;
+  border-bottom: 1px solid #dbe1e8;
+  background: #f8f9fa;
+}
+
+.wm-view-toolbar .form-control {
+  width: 210px;
+}
+
+.wm-view-toolbar label {
+  margin: 0;
+  font-weight: 400;
+}
+
+.wm-orders-table {
+  min-width: 1050px;
+  margin-bottom: 0;
+}
+
+.wm-orders-table thead th {
+  border-bottom: 1px solid #dbe1e8;
+  background: #fff;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.wm-orders-table .column-headers th {
+  height: 44px;
+  color: #363a41;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.wm-orders-table .column-headers a {
+  color: inherit;
+}
+
+.wm-sort-icon {
+  margin-left: 3px;
+  font-size: 15px !important;
+}
+
+.wm-orders-table .column-filters th {
+  padding: 8px 5px;
+  background: #f8f9fa;
+}
+
+.wm-orders-table .column-filters .form-control {
+  min-width: 76px;
+  height: 34px;
+  padding: 5px 7px;
+  font-size: 12px;
+}
+
+.wm-range-filter {
+  display: flex;
+  min-width: 145px;
+  gap: 4px;
+}
+
+.wm-filter-actions-cell {
+  min-width: 90px;
+  white-space: nowrap;
+}
+
+.wm-orders-table tbody tr:hover {
+  background: #f4f9fc;
+}
+
+.wm-id-preview {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0;
+  font-weight: 600;
+}
+
+.wm-id-preview .material-icons {
+  font-size: 18px;
+}
+
+.wm-actions .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wm-grid-footer {
+  min-height: 58px;
+  padding: 10px 16px;
+  border-top: 1px solid #dbe1e8;
+  background: #f8f9fa;
+}
+
+.wm-pagination label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  font-weight: 400;
+}
+
+.wm-pagination .form-control {
+  width: 72px;
+}
+
+.wm-audit-panel {
+  margin-top: 18px;
+}
+
+.wm-audit-panel summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.wm-empty-grid {
+  padding: 35px !important;
+}

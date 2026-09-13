@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.0 - 2026-09-13
+
+- Reworked the main screen as a PrestaShop 8.2 native-style order grid.
+- Added the standard new-client and delivery-country columns.
+- Moved searching into per-column filters in the grid header.
+- Added configurable email, company, carrier, store and internal-note columns.
+- Kept saved views, quick view, CSV export, audited bulk preview and activity history.
+
 ## 1.0.1 - 2026-09-13
 
 - Fixed the order-state color query for the PrestaShop 8.2 database schema.

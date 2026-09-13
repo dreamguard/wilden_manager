@@ -33,14 +33,22 @@
     }
   });
 
-  $(document).on('submit', '#wm-orders-form', function (event) {
+  $(document).on('click', '.wm-bulk-preview-button', function (event) {
+    var $form = $(this).closest('form');
     var selected = $('.wm-order-checkbox:checked').length;
-    var state = parseInt($(this).find('select[name="bulk_state"]').val(), 10) || 0;
-    var max = parseInt((window.wildenManagerConfig || {}).maxBulk, 10) || 100;
+    var state = parseInt($form.find('select[name="bulk_state"]').val(), 10) || 0;
+    var config = window.wildenManagerConfig || {};
+    var max = parseInt(config.maxBulk, 10) || 100;
 
     if (!selected || !state || selected > max) {
       event.preventDefault();
-      window.alert(!selected ? 'Select at least one order.' : (!state ? 'Choose a new state.' : 'Too many orders selected.'));
+      window.alert(!selected ? config.selectOrderText : (!state ? config.selectStateText : config.tooManyText));
+    }
+  });
+
+  $(document).on('click', '.wm-column-menu', function (event) {
+    if (!$(event.target).closest('.wm-apply-columns').length) {
+      event.stopPropagation();
     }
   });
 

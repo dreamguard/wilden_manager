@@ -110,10 +110,15 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
                 (float) $order['total_paid_tax_incl'],
                 new Currency((int) $order['id_currency'])
             );
+            $order['formatted_date'] = Tools::displayDate($order['date_add'], true);
             $order['view_url'] = $this->context->link->getAdminLink('AdminOrders') .
                 '&vieworder&id_order=' . (int) $order['id_order'];
+            $order['customer_url'] = $this->context->link->getAdminLink('AdminCustomers') .
+                '&viewcustomer&id_customer=' . (int) $order['id_customer'];
             $order['invoice_url'] = $this->context->link->getAdminLink('AdminPdf') .
                 '&submitAction=generateInvoicePDF&id_order=' . (int) $order['id_order'];
+            $order['delivery_slip_url'] = $this->context->link->getAdminLink('AdminPdf') .
+                '&submitAction=generateDeliverySlipPDF&id_order=' . (int) $order['id_order'];
         }
         unset($order);
 
@@ -351,9 +356,14 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
             'id_order' => trim((string) Tools::getValue('id_order_filter', '')),
             'reference' => trim((string) Tools::getValue('reference', '')),
             'customer' => trim((string) Tools::getValue('customer', '')),
+            'new_customer' => trim((string) Tools::getValue('new_customer', '')),
+            'email' => trim((string) Tools::getValue('email', '')),
+            'country' => trim((string) Tools::getValue('country', '')),
+            'company' => trim((string) Tools::getValue('company', '')),
             'id_order_state' => (int) Tools::getValue('id_order_state', 0),
             'payment' => trim((string) Tools::getValue('payment', '')),
             'carrier' => trim((string) Tools::getValue('carrier', '')),
+            'shop' => trim((string) Tools::getValue('shop', '')),
             'note' => trim((string) Tools::getValue('note', '')),
             'date_from' => trim((string) Tools::getValue('date_from', '')),
             'date_to' => trim((string) Tools::getValue('date_to', '')),
@@ -367,12 +377,16 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         return array(
             'id_order' => 'ID',
             'reference' => $this->module->l('Reference', 'AdminWildenManagerOrdersController'),
+            'new' => $this->module->l('New client', 'AdminWildenManagerOrdersController'),
+            'country' => $this->module->l('Delivery', 'AdminWildenManagerOrdersController'),
             'customer' => $this->module->l('Customer', 'AdminWildenManagerOrdersController'),
             'email' => $this->module->l('Email', 'AdminWildenManagerOrdersController'),
             'total' => $this->module->l('Total', 'AdminWildenManagerOrdersController'),
             'state' => $this->module->l('State', 'AdminWildenManagerOrdersController'),
             'payment' => $this->module->l('Payment', 'AdminWildenManagerOrdersController'),
             'carrier' => $this->module->l('Carrier', 'AdminWildenManagerOrdersController'),
+            'company' => $this->module->l('Company', 'AdminWildenManagerOrdersController'),
+            'shop' => $this->module->l('Store', 'AdminWildenManagerOrdersController'),
             'note' => $this->module->l('Internal note', 'AdminWildenManagerOrdersController'),
             'date_add' => $this->module->l('Date', 'AdminWildenManagerOrdersController'),
         );
@@ -382,7 +396,7 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
     {
         $requested = Tools::getValue('columns');
         if (!is_array($requested)) {
-            return array('id_order', 'reference', 'customer', 'total', 'state', 'payment', 'date_add');
+            return array('id_order', 'reference', 'new', 'country', 'customer', 'total', 'payment', 'state', 'date_add');
         }
 
         return $this->sanitizeColumns($requested);
@@ -393,7 +407,7 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         $allowed = array_keys($this->getAvailableColumns());
         $columns = array_values(array_intersect($allowed, $columns));
 
-        return $columns ?: array('id_order', 'reference', 'customer', 'total', 'state', 'date_add');
+        return $columns ?: array('id_order', 'reference', 'new', 'country', 'customer', 'total', 'payment', 'state', 'date_add');
     }
 
     private function getRequestedSavedView()
