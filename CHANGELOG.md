@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.2 - 2026-09-14
+
+- Fixed native column ordering by reading identifiers from PrestaShop column objects.
+- Limited the selector to columns that exist for the current B2B and multistore configuration.
+- Intersected configurable columns with the actual native grid definition before modifying it.
+
 ## 1.2.1 - 2026-09-13
 
 - Fixed stale SQL caching that could discard a newly saved grid preference.

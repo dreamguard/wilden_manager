@@ -20,7 +20,7 @@ require_once __DIR__ . '/classes/WmBulkOrderService.php';
 
 class Wilden_manager extends Module
 {
-    const VERSION = '1.2.1';
+    const VERSION = '1.2.2';
     const TAB_CLASS = 'AdminWildenManagerOrders';
     const MAX_BULK_ORDERS = 100;
 
@@ -64,19 +64,28 @@ class Wilden_manager extends Module
 
     public function getNativeOrderColumns()
     {
-        return array(
+        $columns = array(
             'id_order' => $this->l('ID'),
             'reference' => $this->l('Reference'),
             'new' => $this->l('New client'),
             'country_name' => $this->l('Delivery'),
             'customer' => $this->l('Customer'),
-            'company' => $this->l('Company'),
             'total_paid_tax_incl' => $this->l('Total'),
             'payment' => $this->l('Payment'),
             'osname' => $this->l('Status'),
             'date_add' => $this->l('Date'),
-            'shop_name' => $this->l('Store'),
         );
+
+        if ((bool) Configuration::get('PS_B2B_ENABLE')) {
+            $columns = array_slice($columns, 0, 5, true)
+                + array('company' => $this->l('Company'))
+                + array_slice($columns, 5, null, true);
+        }
+        if (Shop::isFeatureActive()) {
+            $columns['shop_name'] = $this->l('Store');
+        }
+
+        return $columns;
     }
 
     public function hookActionOrderGridDefinitionModifier(array $params)
@@ -88,7 +97,11 @@ class Wilden_manager extends Module
         $definition = $params['definition'];
         $columns = $definition->getColumns();
         $filters = $definition->getFilters();
-        $available = $this->getNativeOrderColumns();
+        $presentColumns = $this->getGridCollectionIds($columns);
+        $available = array_intersect_key(
+            $this->getNativeOrderColumns(),
+            array_flip($presentColumns)
+        );
         $selected = WmGridPreference::get(
             (int) $this->context->employee->id,
             (int) $this->context->shop->id
@@ -107,7 +120,6 @@ class Wilden_manager extends Module
         }
 
         if (method_exists($columns, 'move')) {
-            $presentColumns = array_column($columns->toArray(), 'id');
             $position = in_array('orders_bulk', $presentColumns, true) ? 1 : 0;
             foreach ($selected as $columnId) {
                 if (in_array($columnId, $presentColumns, true)) {
@@ -115,6 +127,22 @@ class Wilden_manager extends Module
                 }
             }
         }
+    }
+
+    private function getGridCollectionIds($collection)
+    {
+        $ids = array();
+        foreach ($collection->toArray() as $key => $item) {
+            if (is_object($item) && method_exists($item, 'getId')) {
+                $ids[] = (string) $item->getId();
+            } elseif (is_array($item) && isset($item['id'])) {
+                $ids[] = (string) $item['id'];
+            } elseif (is_string($key)) {
+                $ids[] = $key;
+            }
+        }
+
+        return array_values(array_unique($ids));
     }
 
     public function hookDisplayBackOfficeHeader()
