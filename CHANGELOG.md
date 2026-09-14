@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.0 - 2026-09-14
+
+- Added configurable Customer email and Shipping method columns to the native order grid.
+- Added filtering and sorting for both new columns through the official query-builder hook.
+- Enabled both columns automatically for existing employee preferences during upgrade.
+
 ## 1.2.2 - 2026-09-14
 
 - Fixed native column ordering by reading identifiers from PrestaShop column objects.

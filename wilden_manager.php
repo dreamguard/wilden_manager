@@ -20,7 +20,7 @@ require_once __DIR__ . '/classes/WmBulkOrderService.php';
 
 class Wilden_manager extends Module
 {
-    const VERSION = '1.2.2';
+    const VERSION = '1.3.0';
     const TAB_CLASS = 'AdminWildenManagerOrders';
     const MAX_BULK_ORDERS = 100;
 
@@ -47,6 +47,7 @@ class Wilden_manager extends Module
             && $this->installDatabase()
             && $this->installTab()
             && $this->registerHook('actionOrderGridDefinitionModifier')
+            && $this->registerHook('actionOrderGridQueryBuilderModifier')
             && $this->registerHook('displayBackOfficeHeader');
     }
 
@@ -70,17 +71,19 @@ class Wilden_manager extends Module
             'new' => $this->l('New client'),
             'country_name' => $this->l('Delivery'),
             'customer' => $this->l('Customer'),
-            'total_paid_tax_incl' => $this->l('Total'),
-            'payment' => $this->l('Payment'),
-            'osname' => $this->l('Status'),
-            'date_add' => $this->l('Date'),
+            'customer_email' => $this->l('Customer email'),
         );
 
         if ((bool) Configuration::get('PS_B2B_ENABLE')) {
-            $columns = array_slice($columns, 0, 5, true)
-                + array('company' => $this->l('Company'))
-                + array_slice($columns, 5, null, true);
+            $columns['company'] = $this->l('Company');
         }
+
+        $columns['total_paid_tax_incl'] = $this->l('Total');
+        $columns['payment'] = $this->l('Payment');
+        $columns['shipping_method'] = $this->l('Shipping method');
+        $columns['osname'] = $this->l('Status');
+        $columns['date_add'] = $this->l('Date');
+
         if (Shop::isFeatureActive()) {
             $columns['shop_name'] = $this->l('Store');
         }
@@ -97,6 +100,43 @@ class Wilden_manager extends Module
         $definition = $params['definition'];
         $columns = $definition->getColumns();
         $filters = $definition->getFilters();
+
+        $columns->addAfter(
+            'customer',
+            (new \PrestaShop\PrestaShop\Core\Grid\Column\Type\DataColumn('customer_email'))
+                ->setName($this->l('Customer email'))
+                ->setOptions(array('field' => 'customer_email'))
+        );
+        $columns->addAfter(
+            'payment',
+            (new \PrestaShop\PrestaShop\Core\Grid\Column\Type\DataColumn('shipping_method'))
+                ->setName($this->l('Shipping method'))
+                ->setOptions(array('field' => 'shipping_method'))
+        );
+
+        $filters->add(
+            (new \PrestaShop\PrestaShop\Core\Grid\Filter\Filter(
+                'customer_email',
+                \Symfony\Component\Form\Extension\Core\Type\TextType::class
+            ))
+                ->setTypeOptions(array(
+                    'required' => false,
+                    'attr' => array('placeholder' => $this->l('Search email')),
+                ))
+                ->setAssociatedColumn('customer_email')
+        );
+        $filters->add(
+            (new \PrestaShop\PrestaShop\Core\Grid\Filter\Filter(
+                'shipping_method',
+                \Symfony\Component\Form\Extension\Core\Type\TextType::class
+            ))
+                ->setTypeOptions(array(
+                    'required' => false,
+                    'attr' => array('placeholder' => $this->l('Search shipping method')),
+                ))
+                ->setAssociatedColumn('shipping_method')
+        );
+
         $presentColumns = $this->getGridCollectionIds($columns);
         $available = array_intersect_key(
             $this->getNativeOrderColumns(),
@@ -126,6 +166,79 @@ class Wilden_manager extends Module
                     $columns->move($columnId, $position++);
                 }
             }
+        }
+    }
+
+    public function hookActionOrderGridQueryBuilderModifier(array $params)
+    {
+        if (empty($params['search_query_builder']) || empty($params['count_query_builder'])) {
+            return;
+        }
+
+        $searchQueryBuilder = $params['search_query_builder'];
+        $countQueryBuilder = $params['count_query_builder'];
+        $searchCriteria = isset($params['search_criteria']) ? $params['search_criteria'] : null;
+
+        $searchQueryBuilder
+            ->addSelect('cu.email AS customer_email')
+            ->leftJoin(
+                'o',
+                _DB_PREFIX_ . 'carrier',
+                'wm_shipping_carrier',
+                'o.id_carrier = wm_shipping_carrier.id_carrier'
+            )
+            ->addSelect('wm_shipping_carrier.name AS shipping_method');
+        $countQueryBuilder->leftJoin(
+            'o',
+            _DB_PREFIX_ . 'carrier',
+            'wm_shipping_carrier',
+            'o.id_carrier = wm_shipping_carrier.id_carrier'
+        );
+
+        if (!$searchCriteria) {
+            return;
+        }
+
+        $filters = $searchCriteria->getFilters();
+        $this->applyNativeTextFilter(
+            $searchQueryBuilder,
+            $countQueryBuilder,
+            $filters,
+            'customer_email',
+            'cu.email'
+        );
+        $this->applyNativeTextFilter(
+            $searchQueryBuilder,
+            $countQueryBuilder,
+            $filters,
+            'shipping_method',
+            'wm_shipping_carrier.name'
+        );
+
+        if ($searchCriteria->getOrderBy() === 'customer_email') {
+            $searchQueryBuilder->orderBy('cu.email', $searchCriteria->getOrderWay());
+        } elseif ($searchCriteria->getOrderBy() === 'shipping_method') {
+            $searchQueryBuilder->orderBy('wm_shipping_carrier.name', $searchCriteria->getOrderWay());
+        }
+    }
+
+    private function applyNativeTextFilter(
+        $searchQueryBuilder,
+        $countQueryBuilder,
+        array $filters,
+        $filterName,
+        $field
+    ) {
+        if (!isset($filters[$filterName]) || trim((string) $filters[$filterName]) === '') {
+            return;
+        }
+
+        $parameter = 'wm_' . $filterName;
+        $value = '%' . trim((string) $filters[$filterName]) . '%';
+        foreach (array($searchQueryBuilder, $countQueryBuilder) as $queryBuilder) {
+            $queryBuilder
+                ->andWhere($field . ' LIKE :' . $parameter)
+                ->setParameter($parameter, $value);
         }
     }
 
@@ -167,7 +280,7 @@ class Wilden_manager extends Module
             'wildenManagerNativeColumns' => array(
                 'columns' => $columnOptions,
                 'selected' => array_values($selected),
-                'storageKey' => 'wilden_manager_order_columns_' .
+                'storageKey' => 'wilden_manager_order_columns_' . self::VERSION . '_' .
                     (int) $this->context->employee->id . '_' . (int) $this->context->shop->id,
                 'saveUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=saveNativeColumns',
                 'title' => $this->l('Configure order columns'),
