@@ -215,6 +215,107 @@
       $panel.find('.card-header').first().append($bulkButton);
     }
 
+    var exportModalId = 'wm-export-modal';
+    var $exportModal = $('#' + exportModalId);
+    if (!$exportModal.length) {
+      $exportModal = $(
+        '<div class="modal fade" id="' + exportModalId + '" tabindex="-1" role="dialog" aria-hidden="true">' +
+          '<div class="modal-dialog" role="document"><div class="modal-content">' +
+            '<div class="modal-header"><h4 class="modal-title"></h4><button type="button" class="close" data-dismiss="modal">&times;</button></div>' +
+            '<div class="modal-body">' +
+              '<p class="wm-export-selection"></p>' +
+              '<div class="form-group"><label class="wm-export-format-label"></label><select class="form-control wm-export-format"><option value="csv"></option></select></div>' +
+              '<div class="form-group"><label class="wm-export-fields-label"></label><div class="wm-export-columns"></div></div>' +
+              '<div class="alert alert-danger wm-export-error" hidden></div>' +
+            '</div>' +
+            '<div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-dismiss="modal"></button><button type="button" class="btn btn-primary wm-export-download"></button></div>' +
+          '</div></div>' +
+        '</div>'
+      ).appendTo('body');
+      $exportModal.find('.modal-title').text(config.exportTitle);
+      $exportModal.find('.wm-export-format-label').text(config.exportFormat);
+      $exportModal.find('.wm-export-fields-label').text(config.exportFields);
+      $exportModal.find('.wm-export-format option[value="csv"]').text(config.exportCsv);
+      if (config.xlsxAvailable) {
+        $('<option value="xlsx"></option>').text(config.exportXlsx).appendTo($exportModal.find('.wm-export-format'));
+      }
+      $exportModal.find('[data-dismiss="modal"]').last().text(config.cancel);
+      $exportModal.find('.wm-export-download').text(config.exportDownload);
+    }
+
+    function getSavedExportColumns() {
+      var defaults = ['id_order', 'reference', 'date_add', 'customer', 'email', 'total_paid_tax_incl', 'state_name', 'carrier_name'];
+      if (config.exportStorageKey && window.localStorage) {
+        try {
+          var stored = JSON.parse(window.localStorage.getItem(config.exportStorageKey));
+          if (Array.isArray(stored) && stored.length) {
+            return stored;
+          }
+        } catch (error) {
+          window.localStorage.removeItem(config.exportStorageKey);
+        }
+      }
+      return defaults;
+    }
+
+    function renderExportColumns() {
+      var selected = getSavedExportColumns();
+      var $list = $exportModal.find('.wm-export-columns').empty();
+      (config.exportColumns || []).forEach(function (column) {
+        var $label = $('<label class="wm-export-column"><input type="checkbox"> <span></span></label>');
+        $label.find('input').val(column.id).prop('checked', selected.indexOf(column.id) !== -1);
+        $label.find('span').text(column.label);
+        $list.append($label);
+      });
+    }
+
+    var $exportButton = $('<button type="button" class="btn btn-outline-secondary wm-export-button"><i class="material-icons">download</i> <span></span></button>');
+    $exportButton.find('span').text(config.exportButton);
+    if ($actions.length) {
+      $actions.prepend($exportButton);
+    } else {
+      $panel.find('.card-header').first().append($exportButton);
+    }
+
+    $exportButton.on('click', function () {
+      var ids = getSelectedOrderIds();
+      if (!ids.length) {
+        window.alert(config.bulkNoSelection);
+        return;
+      }
+      renderExportColumns();
+      $exportModal.data('order-ids', ids);
+      $exportModal.find('.wm-export-selection').text(ids.length + ' ' + config.bulkSelected);
+      $exportModal.find('.wm-export-error').prop('hidden', true).text('');
+      $exportModal.modal('show');
+    });
+
+    $exportModal.on('click', '.wm-export-download', function () {
+      var columns = [];
+      $exportModal.find('.wm-export-columns input:checked').each(function () {
+        columns.push($(this).val());
+      });
+      if (!columns.length) {
+        $exportModal.find('.wm-export-error').prop('hidden', false).text(config.exportNoColumns);
+        return;
+      }
+      if (config.exportStorageKey && window.localStorage) {
+        window.localStorage.setItem(config.exportStorageKey, JSON.stringify(columns));
+      }
+
+      var $form = $('<form method="post" hidden></form>').attr('action', config.exportUrl).appendTo('body');
+      ($exportModal.data('order-ids') || []).forEach(function (id) {
+        $('<input type="hidden" name="order_ids[]">').val(id).appendTo($form);
+      });
+      columns.forEach(function (column) {
+        $('<input type="hidden" name="export_columns[]">').val(column).appendTo($form);
+      });
+      $('<input type="hidden" name="export_format">').val($exportModal.find('.wm-export-format').val()).appendTo($form);
+      $form.trigger('submit');
+      window.setTimeout(function () { $form.remove(); }, 1000);
+      $exportModal.modal('hide');
+    });
+
     function resetBulkPreview() {
       $bulkModal.removeData('preview').removeData('completed');
       $bulkModal.find('.wm-bulk-execute').prop('disabled', true).text(config.bulkExecute);

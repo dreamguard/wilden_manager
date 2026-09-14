@@ -283,6 +283,57 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         }
     }
 
+    public function ajaxProcessExportSelectedOrders()
+    {
+        if (!$this->access('view')) {
+            $this->ajaxDie(json_encode(array(
+                'success' => false,
+                'error' => $this->module->l('You do not have permission to export orders.', 'AdminWildenManagerOrdersController'),
+            )));
+        }
+
+        $ids = array_values(array_unique(array_filter(array_map(
+            'intval',
+            (array) Tools::getValue('order_ids', array())
+        ))));
+        $available = $this->module->getExportColumns();
+        $columns = array_values(array_unique(array_intersect(
+            (array) Tools::getValue('export_columns', array()),
+            array_keys($available)
+        )));
+        $format = strtolower((string) Tools::getValue('export_format', 'csv'));
+
+        if (!$ids || count($ids) > Wilden_manager::MAX_EXPORT_ORDERS || !$columns) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'Invalid export selection.')));
+        }
+        if (!in_array($format, array('csv', 'xlsx'), true)) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'Invalid export format.')));
+        }
+        if ($format === 'xlsx' && !class_exists('ZipArchive')) {
+            $this->ajaxDie(json_encode(array(
+                'success' => false,
+                'error' => 'XLSX export requires the PHP Zip extension.',
+            )));
+        }
+
+        $orders = $this->repository->getOrdersByIds($ids, Wilden_manager::MAX_EXPORT_ORDERS);
+        if (count($orders) !== count($ids)) {
+            $this->ajaxDie(json_encode(array(
+                'success' => false,
+                'error' => 'One or more selected orders are not accessible.',
+            )));
+        }
+
+        WmAuditLogger::log('orders_exported', array(
+            'format' => $format,
+            'columns' => $columns,
+            'order_ids' => $ids,
+        ));
+
+        $service = new WmExportService();
+        $service->download($orders, $columns, $available, $format);
+    }
+
     private function saveNote()
     {
         if (!$this->canEdit()) {

@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.0 - 2026-09-15
+
+- Added configurable CSV and XLSX export from the native order selection.
+- Added 15 exportable order, customer, delivery, payment and shop fields.
+- Added employee-local export column preferences.
+- Added formula-injection and invalid-XML character protection.
+- Added numeric Excel cells for order IDs and totals, frozen headers and autofilters.
+- Added access, shop-scope and maximum-row validation plus export auditing.
+
 ## 1.5.0 - 2026-09-14
 
 - Removed the internal-note column and editor from the native order grid.

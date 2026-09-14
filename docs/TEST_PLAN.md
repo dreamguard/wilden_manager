@@ -20,7 +20,11 @@
 
 ## Export
 
-- Export filtered orders and open the UTF-8 CSV in Excel or LibreOffice.
+- Select one and several orders in the native grid and export CSV and XLSX.
+- Choose a reduced set of columns, repeat the export and confirm it is remembered.
+- Confirm CSV accents and separators display correctly in Excel or LibreOffice.
+- Confirm XLSX IDs and totals are numeric, and that header filters work.
+- Confirm a restricted employee cannot export orders outside the active shop context.
 
 ## Bulk state changes
 

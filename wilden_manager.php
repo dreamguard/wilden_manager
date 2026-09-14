@@ -17,12 +17,14 @@ require_once __DIR__ . '/classes/WmSavedView.php';
 require_once __DIR__ . '/classes/WmGridPreference.php';
 require_once __DIR__ . '/classes/WmOrderRepository.php';
 require_once __DIR__ . '/classes/WmBulkOrderService.php';
+require_once __DIR__ . '/classes/WmExportService.php';
 
 class Wilden_manager extends Module
 {
-    const VERSION = '1.5.0';
+    const VERSION = '1.6.0';
     const TAB_CLASS = 'AdminWildenManagerOrders';
     const MAX_BULK_ORDERS = 100;
+    const MAX_EXPORT_ORDERS = 1000;
 
     public function __construct()
     {
@@ -89,6 +91,27 @@ class Wilden_manager extends Module
         }
 
         return $columns;
+    }
+
+    public function getExportColumns()
+    {
+        return array(
+            'id_order' => $this->l('ID'),
+            'reference' => $this->l('Reference'),
+            'date_add' => $this->l('Date'),
+            'customer' => $this->l('Customer'),
+            'email' => $this->l('Customer email'),
+            'company' => $this->l('Company'),
+            'country_name' => $this->l('Delivery country'),
+            'delivery_postcode' => $this->l('Delivery postcode'),
+            'delivery_city' => $this->l('Delivery city'),
+            'total_paid_tax_incl' => $this->l('Total paid tax included'),
+            'currency_iso' => $this->l('Currency'),
+            'payment' => $this->l('Payment'),
+            'state_name' => $this->l('Status'),
+            'carrier_name' => $this->l('Shipping method'),
+            'shop_name' => $this->l('Store'),
+        );
     }
 
     public function hookActionOrderGridDefinitionModifier(array $params)
@@ -273,6 +296,10 @@ class Wilden_manager extends Module
         foreach ($available as $id => $label) {
             $columnOptions[] = array('id' => $id, 'label' => $label);
         }
+        $exportColumnOptions = array();
+        foreach ($this->getExportColumns() as $id => $label) {
+            $exportColumnOptions[] = array('id' => $id, 'label' => $label);
+        }
 
         $this->context->controller->addJS($this->_path . 'views/js/native-order-columns.js');
         $this->context->controller->addCSS($this->_path . 'views/css/native-order-columns.css');
@@ -287,6 +314,10 @@ class Wilden_manager extends Module
                 'bulkExecuteUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=executeBulkStatus',
                 'orderStates' => OrderState::getOrderStates((int) $this->context->language->id),
                 'maxBulk' => self::MAX_BULK_ORDERS,
+                'exportUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=exportSelectedOrders',
+                'exportColumns' => $exportColumnOptions,
+                'xlsxAvailable' => class_exists('ZipArchive'),
+                'exportStorageKey' => 'wilden_manager_export_columns_' . (int) $this->context->employee->id,
                 'title' => $this->l('Configure order columns'),
                 'button' => $this->l('Columns'),
                 'save' => $this->l('Save and reload'),
@@ -311,6 +342,14 @@ class Wilden_manager extends Module
                 'bulkWarnings' => $this->l('Warnings'),
                 'bulkErrors' => $this->l('Errors'),
                 'bulkError' => $this->l('The bulk operation could not be completed.'),
+                'exportButton' => $this->l('Export selection'),
+                'exportTitle' => $this->l('Export selected orders'),
+                'exportFormat' => $this->l('File format'),
+                'exportFields' => $this->l('Columns to export'),
+                'exportDownload' => $this->l('Download export'),
+                'exportNoColumns' => $this->l('Select at least one export column.'),
+                'exportCsv' => $this->l('CSV (UTF-8, semicolon separated)'),
+                'exportXlsx' => $this->l('Excel XLSX'),
             ),
         ));
     }

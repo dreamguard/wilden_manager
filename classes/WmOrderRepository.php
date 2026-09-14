@@ -84,6 +84,21 @@ class WmOrderRepository
         );
     }
 
+    public function getOrdersByIds(array $ids, $maxRows = 1000)
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+        if (!$ids || count($ids) > (int) $maxRows) {
+            return array();
+        }
+
+        return Db::getInstance()->executeS(
+            $this->getSelectSql() . '
+             WHERE o.id_order IN (' . implode(',', $ids) . ')
+               AND o.id_shop IN (' . $this->getAllowedShopSql() . ')
+             ORDER BY o.date_add ASC, o.id_order ASC'
+        );
+    }
+
     public function isOrderAccessible($idOrder)
     {
         return (bool) Db::getInstance()->getValue(
@@ -100,7 +115,9 @@ class WmOrderRepository
                        osl.name AS state_name, os.color AS state_color,
                        CONCAT(c.firstname, CHAR(32), c.lastname) AS customer,
                        c.email, c.company, c.deleted AS deleted_customer,
-                       cl.name AS country_name, ca.name AS carrier_name, s.name AS shop_name,
+                       cl.name AS country_name, ad.postcode AS delivery_postcode,
+                       ad.city AS delivery_city, ca.name AS carrier_name, s.name AS shop_name,
+                       cur.iso_code AS currency_iso,
                        IF(EXISTS(
                            SELECT 1 FROM `' . _DB_PREFIX_ . 'orders` previous_order
                            WHERE previous_order.id_customer = o.id_customer
@@ -119,6 +136,7 @@ class WmOrderRepository
                    ON osl.id_order_state = o.current_state
                   AND osl.id_lang = ' . (int) $this->context->language->id . '
                 LEFT JOIN `' . _DB_PREFIX_ . 'carrier` ca ON ca.id_carrier = o.id_carrier
+                LEFT JOIN `' . _DB_PREFIX_ . 'currency` cur ON cur.id_currency = o.id_currency
                 LEFT JOIN `' . _DB_PREFIX_ . 'shop` s ON s.id_shop = o.id_shop
                 LEFT JOIN `' . _DB_PREFIX_ . 'wilden_manager_order_note` wn ON wn.id_order = o.id_order';
     }
