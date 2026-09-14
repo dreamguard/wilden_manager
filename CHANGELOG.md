@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.5.0 - 2026-09-14
+
+- Removed the internal-note column and editor from the native order grid.
+- Added a safe bulk status-change workflow driven by the native order selection.
+- Added a mandatory signed preview that expires after 15 minutes and is invalidated if an order changes.
+- Added a final per-order state check immediately before each update.
+- Added optional customer emails, per-order results, warnings, errors and audit records.
+- Preserved existing note data without exposing the discontinued feature.
+
 ## 1.4.0 - 2026-09-14
 
 - Added an optional internal-note column to the native order grid.

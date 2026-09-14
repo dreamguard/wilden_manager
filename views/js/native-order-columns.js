@@ -82,98 +82,43 @@
     config.selected = getSelectedColumns();
     applyColumns(config.selected);
 
-    function getOrderId($row) {
-      var value = $row.find('input[name="order_orders_bulk[]"], input[name$="[orders_bulk][]"], .js-bulk-action-checkbox').first().val();
-      if (parseInt(value, 10) > 0) {
-        return parseInt(value, 10);
-      }
-
-      var text = $row.find('.column-id_order').first().text();
-      var match = String(text || '').match(/\d+/);
-      return match ? parseInt(match[0], 10) : 0;
+    function getSelectedOrderIds() {
+      var ids = [];
+      $('#order_grid_table tbody input[name="order_orders_bulk[]"]:checked, ' +
+        '#order_grid_table tbody input[name$="[orders_bulk][]"]:checked, ' +
+        '#order_grid_table tbody .js-bulk-action-checkbox:checked').each(function () {
+        var id = parseInt($(this).val(), 10);
+        if (id > 0 && ids.indexOf(id) === -1) {
+          ids.push(id);
+        }
+      });
+      ids.sort(function (a, b) { return a - b; });
+      return ids;
     }
 
-    var noteModalId = 'wm-order-note-modal';
-    var $noteModal = $('#' + noteModalId);
-    if (!$noteModal.length) {
-      $noteModal = $(
-        '<div class="modal fade" id="' + noteModalId + '" tabindex="-1" role="dialog" aria-hidden="true">' +
-          '<div class="modal-dialog" role="document"><div class="modal-content">' +
-            '<div class="modal-header"><h4 class="modal-title"></h4><button type="button" class="close" data-dismiss="modal">&times;</button></div>' +
-            '<div class="modal-body"><p class="text-muted wm-order-note-help"></p><textarea class="form-control wm-order-note-text" rows="8" maxlength="5000"></textarea><div class="alert wm-order-note-message" hidden></div></div>' +
-            '<div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-dismiss="modal"></button><button type="button" class="btn btn-primary wm-order-note-save"></button></div>' +
-          '</div></div>' +
-        '</div>'
-      ).appendTo('body');
-      $noteModal.find('.modal-title').text(config.noteTitle);
-      $noteModal.find('.wm-order-note-help').text(config.noteHelp);
-      $noteModal.find('[data-dismiss="modal"]').last().text(config.cancel);
-      $noteModal.find('.wm-order-note-save').text(config.noteSave);
+    function setBulkMessage($modal, type, message) {
+      $modal.find('.wm-bulk-message')
+        .removeClass('alert-info alert-success alert-danger alert-warning')
+        .addClass('alert-' + type)
+        .prop('hidden', !message)
+        .text(message || '');
     }
 
-    $panel.on('click', '#order_grid_table tbody .column-internal_note', function () {
-      var $cell = $(this);
-      var idOrder = getOrderId($cell.closest('tr'));
-      if (!idOrder) {
+    function appendResultList($container, title, items, key) {
+      if (!Array.isArray(items) || !items.length) {
         return;
       }
-
-      $noteModal.data('order-id', idOrder).modal('show');
-      $noteModal.find('.wm-order-note-text').val('').prop('disabled', true);
-      $noteModal.find('.wm-order-note-save').prop('disabled', true);
-      $noteModal.find('.wm-order-note-message').removeClass('alert-success alert-danger').addClass('alert-info').prop('hidden', false).text(config.noteLoading);
-
-      $.ajax({
-        url: config.noteGetUrl,
-        method: 'GET',
-        dataType: 'json',
-        data: { id_order: idOrder }
-      }).done(function (response) {
-        if (!response || !response.success) {
-          $noteModal.find('.wm-order-note-message').removeClass('alert-info').addClass('alert-danger').prop('hidden', false).text((response && response.error) || config.noteError);
-          return;
+      var $section = $('<div class="wm-bulk-result-section"><strong></strong><ul></ul></div>');
+      $section.find('strong').text(title + ': ' + items.length);
+      items.forEach(function (item) {
+        var message = '#' + parseInt(item.id_order, 10);
+        if (item[key]) {
+          message += ' — ' + item[key];
         }
-        $noteModal.find('.wm-order-note-text').val(response.note || '').prop('disabled', !response.can_edit);
-        $noteModal.find('.wm-order-note-save').prop('disabled', !response.can_edit);
-        if (response.can_edit) {
-          $noteModal.find('.wm-order-note-message').prop('hidden', true);
-        } else {
-          $noteModal.find('.wm-order-note-message').removeClass('alert-info').addClass('alert-danger').text(config.noteReadOnly);
-        }
-      }).fail(function (xhr) {
-        var response = xhr.responseJSON || {};
-        $noteModal.find('.wm-order-note-message').removeClass('alert-info').addClass('alert-danger').prop('hidden', false).text(response.error || config.noteError);
+        $('<li></li>').text(message).appendTo($section.find('ul'));
       });
-    });
-
-    $noteModal.on('click', '.wm-order-note-save', function () {
-      var $save = $(this).prop('disabled', true);
-      var idOrder = parseInt($noteModal.data('order-id'), 10);
-      var note = $noteModal.find('.wm-order-note-text').val();
-      $.ajax({
-        url: config.noteSaveUrl,
-        method: 'POST',
-        dataType: 'json',
-        data: { id_order: idOrder, note: note }
-      }).done(function (response) {
-        if (!response || !response.success) {
-          $noteModal.find('.wm-order-note-message').removeClass('alert-success').addClass('alert-danger').prop('hidden', false).text((response && response.error) || config.noteError);
-          return;
-        }
-        var display = response.note || '';
-        $('#order_grid_table tbody tr').each(function () {
-          if (getOrderId($(this)) === idOrder) {
-            $(this).find('.column-internal_note').text(display).attr('title', display);
-          }
-        });
-        $noteModal.find('.wm-order-note-message').removeClass('alert-danger').addClass('alert-success').prop('hidden', false).text(config.noteSaved);
-      }).fail(function (xhr) {
-        var response = xhr.responseJSON || {};
-        $noteModal.find('.wm-order-note-message').removeClass('alert-success').addClass('alert-danger').prop('hidden', false).text(response.error || config.noteError);
-      }).always(function () {
-        $save.prop('disabled', false);
-      });
-    });
+      $container.append($section);
+    }
 
     var modalId = 'wm-native-columns-modal';
     var $modal = $('#' + modalId);
@@ -228,6 +173,162 @@
     } else {
       $panel.find('.card-header').first().append($button);
     }
+
+    var bulkModalId = 'wm-bulk-status-modal';
+    var $bulkModal = $('#' + bulkModalId);
+    if (!$bulkModal.length) {
+      $bulkModal = $(
+        '<div class="modal fade" id="' + bulkModalId + '" tabindex="-1" role="dialog" aria-hidden="true">' +
+          '<div class="modal-dialog modal-lg" role="document"><div class="modal-content">' +
+            '<div class="modal-header"><h4 class="modal-title"></h4><button type="button" class="close" data-dismiss="modal">&times;</button></div>' +
+            '<div class="modal-body">' +
+              '<p class="wm-bulk-selection"></p>' +
+              '<div class="form-group"><label class="wm-bulk-state-label"></label><select class="form-control wm-bulk-state"><option value=""></option></select></div>' +
+              '<div class="form-check"><label><input type="checkbox" class="wm-bulk-email"> <span class="wm-bulk-email-label"></span></label></div>' +
+              '<p class="text-muted wm-bulk-help"></p>' +
+              '<div class="alert wm-bulk-message" hidden></div>' +
+              '<div class="wm-bulk-preview-table"></div>' +
+              '<div class="wm-bulk-results"></div>' +
+            '</div>' +
+            '<div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-dismiss="modal"></button><button type="button" class="btn btn-outline-primary wm-bulk-preview"></button><button type="button" class="btn btn-primary wm-bulk-execute" disabled></button></div>' +
+          '</div></div>' +
+        '</div>'
+      ).appendTo('body');
+      $bulkModal.find('.modal-title').text(config.bulkTitle);
+      $bulkModal.find('.wm-bulk-state-label').text(config.bulkState);
+      $bulkModal.find('.wm-bulk-state option').first().text(config.bulkSelectState);
+      $bulkModal.find('.wm-bulk-email-label').text(config.bulkSendEmail);
+      $bulkModal.find('.wm-bulk-help').text(config.bulkPreviewHelp);
+      $bulkModal.find('[data-dismiss="modal"]').last().text(config.cancel);
+      $bulkModal.find('.wm-bulk-preview').text(config.bulkPreview);
+      $bulkModal.find('.wm-bulk-execute').text(config.bulkExecute);
+      (config.orderStates || []).forEach(function (state) {
+        $('<option></option>').val(state.id_order_state).text(state.name).appendTo($bulkModal.find('.wm-bulk-state'));
+      });
+    }
+
+    var $bulkButton = $('<button type="button" class="btn btn-outline-secondary wm-bulk-status-button"><i class="material-icons">published_with_changes</i> <span></span></button>');
+    $bulkButton.find('span').text(config.bulkButton);
+    if ($actions.length) {
+      $actions.prepend($bulkButton);
+    } else {
+      $panel.find('.card-header').first().append($bulkButton);
+    }
+
+    function resetBulkPreview() {
+      $bulkModal.removeData('preview').removeData('completed');
+      $bulkModal.find('.wm-bulk-execute').prop('disabled', true).text(config.bulkExecute);
+      $bulkModal.find('.wm-bulk-preview').prop('disabled', false);
+      $bulkModal.find('.wm-bulk-preview-table, .wm-bulk-results').empty();
+      setBulkMessage($bulkModal, 'info', '');
+    }
+
+    $bulkButton.on('click', function () {
+      var ids = getSelectedOrderIds();
+      if (!ids.length) {
+        window.alert(config.bulkNoSelection);
+        return;
+      }
+      if (ids.length > parseInt(config.maxBulk, 10)) {
+        window.alert(config.bulkTooMany + ' ' + config.maxBulk + '.');
+        return;
+      }
+      resetBulkPreview();
+      $bulkModal.data('order-ids', ids);
+      $bulkModal.find('.wm-bulk-selection').text(ids.length + ' ' + config.bulkSelected);
+      $bulkModal.modal('show');
+    });
+
+    $bulkModal.on('change', '.wm-bulk-state, .wm-bulk-email', resetBulkPreview);
+
+    $bulkModal.on('click', '.wm-bulk-preview', function () {
+      var ids = $bulkModal.data('order-ids') || [];
+      var targetState = parseInt($bulkModal.find('.wm-bulk-state').val(), 10);
+      if (!targetState) {
+        setBulkMessage($bulkModal, 'danger', config.bulkSelectState);
+        return;
+      }
+
+      var $previewButton = $(this).prop('disabled', true);
+      setBulkMessage($bulkModal, 'info', config.bulkPreview + '…');
+      $.ajax({
+        url: config.bulkPreviewUrl,
+        method: 'POST',
+        dataType: 'json',
+        data: { order_ids: ids, target_state: targetState }
+      }).done(function (response) {
+        if (!response || !response.success || !response.preview) {
+          setBulkMessage($bulkModal, 'danger', (response && response.error) || config.bulkError);
+          return;
+        }
+
+        var preview = response.preview;
+        var $table = $('<div class="table-responsive"><table class="table"><thead><tr><th>ID</th><th>Reference</th><th>Customer</th><th>Current status</th><th>New status</th></tr></thead><tbody></tbody></table></div>');
+        (preview.orders || []).forEach(function (order) {
+          var $row = $('<tr><td></td><td></td><td></td><td></td><td></td></tr>');
+          var values = [order.id_order, order.reference, order.customer, order.state_name || '', preview.target_state.name];
+          $row.children().each(function (index) { $(this).text(values[index]); });
+          $table.find('tbody').append($row);
+        });
+        $bulkModal.find('.wm-bulk-preview-table').empty().append($table);
+        $bulkModal.data('preview', preview);
+        $bulkModal.find('.wm-bulk-execute').prop('disabled', false);
+        setBulkMessage($bulkModal, 'success', config.bulkPreviewReady);
+      }).fail(function (xhr) {
+        var response = xhr.responseJSON || {};
+        setBulkMessage($bulkModal, 'danger', response.error || config.bulkError);
+      }).always(function () {
+        $previewButton.prop('disabled', false);
+      });
+    });
+
+    $bulkModal.on('click', '.wm-bulk-execute', function () {
+      if ($bulkModal.data('completed')) {
+        window.location.reload();
+        return;
+      }
+
+      var preview = $bulkModal.data('preview');
+      if (!preview) {
+        return;
+      }
+      var $execute = $(this).prop('disabled', true);
+      setBulkMessage($bulkModal, 'info', config.bulkExecute + '…');
+      $.ajax({
+        url: config.bulkExecuteUrl,
+        method: 'POST',
+        dataType: 'json',
+        data: {
+          order_ids: preview.ids,
+          target_state: preview.target_state.id,
+          preview_timestamp: preview.timestamp,
+          preview_snapshot: preview.snapshot,
+          preview_signature: preview.signature,
+          send_email: $bulkModal.find('.wm-bulk-email').prop('checked') ? 1 : 0
+        }
+      }).done(function (response) {
+        if (!response || !response.success || !response.results) {
+          setBulkMessage($bulkModal, 'danger', (response && response.error) || config.bulkError);
+          $execute.prop('disabled', false);
+          return;
+        }
+        var results = response.results;
+        var $results = $bulkModal.find('.wm-bulk-results').empty();
+        var applied = results.success.filter(function (item) { return !item.skipped; });
+        var skipped = results.success.filter(function (item) { return item.skipped; });
+        appendResultList($results, config.bulkSkipped, skipped, 'message');
+        appendResultList($results, config.bulkWarnings, results.warnings, 'warning');
+        appendResultList($results, config.bulkErrors, results.errors, 'error');
+        setBulkMessage($bulkModal, results.errors.length ? 'warning' : 'success', config.bulkSuccess + ': ' + applied.length + '.');
+        $bulkModal.data('completed', true);
+        $bulkModal.find('.wm-bulk-preview').prop('disabled', true);
+        $execute.prop('disabled', false).text(config.bulkReload);
+      }).fail(function (xhr) {
+        var response = xhr.responseJSON || {};
+        setBulkMessage($bulkModal, 'danger', response.error || config.bulkError);
+        $execute.prop('disabled', false);
+      });
+    });
 
     $button.on('click', function () {
       renderColumns(config.selected);

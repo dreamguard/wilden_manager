@@ -237,60 +237,50 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         $this->ajaxDie(json_encode(array('success' => true, 'columns' => $storedColumns)));
     }
 
-    public function ajaxProcessGetOrderNote()
-    {
-        $idOrder = (int) Tools::getValue('id_order');
-        if (!$idOrder || !$this->repository->isOrderAccessible($idOrder)) {
-            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'Order not found.')));
-        }
-
-        $this->ajaxDie(json_encode(array(
-            'success' => true,
-            'id_order' => $idOrder,
-            'note' => WmOrderNote::get($idOrder),
-            'can_edit' => $this->canEdit(),
-        )));
-    }
-
-    public function ajaxProcessSaveOrderNote()
+    public function ajaxProcessPreviewBulkStatus()
     {
         if (!$this->canEdit()) {
             $this->ajaxDie(json_encode(array(
                 'success' => false,
-                'error' => $this->module->l('You do not have permission to edit orders.', 'AdminWildenManagerOrdersController'),
+                'error' => $this->module->l('You do not have permission to change order states.', 'AdminWildenManagerOrdersController'),
             )));
         }
 
-        $idOrder = (int) Tools::getValue('id_order');
-        $note = trim((string) Tools::getValue('note'));
-        if (!$idOrder || !$this->repository->isOrderAccessible($idOrder)) {
-            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'Order not found.')));
+        try {
+            $service = new WmBulkOrderService($this->context, $this->repository);
+            $preview = $service->preview(
+                (array) Tools::getValue('order_ids', array()),
+                (int) Tools::getValue('target_state')
+            );
+            $this->ajaxDie(json_encode(array('success' => true, 'preview' => $preview)));
+        } catch (Exception $exception) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => $exception->getMessage())));
         }
-        if (Tools::strlen($note) > 5000 || strpos($note, "\0") !== false) {
+    }
+
+    public function ajaxProcessExecuteBulkStatus()
+    {
+        if (!$this->canEdit()) {
             $this->ajaxDie(json_encode(array(
                 'success' => false,
-                'error' => $this->module->l('The note is invalid or exceeds 5,000 characters.', 'AdminWildenManagerOrdersController'),
+                'error' => $this->module->l('You do not have permission to change order states.', 'AdminWildenManagerOrdersController'),
             )));
         }
 
-        $oldNote = WmOrderNote::get($idOrder);
-        if (!WmOrderNote::save($idOrder, $note, (int) $this->context->employee->id)) {
-            $this->ajaxDie(json_encode(array(
-                'success' => false,
-                'error' => $this->module->l('The internal note could not be saved.', 'AdminWildenManagerOrdersController'),
-            )));
+        try {
+            $service = new WmBulkOrderService($this->context, $this->repository);
+            $results = $service->execute(
+                (array) Tools::getValue('order_ids', array()),
+                (int) Tools::getValue('target_state'),
+                (int) Tools::getValue('preview_timestamp'),
+                (string) Tools::getValue('preview_snapshot'),
+                (string) Tools::getValue('preview_signature'),
+                (bool) Tools::getValue('send_email')
+            );
+            $this->ajaxDie(json_encode(array('success' => true, 'results' => $results)));
+        } catch (Exception $exception) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => $exception->getMessage())));
         }
-
-        WmAuditLogger::log('note_updated', array(
-            'before' => $oldNote,
-            'after' => $note,
-        ), $idOrder);
-
-        $this->ajaxDie(json_encode(array(
-            'success' => true,
-            'id_order' => $idOrder,
-            'note' => WmOrderNote::get($idOrder),
-        )));
     }
 
     private function saveNote()

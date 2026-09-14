@@ -3,32 +3,29 @@
 ## Installation
 
 1. Back up the staging database and files.
-2. Install `wilden_manager-1.0.0.zip`.
-3. Confirm the **Orders → Wilden Manager** tab appears.
-4. Confirm the three `wilden_manager_*` tables were created.
+2. Install the current `wilden_manager` ZIP.
+3. Confirm the native **Orders** page shows the module action buttons.
+4. Confirm the `wilden_manager_*` tables were created.
 5. Test with an administrator and a restricted employee profile.
 
 ## Read-only behavior
 
 - Open the default list and paginate through orders.
-- Combine ID, reference, customer, state, date, total, payment, carrier and
-  note filters.
+- Combine the native ID, reference, customer, state, date, total and the added
+  customer-email and shipping-method filters.
 - Test ascending and descending ordering.
-- Change visible columns and save a personal view.
-- Mark a view as default, reload the page and delete the view.
-- Open quick view for orders with and without invoices and deleted addresses.
+- Change visible columns, save, reload and verify the employee/shop preference.
+- Confirm **Internal note** is no longer offered or displayed.
 - Download an existing native invoice.
 
-## Notes and export
+## Export
 
-- Create, edit, clear and reload a 5,000-character internal note.
-- Confirm another employee can read the note and the audit records the editor.
 - Export filtered orders and open the UTF-8 CSV in Excel or LibreOffice.
-- Put `=1+1` in a test note and confirm the exported cell is treated as text.
 
 ## Bulk state changes
 
-- Select one order, preview a harmless state change and execute without email.
+- Select one order in the native grid, open **Safe status change**, preview a
+  harmless state change and execute without email.
 - Repeat with customer email enabled and verify receipt.
 - Preview multiple orders and confirm the displayed current and target states.
 - Change one selected order in another tab before execution; the signed preview

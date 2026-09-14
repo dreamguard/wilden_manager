@@ -46,25 +46,39 @@
   margin-bottom: 0;
 }
 
-#order_grid_table .column-internal_note {
-  max-width: 260px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  cursor: pointer;
+.wm-bulk-status-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-right: 8px;
 }
 
-#order_grid_table tbody .column-internal_note:empty::before {
-  content: '\2014';
-  color: #9da7b1;
+.wm-bulk-status-button .material-icons {
+  font-size: 18px;
+  line-height: 1;
 }
 
-.wm-order-note-text {
-  min-height: 170px;
-  resize: vertical;
+.wm-bulk-preview-table {
+  max-height: 360px;
+  margin-top: 15px;
+  overflow: auto;
 }
 
-.wm-order-note-message {
+.wm-bulk-preview-table .table {
+  margin-bottom: 0;
+}
+
+.wm-bulk-message {
   margin-top: 12px;
   margin-bottom: 0;
+}
+
+.wm-bulk-results {
+  margin-top: 12px;
+}
+
+.wm-bulk-result-section ul {
+  max-height: 140px;
+  margin-top: 5px;
+  overflow: auto;
 }

@@ -76,6 +76,13 @@ class WmBulkOrderService
                 $results['errors'][] = array('id_order' => (int) $summary['id_order'], 'error' => 'Order not found.');
                 continue;
             }
+            if ((int) $order->current_state !== (int) $summary['current_state']) {
+                $results['errors'][] = array(
+                    'id_order' => (int) $order->id,
+                    'error' => 'The order changed during execution. Generate a new preview.',
+                );
+                continue;
+            }
             if ((int) $order->current_state === $targetState) {
                 $results['success'][] = array('id_order' => (int) $order->id, 'skipped' => true);
                 continue;

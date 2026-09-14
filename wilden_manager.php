@@ -20,7 +20,7 @@ require_once __DIR__ . '/classes/WmBulkOrderService.php';
 
 class Wilden_manager extends Module
 {
-    const VERSION = '1.4.0';
+    const VERSION = '1.5.0';
     const TAB_CLASS = 'AdminWildenManagerOrders';
     const MAX_BULK_ORDERS = 100;
 
@@ -81,7 +81,6 @@ class Wilden_manager extends Module
         $columns['total_paid_tax_incl'] = $this->l('Total');
         $columns['payment'] = $this->l('Payment');
         $columns['shipping_method'] = $this->l('Shipping method');
-        $columns['internal_note'] = $this->l('Internal note');
         $columns['osname'] = $this->l('Status');
         $columns['date_add'] = $this->l('Date');
 
@@ -114,12 +113,6 @@ class Wilden_manager extends Module
                 ->setName($this->l('Shipping method'))
                 ->setOptions(array('field' => 'shipping_method'))
         );
-        $columns->addAfter(
-            'shipping_method',
-            (new \PrestaShop\PrestaShop\Core\Grid\Column\Type\DataColumn('internal_note'))
-                ->setName($this->l('Internal note'))
-                ->setOptions(array('field' => 'internal_note'))
-        );
 
         $filters->add(
             (new \PrestaShop\PrestaShop\Core\Grid\Filter\Filter(
@@ -142,17 +135,6 @@ class Wilden_manager extends Module
                     'attr' => array('placeholder' => $this->l('Search shipping method')),
                 ))
                 ->setAssociatedColumn('shipping_method')
-        );
-        $filters->add(
-            (new \PrestaShop\PrestaShop\Core\Grid\Filter\Filter(
-                'internal_note',
-                \Symfony\Component\Form\Extension\Core\Type\TextType::class
-            ))
-                ->setTypeOptions(array(
-                    'required' => false,
-                    'attr' => array('placeholder' => $this->l('Search internal note')),
-                ))
-                ->setAssociatedColumn('internal_note')
         );
 
         $presentColumns = $this->getGridCollectionIds($columns);
@@ -205,24 +187,12 @@ class Wilden_manager extends Module
                 'wm_shipping_carrier',
                 'o.id_carrier = wm_shipping_carrier.id_carrier'
             )
-            ->addSelect('wm_shipping_carrier.name AS shipping_method')
-            ->leftJoin(
-                'o',
-                _DB_PREFIX_ . 'wilden_manager_order_note',
-                'wm_order_note',
-                'o.id_order = wm_order_note.id_order'
-            )
-            ->addSelect("COALESCE(wm_order_note.note, '') AS internal_note");
+            ->addSelect('wm_shipping_carrier.name AS shipping_method');
         $countQueryBuilder->leftJoin(
             'o',
             _DB_PREFIX_ . 'carrier',
             'wm_shipping_carrier',
             'o.id_carrier = wm_shipping_carrier.id_carrier'
-        )->leftJoin(
-            'o',
-            _DB_PREFIX_ . 'wilden_manager_order_note',
-            'wm_order_note',
-            'o.id_order = wm_order_note.id_order'
         );
 
         if (!$searchCriteria) {
@@ -244,20 +214,11 @@ class Wilden_manager extends Module
             'shipping_method',
             'wm_shipping_carrier.name'
         );
-        $this->applyNativeTextFilter(
-            $searchQueryBuilder,
-            $countQueryBuilder,
-            $filters,
-            'internal_note',
-            'wm_order_note.note'
-        );
 
         if ($searchCriteria->getOrderBy() === 'customer_email') {
             $searchQueryBuilder->orderBy('cu.email', $searchCriteria->getOrderWay());
         } elseif ($searchCriteria->getOrderBy() === 'shipping_method') {
             $searchQueryBuilder->orderBy('wm_shipping_carrier.name', $searchCriteria->getOrderWay());
-        } elseif ($searchCriteria->getOrderBy() === 'internal_note') {
-            $searchQueryBuilder->orderBy('wm_order_note.note', $searchCriteria->getOrderWay());
         }
     }
 
@@ -322,21 +283,34 @@ class Wilden_manager extends Module
                 'storageKey' => 'wilden_manager_order_columns_' . self::VERSION . '_' .
                     (int) $this->context->employee->id . '_' . (int) $this->context->shop->id,
                 'saveUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=saveNativeColumns',
-                'noteGetUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=getOrderNote',
-                'noteSaveUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=saveOrderNote',
+                'bulkPreviewUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=previewBulkStatus',
+                'bulkExecuteUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=executeBulkStatus',
+                'orderStates' => OrderState::getOrderStates((int) $this->context->language->id),
+                'maxBulk' => self::MAX_BULK_ORDERS,
                 'title' => $this->l('Configure order columns'),
                 'button' => $this->l('Columns'),
                 'save' => $this->l('Save and reload'),
                 'reset' => $this->l('Restore defaults'),
                 'cancel' => $this->l('Cancel'),
                 'error' => $this->l('The column preference could not be saved.'),
-                'noteTitle' => $this->l('Internal note'),
-                'noteHelp' => $this->l('Only employees with edit permission can modify this note. Maximum 5,000 characters.'),
-                'noteSave' => $this->l('Save note'),
-                'noteLoading' => $this->l('Loading note...'),
-                'noteSaved' => $this->l('The internal note was saved.'),
-                'noteError' => $this->l('The internal note could not be loaded or saved.'),
-                'noteReadOnly' => $this->l('You do not have permission to edit this note.'),
+                'bulkButton' => $this->l('Safe status change'),
+                'bulkTitle' => $this->l('Bulk order status change'),
+                'bulkState' => $this->l('New status'),
+                'bulkSelectState' => $this->l('Select a status'),
+                'bulkSendEmail' => $this->l('Send the status email to customers'),
+                'bulkPreview' => $this->l('Preview changes'),
+                'bulkExecute' => $this->l('Apply changes'),
+                'bulkReload' => $this->l('Reload orders'),
+                'bulkSelected' => $this->l('selected orders'),
+                'bulkNoSelection' => $this->l('Select at least one order in the native list.'),
+                'bulkTooMany' => $this->l('The maximum number of orders per operation is'),
+                'bulkPreviewHelp' => $this->l('No changes are made during preview. Execution is enabled only for the exact previewed selection.'),
+                'bulkPreviewReady' => $this->l('Preview ready. Review every order before applying the change.'),
+                'bulkSuccess' => $this->l('Orders updated successfully'),
+                'bulkSkipped' => $this->l('Already in the selected status'),
+                'bulkWarnings' => $this->l('Warnings'),
+                'bulkErrors' => $this->l('Errors'),
+                'bulkError' => $this->l('The bulk operation could not be completed.'),
             ),
         ));
     }
