@@ -45,3 +45,26 @@
   margin-top: 12px;
   margin-bottom: 0;
 }
+
+#order_grid_table .column-internal_note {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+#order_grid_table tbody .column-internal_note:empty::before {
+  content: '\2014';
+  color: #9da7b1;
+}
+
+.wm-order-note-text {
+  min-height: 170px;
+  resize: vertical;
+}
+
+.wm-order-note-message {
+  margin-top: 12px;
+  margin-bottom: 0;
+}

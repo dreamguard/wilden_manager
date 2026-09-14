@@ -1,0 +1,49 @@
+<?php
+
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
+function upgrade_module_1_4_0($module)
+{
+    if (!$module instanceof Wilden_manager
+        || !$module->registerHook('actionOrderGridDefinitionModifier')
+        || !$module->registerHook('actionOrderGridQueryBuilderModifier')
+        || !$module->registerHook('displayBackOfficeHeader')) {
+        return false;
+    }
+
+    $rows = Db::getInstance()->executeS(
+        'SELECT id_employee, id_shop, columns_json
+         FROM `' . _DB_PREFIX_ . 'wilden_manager_grid_preference`',
+        true,
+        false
+    );
+    if (!is_array($rows)) {
+        return false;
+    }
+
+    foreach ($rows as $row) {
+        $columns = json_decode($row['columns_json'], true);
+        if (!is_array($columns) || in_array('internal_note', $columns, true)) {
+            continue;
+        }
+
+        $position = array_search('shipping_method', $columns, true);
+        if ($position === false) {
+            $columns[] = 'internal_note';
+        } else {
+            array_splice($columns, $position + 1, 0, array('internal_note'));
+        }
+
+        if (!WmGridPreference::save(
+            array_values(array_unique($columns)),
+            (int) $row['id_employee'],
+            (int) $row['id_shop']
+        )) {
+            return false;
+        }
+    }
+
+    return true;
+}

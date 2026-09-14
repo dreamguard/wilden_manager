@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.0 - 2026-09-14
+
+- Added an optional internal-note column to the native order grid.
+- Added native-grid filtering and sorting for internal notes.
+- Added an AJAX editor with employee permission checks and a 5,000-character limit.
+- Added before/after audit data for note changes.
+
 ## 1.3.0 - 2026-09-14
 
 - Added configurable Customer email and Shipping method columns to the native order grid.

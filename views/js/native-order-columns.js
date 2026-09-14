@@ -82,6 +82,99 @@
     config.selected = getSelectedColumns();
     applyColumns(config.selected);
 
+    function getOrderId($row) {
+      var value = $row.find('input[name="order_orders_bulk[]"], input[name$="[orders_bulk][]"], .js-bulk-action-checkbox').first().val();
+      if (parseInt(value, 10) > 0) {
+        return parseInt(value, 10);
+      }
+
+      var text = $row.find('.column-id_order').first().text();
+      var match = String(text || '').match(/\d+/);
+      return match ? parseInt(match[0], 10) : 0;
+    }
+
+    var noteModalId = 'wm-order-note-modal';
+    var $noteModal = $('#' + noteModalId);
+    if (!$noteModal.length) {
+      $noteModal = $(
+        '<div class="modal fade" id="' + noteModalId + '" tabindex="-1" role="dialog" aria-hidden="true">' +
+          '<div class="modal-dialog" role="document"><div class="modal-content">' +
+            '<div class="modal-header"><h4 class="modal-title"></h4><button type="button" class="close" data-dismiss="modal">&times;</button></div>' +
+            '<div class="modal-body"><p class="text-muted wm-order-note-help"></p><textarea class="form-control wm-order-note-text" rows="8" maxlength="5000"></textarea><div class="alert wm-order-note-message" hidden></div></div>' +
+            '<div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-dismiss="modal"></button><button type="button" class="btn btn-primary wm-order-note-save"></button></div>' +
+          '</div></div>' +
+        '</div>'
+      ).appendTo('body');
+      $noteModal.find('.modal-title').text(config.noteTitle);
+      $noteModal.find('.wm-order-note-help').text(config.noteHelp);
+      $noteModal.find('[data-dismiss="modal"]').last().text(config.cancel);
+      $noteModal.find('.wm-order-note-save').text(config.noteSave);
+    }
+
+    $panel.on('click', '#order_grid_table tbody .column-internal_note', function () {
+      var $cell = $(this);
+      var idOrder = getOrderId($cell.closest('tr'));
+      if (!idOrder) {
+        return;
+      }
+
+      $noteModal.data('order-id', idOrder).modal('show');
+      $noteModal.find('.wm-order-note-text').val('').prop('disabled', true);
+      $noteModal.find('.wm-order-note-save').prop('disabled', true);
+      $noteModal.find('.wm-order-note-message').removeClass('alert-success alert-danger').addClass('alert-info').prop('hidden', false).text(config.noteLoading);
+
+      $.ajax({
+        url: config.noteGetUrl,
+        method: 'GET',
+        dataType: 'json',
+        data: { id_order: idOrder }
+      }).done(function (response) {
+        if (!response || !response.success) {
+          $noteModal.find('.wm-order-note-message').removeClass('alert-info').addClass('alert-danger').prop('hidden', false).text((response && response.error) || config.noteError);
+          return;
+        }
+        $noteModal.find('.wm-order-note-text').val(response.note || '').prop('disabled', !response.can_edit);
+        $noteModal.find('.wm-order-note-save').prop('disabled', !response.can_edit);
+        if (response.can_edit) {
+          $noteModal.find('.wm-order-note-message').prop('hidden', true);
+        } else {
+          $noteModal.find('.wm-order-note-message').removeClass('alert-info').addClass('alert-danger').text(config.noteReadOnly);
+        }
+      }).fail(function (xhr) {
+        var response = xhr.responseJSON || {};
+        $noteModal.find('.wm-order-note-message').removeClass('alert-info').addClass('alert-danger').prop('hidden', false).text(response.error || config.noteError);
+      });
+    });
+
+    $noteModal.on('click', '.wm-order-note-save', function () {
+      var $save = $(this).prop('disabled', true);
+      var idOrder = parseInt($noteModal.data('order-id'), 10);
+      var note = $noteModal.find('.wm-order-note-text').val();
+      $.ajax({
+        url: config.noteSaveUrl,
+        method: 'POST',
+        dataType: 'json',
+        data: { id_order: idOrder, note: note }
+      }).done(function (response) {
+        if (!response || !response.success) {
+          $noteModal.find('.wm-order-note-message').removeClass('alert-success').addClass('alert-danger').prop('hidden', false).text((response && response.error) || config.noteError);
+          return;
+        }
+        var display = response.note || '';
+        $('#order_grid_table tbody tr').each(function () {
+          if (getOrderId($(this)) === idOrder) {
+            $(this).find('.column-internal_note').text(display).attr('title', display);
+          }
+        });
+        $noteModal.find('.wm-order-note-message').removeClass('alert-danger').addClass('alert-success').prop('hidden', false).text(config.noteSaved);
+      }).fail(function (xhr) {
+        var response = xhr.responseJSON || {};
+        $noteModal.find('.wm-order-note-message').removeClass('alert-success').addClass('alert-danger').prop('hidden', false).text(response.error || config.noteError);
+      }).always(function () {
+        $save.prop('disabled', false);
+      });
+    });
+
     var modalId = 'wm-native-columns-modal';
     var $modal = $('#' + modalId);
     if (!$modal.length) {

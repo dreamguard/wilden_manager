@@ -3,7 +3,7 @@
 Private order-management module developed from scratch for PrestaShop 8.2 and
 Wilden Militaria S.L.
 
-## Version 1.3.0
+## Version 1.4.0
 
 The initial version provides:
 
@@ -14,7 +14,7 @@ The initial version provides:
 - The real PrestaShop 8.2 Orders grid remains in use.
 - Native order columns can be shown, hidden and reordered per employee and shop.
 - Customer email and shipping method columns, including native-grid filters and sorting.
-- Internal order notes.
+- Internal order notes editable from the native grid, with filtering and sorting.
 - CSV export protected against spreadsheet-formula injection.
 - Bulk order-state changes with a mandatory preview, signed confirmation,
   15-minute expiry and a maximum of 100 orders per operation.

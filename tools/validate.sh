@@ -12,6 +12,7 @@ while IFS= read -r -d '' php_file; do
 done < <(find "$module_dir" -type f -name '*.php' -print0)
 
 node --check "$module_dir/views/js/admin-orders.js" >/dev/null
+node --check "$module_dir/views/js/native-order-columns.js" >/dev/null
 
 if grep -RniE 'ets_ordermanager|prestahero|ETS_ODE|ets_odm' \
   --exclude-dir=.git --exclude='README.md' --exclude='validate.sh' --exclude='*.zip' "$module_dir"; then

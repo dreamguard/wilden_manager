@@ -237,6 +237,62 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         $this->ajaxDie(json_encode(array('success' => true, 'columns' => $storedColumns)));
     }
 
+    public function ajaxProcessGetOrderNote()
+    {
+        $idOrder = (int) Tools::getValue('id_order');
+        if (!$idOrder || !$this->repository->isOrderAccessible($idOrder)) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'Order not found.')));
+        }
+
+        $this->ajaxDie(json_encode(array(
+            'success' => true,
+            'id_order' => $idOrder,
+            'note' => WmOrderNote::get($idOrder),
+            'can_edit' => $this->canEdit(),
+        )));
+    }
+
+    public function ajaxProcessSaveOrderNote()
+    {
+        if (!$this->canEdit()) {
+            $this->ajaxDie(json_encode(array(
+                'success' => false,
+                'error' => $this->module->l('You do not have permission to edit orders.', 'AdminWildenManagerOrdersController'),
+            )));
+        }
+
+        $idOrder = (int) Tools::getValue('id_order');
+        $note = trim((string) Tools::getValue('note'));
+        if (!$idOrder || !$this->repository->isOrderAccessible($idOrder)) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'Order not found.')));
+        }
+        if (Tools::strlen($note) > 5000 || strpos($note, "\0") !== false) {
+            $this->ajaxDie(json_encode(array(
+                'success' => false,
+                'error' => $this->module->l('The note is invalid or exceeds 5,000 characters.', 'AdminWildenManagerOrdersController'),
+            )));
+        }
+
+        $oldNote = WmOrderNote::get($idOrder);
+        if (!WmOrderNote::save($idOrder, $note, (int) $this->context->employee->id)) {
+            $this->ajaxDie(json_encode(array(
+                'success' => false,
+                'error' => $this->module->l('The internal note could not be saved.', 'AdminWildenManagerOrdersController'),
+            )));
+        }
+
+        WmAuditLogger::log('note_updated', array(
+            'before' => $oldNote,
+            'after' => $note,
+        ), $idOrder);
+
+        $this->ajaxDie(json_encode(array(
+            'success' => true,
+            'id_order' => $idOrder,
+            'note' => WmOrderNote::get($idOrder),
+        )));
+    }
+
     private function saveNote()
     {
         if (!$this->canEdit()) {
