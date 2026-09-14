@@ -40,6 +40,15 @@
 - Verify a failed email is shown as a warning while the applied state remains
   recorded as successful.
 
+## Combined documents
+
+- Select orders with and without invoices and delivery slips.
+- Confirm the preview marks each document type independently.
+- Download the invoice PDF and verify all eligible invoices are present once.
+- Download the delivery-slip PDF and verify all eligible slips are present once.
+- Download both as ZIP and verify it contains the two valid PDF files.
+- Confirm orders without the requested document are skipped and displayed as missing.
+
 ## Isolation
 
 - Confirm installation and ordinary navigation do not read or write tables or

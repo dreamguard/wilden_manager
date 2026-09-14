@@ -3,7 +3,7 @@
 Private order-management module developed from scratch for PrestaShop 8.2 and
 Wilden Militaria S.L.
 
-## Version 1.6.0
+## Version 1.7.0
 
 The initial version provides:
 
@@ -16,6 +16,8 @@ The initial version provides:
 - Customer email and shipping method columns, including native-grid filters and sorting.
 - Configurable CSV and XLSX exports from the native order selection.
 - Spreadsheet-formula injection protection for exported text values.
+- Combined native invoice and delivery-slip PDFs from the selected orders.
+- Optional ZIP download containing both document batches.
 - Bulk order-state changes with a mandatory preview, signed confirmation,
   15-minute expiry and a maximum of 100 orders per operation.
 - Optional customer email when applying a bulk state.

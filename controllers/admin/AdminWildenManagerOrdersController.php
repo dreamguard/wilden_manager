@@ -334,6 +334,48 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         $service->download($orders, $columns, $available, $format);
     }
 
+    public function ajaxProcessPreviewDocuments()
+    {
+        if (!$this->access('view')) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'Access denied.')));
+        }
+
+        try {
+            $service = new WmDocumentService($this->context, $this->repository);
+            $preview = $service->preview((array) Tools::getValue('order_ids', array()));
+            $this->ajaxDie(json_encode(array('success' => true, 'preview' => $preview)));
+        } catch (Exception $exception) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => $exception->getMessage())));
+        }
+    }
+
+    public function ajaxProcessDownloadDocuments()
+    {
+        if (!$this->access('view')) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'Access denied.')));
+        }
+
+        $type = strtolower((string) Tools::getValue('document_type'));
+        if (!in_array($type, array('invoice', 'delivery', 'both'), true)) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'Invalid document type.')));
+        }
+
+        try {
+            $service = new WmDocumentService($this->context, $this->repository);
+            $ids = (array) Tools::getValue('order_ids', array());
+            $result = $service->getDocuments($ids);
+            WmAuditLogger::log('documents_download_requested', array(
+                'type' => $type,
+                'order_ids' => $result['order_ids'],
+                'invoice_count' => count($result['invoices']),
+                'delivery_count' => count($result['delivery_slips']),
+            ));
+            $service->download($result, $type);
+        } catch (Exception $exception) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => $exception->getMessage())));
+        }
+    }
+
     private function saveNote()
     {
         if (!$this->canEdit()) {

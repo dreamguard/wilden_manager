@@ -316,6 +316,115 @@
       $exportModal.modal('hide');
     });
 
+    var documentModalId = 'wm-document-modal';
+    var $documentModal = $('#' + documentModalId);
+    if (!$documentModal.length) {
+      $documentModal = $(
+        '<div class="modal fade" id="' + documentModalId + '" tabindex="-1" role="dialog" aria-hidden="true">' +
+          '<div class="modal-dialog modal-lg" role="document"><div class="modal-content">' +
+            '<div class="modal-header"><h4 class="modal-title"></h4><button type="button" class="close" data-dismiss="modal">&times;</button></div>' +
+            '<div class="modal-body"><p class="wm-document-selection"></p><div class="alert wm-document-message" hidden></div><div class="wm-document-table"></div>' +
+              '<div class="form-group wm-document-type-group" hidden><label></label><select class="form-control wm-document-type"><option value="invoice"></option><option value="delivery"></option><option value="both"></option></select></div>' +
+            '</div>' +
+            '<div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-dismiss="modal"></button><button type="button" class="btn btn-primary wm-document-download" disabled></button></div>' +
+          '</div></div>' +
+        '</div>'
+      ).appendTo('body');
+      $documentModal.find('.modal-title').text(config.documentTitle);
+      $documentModal.find('.wm-document-type-group label').text(config.documentType);
+      $documentModal.find('.wm-document-type option[value="invoice"]').text(config.documentInvoice);
+      $documentModal.find('.wm-document-type option[value="delivery"]').text(config.documentDelivery);
+      $documentModal.find('.wm-document-type option[value="both"]').text(config.documentBoth);
+      $documentModal.find('[data-dismiss="modal"]').last().text(config.cancel);
+      $documentModal.find('.wm-document-download').text(config.documentDownload);
+    }
+
+    function setDocumentMessage(type, message) {
+      $documentModal.find('.wm-document-message')
+        .removeClass('alert-info alert-success alert-danger alert-warning')
+        .addClass('alert-' + type)
+        .prop('hidden', !message)
+        .text(message || '');
+    }
+
+    var $documentButton = $('<button type="button" class="btn btn-outline-secondary wm-document-button"><i class="material-icons">picture_as_pdf</i> <span></span></button>');
+    $documentButton.find('span').text(config.documentButton);
+    if ($actions.length) {
+      $actions.prepend($documentButton);
+    } else {
+      $panel.find('.card-header').first().append($documentButton);
+    }
+
+    $documentButton.on('click', function () {
+      var ids = getSelectedOrderIds();
+      if (!ids.length) {
+        window.alert(config.bulkNoSelection);
+        return;
+      }
+      if (ids.length > parseInt(config.maxBulk, 10)) {
+        window.alert(config.bulkTooMany + ' ' + config.maxBulk + '.');
+        return;
+      }
+
+      $documentModal.data('order-ids', ids);
+      $documentModal.find('.wm-document-selection').text(ids.length + ' ' + config.bulkSelected);
+      $documentModal.find('.wm-document-table').empty();
+      $documentModal.find('.wm-document-type-group').prop('hidden', true);
+      $documentModal.find('.wm-document-download').prop('disabled', true);
+      setDocumentMessage('info', config.documentPreview + '…');
+      $documentModal.modal('show');
+
+      $.ajax({
+        url: config.documentPreviewUrl,
+        method: 'POST',
+        dataType: 'json',
+        data: { order_ids: ids }
+      }).done(function (response) {
+        if (!response || !response.success || !response.preview) {
+          setDocumentMessage('danger', (response && response.error) || config.documentError);
+          return;
+        }
+        var preview = response.preview;
+        var $table = $('<div class="table-responsive"><table class="table"><thead><tr><th>ID</th><th></th><th></th><th></th></tr></thead><tbody></tbody></table></div>');
+        var $headers = $table.find('th');
+        $headers.eq(1).text(config.documentReference);
+        $headers.eq(2).text(config.documentInvoice);
+        $headers.eq(3).text(config.documentDelivery);
+        (preview.orders || []).forEach(function (order) {
+          var $row = $('<tr><td></td><td></td><td></td><td></td></tr>');
+          $row.children().eq(0).text(order.id_order);
+          $row.children().eq(1).text(order.reference);
+          $row.children().eq(2).text(order.has_invoice ? config.documentAvailable : config.documentMissing).toggleClass('text-success', order.has_invoice).toggleClass('text-muted', !order.has_invoice);
+          $row.children().eq(3).text(order.has_delivery ? config.documentAvailable : config.documentMissing).toggleClass('text-success', order.has_delivery).toggleClass('text-muted', !order.has_delivery);
+          $table.find('tbody').append($row);
+        });
+        $documentModal.find('.wm-document-table').append($table);
+        var $type = $documentModal.find('.wm-document-type');
+        $type.find('option[value="invoice"]').prop('disabled', preview.invoice_count < 1);
+        $type.find('option[value="delivery"]').prop('disabled', preview.delivery_count < 1);
+        $type.find('option[value="both"]').prop('disabled', !config.documentZipAvailable || preview.invoice_count < 1 || preview.delivery_count < 1);
+        var firstType = preview.invoice_count > 0 ? 'invoice' : (preview.delivery_count > 0 ? 'delivery' : '');
+        $type.val(firstType);
+        $documentModal.find('.wm-document-type-group').prop('hidden', !firstType);
+        $documentModal.find('.wm-document-download').prop('disabled', !firstType);
+        setDocumentMessage(firstType ? 'success' : 'warning', config.documentInvoicesCount + ': ' + preview.invoice_count + '. ' + config.documentDeliveriesCount + ': ' + preview.delivery_count + '.');
+      }).fail(function (xhr) {
+        var response = xhr.responseJSON || {};
+        setDocumentMessage('danger', response.error || config.documentError);
+      });
+    });
+
+    $documentModal.on('click', '.wm-document-download', function () {
+      var $form = $('<form method="post" hidden></form>').attr('action', config.documentDownloadUrl).appendTo('body');
+      ($documentModal.data('order-ids') || []).forEach(function (id) {
+        $('<input type="hidden" name="order_ids[]">').val(id).appendTo($form);
+      });
+      $('<input type="hidden" name="document_type">').val($documentModal.find('.wm-document-type').val()).appendTo($form);
+      $form.trigger('submit');
+      window.setTimeout(function () { $form.remove(); }, 1000);
+      $documentModal.modal('hide');
+    });
+
     function resetBulkPreview() {
       $bulkModal.removeData('preview').removeData('completed');
       $bulkModal.find('.wm-bulk-execute').prop('disabled', true).text(config.bulkExecute);

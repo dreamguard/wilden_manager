@@ -18,13 +18,15 @@ require_once __DIR__ . '/classes/WmGridPreference.php';
 require_once __DIR__ . '/classes/WmOrderRepository.php';
 require_once __DIR__ . '/classes/WmBulkOrderService.php';
 require_once __DIR__ . '/classes/WmExportService.php';
+require_once __DIR__ . '/classes/WmDocumentService.php';
 
 class Wilden_manager extends Module
 {
-    const VERSION = '1.6.0';
+    const VERSION = '1.7.0';
     const TAB_CLASS = 'AdminWildenManagerOrders';
     const MAX_BULK_ORDERS = 100;
     const MAX_EXPORT_ORDERS = 1000;
+    const MAX_DOCUMENT_ORDERS = 100;
 
     public function __construct()
     {
@@ -318,6 +320,9 @@ class Wilden_manager extends Module
                 'exportColumns' => $exportColumnOptions,
                 'xlsxAvailable' => class_exists('ZipArchive'),
                 'exportStorageKey' => 'wilden_manager_export_columns_' . (int) $this->context->employee->id,
+                'documentPreviewUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=previewDocuments',
+                'documentDownloadUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=downloadDocuments',
+                'documentZipAvailable' => class_exists('ZipArchive'),
                 'title' => $this->l('Configure order columns'),
                 'button' => $this->l('Columns'),
                 'save' => $this->l('Save and reload'),
@@ -350,6 +355,20 @@ class Wilden_manager extends Module
                 'exportNoColumns' => $this->l('Select at least one export column.'),
                 'exportCsv' => $this->l('CSV (UTF-8, semicolon separated)'),
                 'exportXlsx' => $this->l('Excel XLSX'),
+                'documentButton' => $this->l('Documents'),
+                'documentTitle' => $this->l('Combined order documents'),
+                'documentType' => $this->l('Document type'),
+                'documentPreview' => $this->l('Check documents'),
+                'documentInvoice' => $this->l('Invoices PDF'),
+                'documentDelivery' => $this->l('Delivery slips PDF'),
+                'documentBoth' => $this->l('Both in ZIP'),
+                'documentDownload' => $this->l('Download'),
+                'documentAvailable' => $this->l('Available'),
+                'documentMissing' => $this->l('Missing'),
+                'documentReference' => $this->l('Reference'),
+                'documentInvoicesCount' => $this->l('Invoices available'),
+                'documentDeliveriesCount' => $this->l('Delivery slips available'),
+                'documentError' => $this->l('The documents could not be checked or generated.'),
             ),
         ));
     }

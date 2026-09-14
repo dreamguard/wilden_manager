@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.7.0 - 2026-09-15
+
+- Added document availability preview for the native order selection.
+- Added combined invoice PDF generation using PrestaShop's native PDF templates.
+- Added combined delivery-slip PDF generation using PrestaShop's native PDF templates.
+- Added an optional ZIP containing both PDF batches.
+- Added shop-scope, permission and 100-order limits plus download auditing.
+
 ## 1.6.0 - 2026-09-15
 
 - Added configurable CSV and XLSX export from the native order selection.
