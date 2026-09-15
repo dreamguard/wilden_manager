@@ -54,6 +54,8 @@
 - Confirm there is no **Integrity** button on the native Orders list.
 - Open the module **Configure** page and confirm the integrity scan starts automatically.
 - Confirm the scan uses the active shop context and does not require selected orders.
+- Wait at least 15 seconds after results appear and confirm the table remains visible.
+- Click refresh repeatedly and change filters quickly; only the latest response must remain visible.
 - Confirm high, medium and information totals are displayed independently.
 - Filter by each severity and by a specific issue type, then paginate the results.
 - Open a reported order using its link and confirm the order ID and reference match.

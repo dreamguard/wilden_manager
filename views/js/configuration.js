@@ -10,9 +10,15 @@
     if (!config || !$dashboard.length) {
       return;
     }
+    if ($dashboard.data('wm-integrity-initialized')) {
+      return;
+    }
+    $dashboard.data('wm-integrity-initialized', true);
 
     var $issue = $dashboard.find('.wm-integrity-issue');
     var $severity = $dashboard.find('.wm-integrity-severity');
+    var activeRequest = null;
+    var requestSequence = 0;
     $issue.find('option').first().text(config.allIssues);
     Object.keys(config.issueTypes || {}).forEach(function (id) {
       $('<option></option>').val(id).text(config.issueTypes[id]).appendTo($issue);
@@ -39,15 +45,15 @@
       $dashboard.find('.wm-integrity-medium').text(config.medium + ': ' + (summary.medium || 0));
       $dashboard.find('.wm-integrity-info').text(config.info + ': ' + (summary.info || 0));
 
-      var $results = $dashboard.find('.wm-integrity-results').empty();
-      if (!Array.isArray(report.issues) || !report.issues.length) {
-        $('<div class="alert alert-success"></div>').text(config.noIssues).appendTo($results);
+      var issues = Array.isArray(report.issues) ? report.issues : [];
+      var $empty = $dashboard.find('.wm-integrity-empty');
+      var $tableWrap = $dashboard.find('.wm-integrity-table-wrap');
+      var $tbody = $dashboard.find('.wm-integrity-report-table tbody').empty();
+      if (!issues.length) {
+        $tableWrap.prop('hidden', true);
+        $empty.text(config.noIssues).prop('hidden', false);
       } else {
-        var $table = $('<div class="table-responsive"><table class="table table-striped"><thead><tr><th></th><th></th><th></th><th></th><th></th><th></th></tr></thead><tbody></tbody></table></div>');
-        var headers = [config.severity, config.issue, config.order, config.reference, config.date, config.detail];
-        $table.find('th').each(function (index) { $(this).text(headers[index]); });
-
-        report.issues.forEach(function (issue) {
+        issues.forEach(function (issue) {
           var $row = $('<tr><td><span class="badge"></span></td><td></td><td><a target="_blank" rel="noopener"></a></td><td></td><td></td><td></td></tr>');
           var severityLabel = issue.severity === 'high' ? config.high : (issue.severity === 'medium' ? config.medium : config.info);
           var badgeClass = issue.severity === 'high' ? 'badge-danger' : (issue.severity === 'medium' ? 'badge-warning' : 'badge-info');
@@ -57,9 +63,10 @@
           $row.children().eq(3).text(issue.reference || '');
           $row.children().eq(4).text(issue.order_date || '');
           $row.children().eq(5).text(issue.detail || '');
-          $table.find('tbody').append($row);
+          $tbody.append($row);
         });
-        $results.append($table);
+        $empty.prop('hidden', true);
+        $tableWrap.prop('hidden', false);
       }
 
       var page = parseInt(report.page, 10) || 1;
@@ -73,25 +80,39 @@
 
     function loadReport(page) {
       page = Math.max(1, parseInt(page, 10) || 1);
+      requestSequence += 1;
+      var currentSequence = requestSequence;
+      if (activeRequest && activeRequest.readyState !== 4) {
+        activeRequest.abort();
+      }
       $dashboard.find('.wm-integrity-refresh').prop('disabled', true);
       setMessage('info', config.loading);
-      $.ajax({
+      activeRequest = $.ajax({
         url: config.scanUrl,
         method: 'POST',
         dataType: 'json',
         data: { issue_type: $issue.val(), severity: $severity.val(), page: page, limit: 50 }
       }).done(function (response) {
+        if (currentSequence !== requestSequence) {
+          return;
+        }
         if (!response || !response.success || !response.report) {
           setMessage('danger', (response && response.error) || config.error);
           return;
         }
         setMessage('info', '');
         renderReport(response.report);
-      }).fail(function (xhr) {
+      }).fail(function (xhr, textStatus) {
+        if (textStatus === 'abort' || currentSequence !== requestSequence) {
+          return;
+        }
         var response = xhr.responseJSON || {};
         setMessage('danger', response.error || config.error);
       }).always(function () {
-        $dashboard.find('.wm-integrity-refresh').prop('disabled', false);
+        if (currentSequence === requestSequence) {
+          $dashboard.find('.wm-integrity-refresh').prop('disabled', false);
+          activeRequest = null;
+        }
       });
     }
 

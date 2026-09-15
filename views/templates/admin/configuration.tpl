@@ -47,7 +47,24 @@
           </div>
 
           <div class="alert wm-integrity-message" hidden></div>
-          <div class="wm-integrity-results"></div>
+          <div class="wm-integrity-results">
+            <div class="alert alert-success wm-integrity-empty" hidden></div>
+            <div class="wm-integrity-table-wrap" hidden>
+              <table class="wm-integrity-report-table">
+                <thead>
+                  <tr>
+                    <th>{l s='Severity' mod='wilden_manager'}</th>
+                    <th>{l s='Issue' mod='wilden_manager'}</th>
+                    <th>{l s='Order' mod='wilden_manager'}</th>
+                    <th>{l s='Reference' mod='wilden_manager'}</th>
+                    <th>{l s='Date' mod='wilden_manager'}</th>
+                    <th>{l s='Detail' mod='wilden_manager'}</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
           <div class="wm-integrity-pagination" hidden>
             <button type="button" class="btn btn-sm btn-outline-secondary wm-integrity-previous"></button>
             <span></span>

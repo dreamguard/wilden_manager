@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.8.2 - 2026-09-15
+
+- Fixed integrity results disappearing after they were rendered on the module configuration page.
+- Replaced the disposable dynamic table with a stable server-rendered result table.
+- Added one-time dashboard initialization and cancellation of stale AJAX requests.
+- Prevented older responses from replacing the most recent diagnostic result.
+
 ## 1.8.1 - 2026-09-15
 
 - Removed the Integrity button and diagnostic interface from the native Orders list.

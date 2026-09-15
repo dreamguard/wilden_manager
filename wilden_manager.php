@@ -23,7 +23,7 @@ require_once __DIR__ . '/classes/WmIntegrityService.php';
 
 class Wilden_manager extends Module
 {
-    const VERSION = '1.8.1';
+    const VERSION = '1.8.2';
     const TAB_CLASS = 'AdminWildenManagerOrders';
     const MAX_BULK_ORDERS = 100;
     const MAX_EXPORT_ORDERS = 1000;
