@@ -23,7 +23,7 @@ require_once __DIR__ . '/classes/WmIntegrityService.php';
 
 class Wilden_manager extends Module
 {
-    const VERSION = '1.8.2';
+    const VERSION = '1.8.3';
     const TAB_CLASS = 'AdminWildenManagerOrders';
     const MAX_BULK_ORDERS = 100;
     const MAX_EXPORT_ORDERS = 1000;
@@ -83,8 +83,8 @@ class Wilden_manager extends Module
 
     public function getContent()
     {
-        $this->context->controller->addJS($this->_path . 'views/js/configuration.js');
-        $this->context->controller->addCSS($this->_path . 'views/css/configuration.css');
+        $this->context->controller->addJS($this->getVersionedAssetUrl('views/js/configuration.js'));
+        $this->context->controller->addCSS($this->getVersionedAssetUrl('views/css/configuration.css'));
         Media::addJsDef(array(
             'wildenManagerConfiguration' => $this->getIntegrityJsConfiguration(),
         ));
@@ -333,8 +333,8 @@ class Wilden_manager extends Module
             $exportColumnOptions[] = array('id' => $id, 'label' => $label);
         }
 
-        $this->context->controller->addJS($this->_path . 'views/js/native-order-columns.js');
-        $this->context->controller->addCSS($this->_path . 'views/css/native-order-columns.css');
+        $this->context->controller->addJS($this->getVersionedAssetUrl('views/js/native-order-columns.js'));
+        $this->context->controller->addCSS($this->getVersionedAssetUrl('views/css/native-order-columns.css'));
         Media::addJsDef(array(
             'wildenManagerNativeColumns' => array(
                 'columns' => $columnOptions,
@@ -401,6 +401,11 @@ class Wilden_manager extends Module
                 'documentError' => $this->l('The documents could not be checked or generated.'),
             ),
         ));
+    }
+
+    private function getVersionedAssetUrl($relativePath)
+    {
+        return $this->_path . ltrim((string) $relativePath, '/') . '?v=' . rawurlencode(self::VERSION);
     }
 
     private function getIntegrityJsConfiguration()

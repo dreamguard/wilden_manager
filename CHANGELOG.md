@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.8.3 - 2026-09-15
+
+- Added the module version to back-office JavaScript and CSS URLs.
+- Prevented browsers from reusing configuration assets from an older module release.
+- Applied the same cache-busting strategy to the native Orders grid assets.
+
 ## 1.8.2 - 2026-09-15
 
 - Fixed integrity results disappearing after they were rendered on the module configuration page.
