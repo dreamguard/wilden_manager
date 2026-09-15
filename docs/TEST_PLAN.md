@@ -51,7 +51,9 @@
 
 ## Integrity diagnostics
 
-- Open **Integrity** without selecting orders and confirm the scan uses the active shop context.
+- Confirm there is no **Integrity** button on the native Orders list.
+- Open the module **Configure** page and confirm the integrity scan starts automatically.
+- Confirm the scan uses the active shop context and does not require selected orders.
 - Confirm high, medium and information totals are displayed independently.
 - Filter by each severity and by a specific issue type, then paginate the results.
 - Open a reported order using its link and confirm the order ID and reference match.

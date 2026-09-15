@@ -1,7 +1,8 @@
 # Architecture
 
-Wilden Manager 1.0.0 is a standalone legacy-admin module for PrestaShop 8.2.
-It intentionally uses no overrides and registers no runtime hooks.
+Wilden Manager is a standalone module for PrestaShop 8.2. It uses official
+order-grid hooks and no overrides. Selection-based actions remain on the native
+Orders page; diagnostics and future settings live in the module control centre.
 
 ## Components
 
@@ -11,8 +12,14 @@ It intentionally uses no overrides and registers no runtime hooks.
 - `WmOrderNote`: storage for private order notes owned by this module.
 - `WmSavedView`: per-employee, per-shop filters and visible columns.
 - `WmAuditLogger`: append-only record of module actions.
+- `WmGridPreference`: per-employee and per-shop native-grid column settings.
+- `WmExportService`: safe CSV and XLSX output for selected orders.
+- `WmDocumentService`: combined native invoices and delivery slips.
+- `WmIntegrityService`: read-only order consistency checks scoped by shop.
 - `AdminWildenManagerOrdersController`: authorization, validation, exports and
-  view composition.
+  AJAX actions.
+- `configuration.tpl` and `configuration.js`: diagnostics and future module
+  settings outside the native Orders workspace.
 
 ## Safety decisions
 
@@ -25,5 +32,6 @@ It intentionally uses no overrides and registers no runtime hooks.
 - Customer email is optional and email failure is reported separately from
   status-update failure.
 - CSV text cells beginning with formula-control characters are neutralized.
+- Integrity diagnostics never repair or update business data.
 - Notes are rendered escaped and limited to 5,000 characters.
 - The module contains no third-party integrations or inherited source.

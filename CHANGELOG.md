@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.8.1 - 2026-09-15
+
+- Removed the Integrity button and diagnostic interface from the native Orders list.
+- Added a dedicated module control centre on the configuration page.
+- Moved integrity filters, results, pagination and CSV export to the control centre.
+- Added a clear area for future checks and module settings.
+- Kept order-selection actions on the native Orders list unchanged.
+
 ## 1.8.0 - 2026-09-15
 
 - Added a read-only integrity panel to the native Orders page.

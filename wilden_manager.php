@@ -23,7 +23,7 @@ require_once __DIR__ . '/classes/WmIntegrityService.php';
 
 class Wilden_manager extends Module
 {
-    const VERSION = '1.8.0';
+    const VERSION = '1.8.1';
     const TAB_CLASS = 'AdminWildenManagerOrders';
     const MAX_BULK_ORDERS = 100;
     const MAX_EXPORT_ORDERS = 1000;
@@ -83,7 +83,18 @@ class Wilden_manager extends Module
 
     public function getContent()
     {
-        Tools::redirectAdmin($this->context->link->getAdminLink('AdminOrders'));
+        $this->context->controller->addJS($this->_path . 'views/js/configuration.js');
+        $this->context->controller->addCSS($this->_path . 'views/css/configuration.css');
+        Media::addJsDef(array(
+            'wildenManagerConfiguration' => $this->getIntegrityJsConfiguration(),
+        ));
+
+        $this->context->smarty->assign(array(
+            'wm_module_version' => self::VERSION,
+            'wm_orders_url' => $this->context->link->getAdminLink('AdminOrders'),
+        ));
+
+        return $this->display(__FILE__, 'views/templates/admin/configuration.tpl');
     }
 
     public function getNativeOrderColumns()
@@ -342,9 +353,6 @@ class Wilden_manager extends Module
                 'documentPreviewUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=previewDocuments',
                 'documentDownloadUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=downloadDocuments',
                 'documentZipAvailable' => class_exists('ZipArchive'),
-                'integrityScanUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=integrityScan',
-                'integrityExportUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=exportIntegrity',
-                'integrityIssueTypes' => $this->getIntegrityIssueTypes(),
                 'title' => $this->l('Configure order columns'),
                 'button' => $this->l('Columns'),
                 'save' => $this->l('Save and reload'),
@@ -391,31 +399,48 @@ class Wilden_manager extends Module
                 'documentInvoicesCount' => $this->l('Invoices available'),
                 'documentDeliveriesCount' => $this->l('Delivery slips available'),
                 'documentError' => $this->l('The documents could not be checked or generated.'),
-                'integrityButton' => $this->l('Integrity'),
-                'integrityTitle' => $this->l('Order integrity diagnostics'),
-                'integrityHelp' => $this->l('Read-only analysis. No order data will be modified.'),
-                'integrityIssue' => $this->l('Issue'),
-                'integrityAllIssues' => $this->l('All issue types'),
-                'integritySeverity' => $this->l('Severity'),
-                'integrityAllSeverities' => $this->l('All severities'),
-                'integrityHigh' => $this->l('High'),
-                'integrityMedium' => $this->l('Medium'),
-                'integrityInfo' => $this->l('Information'),
-                'integrityRefresh' => $this->l('Refresh analysis'),
-                'integrityExport' => $this->l('Export CSV'),
-                'integrityOrder' => $this->l('Order'),
-                'integrityReference' => $this->l('Reference'),
-                'integrityDate' => $this->l('Date'),
-                'integrityDetail' => $this->l('Detail'),
-                'integrityNoIssues' => $this->l('No issues match the selected filters.'),
-                'integrityLoading' => $this->l('Analysing orders...'),
-                'integrityError' => $this->l('The integrity analysis could not be completed.'),
-                'integrityPrevious' => $this->l('Previous'),
-                'integrityNext' => $this->l('Next'),
-                'integrityPage' => $this->l('Page'),
-                'integrityOf' => $this->l('of'),
             ),
         ));
+    }
+
+    private function getIntegrityJsConfiguration()
+    {
+        return array(
+            'scanUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=integrityScan',
+            'exportUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=exportIntegrity',
+            'issueTypes' => $this->getIntegrityIssueTypes(),
+            'issueSeverities' => array(
+                'missing_history' => 'high',
+                'state_history_mismatch' => 'high',
+                'delivery_address_missing' => 'high',
+                'invoice_address_missing' => 'high',
+                'customer_missing' => 'high',
+                'customer_incomplete' => 'medium',
+                'invoice_number_without_date' => 'medium',
+                'delivery_number_without_date' => 'medium',
+                'delivery_address_deleted' => 'info',
+                'invoice_address_deleted' => 'info',
+                'customer_deleted' => 'info',
+            ),
+            'allIssues' => $this->l('All issue types'),
+            'allSeverities' => $this->l('All severities'),
+            'issue' => $this->l('Issue'),
+            'severity' => $this->l('Severity'),
+            'high' => $this->l('High'),
+            'medium' => $this->l('Medium'),
+            'info' => $this->l('Information'),
+            'order' => $this->l('Order'),
+            'reference' => $this->l('Reference'),
+            'date' => $this->l('Date'),
+            'detail' => $this->l('Detail'),
+            'noIssues' => $this->l('No issues match the selected filters.'),
+            'loading' => $this->l('Analysing orders...'),
+            'error' => $this->l('The integrity analysis could not be completed.'),
+            'previous' => $this->l('Previous'),
+            'next' => $this->l('Next'),
+            'page' => $this->l('Page'),
+            'of' => $this->l('of'),
+        );
     }
 
     private function installDatabase()

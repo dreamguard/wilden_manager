@@ -67,68 +67,6 @@
   margin-right: 8px;
 }
 
-.wm-integrity-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  margin-right: 8px;
-}
-
-.wm-integrity-button .material-icons {
-  font-size: 18px;
-  line-height: 1;
-}
-
-.wm-integrity-dialog {
-  max-width: 1180px;
-}
-
-.wm-integrity-summary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 14px;
-}
-
-.wm-integrity-summary .badge {
-  padding: 7px 10px;
-  font-size: 13px;
-}
-
-.wm-integrity-filter-actions {
-  display: flex;
-  align-items: flex-end;
-}
-
-.wm-integrity-results {
-  max-height: 480px;
-  overflow: auto;
-}
-
-.wm-integrity-results .table {
-  margin-bottom: 0;
-}
-
-.wm-integrity-results th:nth-child(1) {
-  width: 95px;
-}
-
-.wm-integrity-results th:nth-child(3) {
-  width: 75px;
-}
-
-.wm-integrity-pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 14px;
-}
-
-.wm-integrity-message {
-  margin-bottom: 12px;
-}
-
 .wm-document-button .material-icons {
   font-size: 18px;
   line-height: 1;

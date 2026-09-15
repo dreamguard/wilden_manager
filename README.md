@@ -3,7 +3,7 @@
 Private order-management module developed from scratch for PrestaShop 8.2 and
 Wilden Militaria S.L.
 
-## Version 1.8.0
+## Version 1.8.1
 
 The initial version provides:
 
@@ -26,6 +26,7 @@ The initial version provides:
   incomplete customers and invalid document dates.
 - Informational visibility of historical addresses and customers marked deleted.
 - Filtered integrity-report export to CSV.
+- Dedicated module control centre for diagnostics and future settings.
 - Append-only audit trail for actions performed through the module.
 - Native links to the full PrestaShop order page and invoice PDF.
 
@@ -41,14 +42,16 @@ Redsys, or any other third-party module.
 
 1. Upload `wilden_manager.zip` from the PrestaShop module manager.
 2. Install **Wilden Manager**.
-3. Open the native **Orders** page and use the module action buttons.
+3. Open the native **Orders** page for selection-based order actions.
 4. Choose and order the visible columns; the preference is saved per employee and shop.
+5. Open **Configure** from the module manager for integrity diagnostics and module settings.
 
 Always test state changes and customer emails in staging before deploying a
 new release to production.
 
-The **Integrity** panel never repairs or updates data. Review each reported
-order before deciding whether a manual correction is appropriate.
+The integrity panel on the module configuration page never repairs or updates
+data. Review each reported order before deciding whether a manual correction
+is appropriate.
 
 Run `bash tools/validate.sh` in an environment with PHP and Node.js before
 packaging a release. The repository workflow validates PHP 8.1, 8.2 and 8.3.

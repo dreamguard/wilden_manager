@@ -1,0 +1,155 @@
+.wm-configuration {
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+.wm-configuration-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+  padding: 20px 24px;
+  border-radius: 6px;
+  color: #fff;
+  background: linear-gradient(135deg, #202a44, #3b4e79);
+}
+
+.wm-configuration-header h2 {
+  margin: 0 0 6px;
+  color: #fff;
+}
+
+.wm-configuration-header p {
+  margin: 0;
+  color: rgba(255, 255, 255, .82);
+}
+
+.wm-version {
+  padding: 5px 10px;
+  border: 1px solid rgba(255, 255, 255, .35);
+  border-radius: 14px;
+  white-space: nowrap;
+}
+
+.wm-configuration-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 20px;
+}
+
+.wm-configuration-card {
+  margin-bottom: 20px;
+}
+
+.wm-configuration-card .card-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 17px;
+}
+
+.wm-configuration-card .material-icons {
+  font-size: 20px;
+}
+
+.wm-integrity-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.wm-integrity-summary .badge {
+  padding: 8px 11px;
+  font-size: 13px;
+}
+
+.wm-integrity-filter-actions {
+  display: flex;
+  align-items: flex-end;
+}
+
+.wm-integrity-filter-actions .btn,
+.wm-integrity-footer .btn,
+.wm-orders-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wm-integrity-results {
+  min-height: 90px;
+  max-height: 560px;
+  overflow: auto;
+}
+
+.wm-integrity-results .table {
+  margin-bottom: 0;
+}
+
+.wm-integrity-results th:nth-child(1) {
+  width: 95px;
+}
+
+.wm-integrity-results th:nth-child(3) {
+  width: 75px;
+}
+
+.wm-integrity-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.wm-integrity-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #dbe1e8;
+}
+
+.wm-area {
+  display: flex;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid #e7ebef;
+}
+
+.wm-area:last-child {
+  border-bottom: 0;
+}
+
+.wm-area div {
+  display: flex;
+  flex-direction: column;
+}
+
+.wm-area span {
+  margin-top: 2px;
+  color: #6c757d;
+  font-size: 12px;
+}
+
+.wm-area-active .material-icons {
+  color: #25b9d7;
+}
+
+.wm-area-future {
+  opacity: .65;
+}
+
+.wm-orders-link {
+  width: 100%;
+  justify-content: center;
+}
+
+@media (max-width: 991px) {
+  .wm-configuration-layout {
+    grid-template-columns: 1fr;
+  }
+}
