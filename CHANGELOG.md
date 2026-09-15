@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.8.0 - 2026-09-15
+
+- Added a read-only integrity panel to the native Orders page.
+- Added high-severity checks for missing history, state mismatches and missing related records.
+- Added medium-severity checks for incomplete customers and document numbers without valid dates.
+- Classified soft-deleted historical addresses and customers as informational findings.
+- Added issue/severity filters, pagination, native order links and safe CSV export.
+- Kept the diagnostic workflow free of automatic repairs or data mutations.
+
 ## 1.7.0 - 2026-09-15
 
 - Added document availability preview for the native order selection.

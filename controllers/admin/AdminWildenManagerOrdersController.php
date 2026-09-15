@@ -376,6 +376,151 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         }
     }
 
+    public function ajaxProcessIntegrityScan()
+    {
+        if (!$this->access('view')) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'Access denied.')));
+        }
+
+        try {
+            $service = new WmIntegrityService($this->context);
+            $report = $service->scan(
+                (string) Tools::getValue('issue_type'),
+                (string) Tools::getValue('severity'),
+                (int) Tools::getValue('page', 1),
+                (int) Tools::getValue('limit', 50)
+            );
+            $report['issues'] = $this->prepareIntegrityIssues($report['issues']);
+            $this->ajaxDie(json_encode(array('success' => true, 'report' => $report)));
+        } catch (Exception $exception) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => $exception->getMessage())));
+        }
+    }
+
+    public function ajaxProcessExportIntegrity()
+    {
+        if (!$this->access('view')) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'Access denied.')));
+        }
+
+        try {
+            $service = new WmIntegrityService($this->context);
+            $issues = $this->prepareIntegrityIssues($service->getForExport(
+                (string) Tools::getValue('issue_type'),
+                (string) Tools::getValue('severity'),
+                Wilden_manager::MAX_INTEGRITY_EXPORT
+            ));
+            WmAuditLogger::log('integrity_report_exported', array(
+                'issue_type' => (string) Tools::getValue('issue_type'),
+                'severity' => (string) Tools::getValue('severity'),
+                'rows' => count($issues),
+            ));
+            $this->downloadIntegrityCsv($issues);
+        } catch (Exception $exception) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => $exception->getMessage())));
+        }
+    }
+
+    private function prepareIntegrityIssues(array $issues)
+    {
+        $labels = $this->module->getIntegrityIssueTypes();
+        foreach ($issues as &$issue) {
+            $issue['label'] = isset($labels[$issue['issue_type']]) ? $labels[$issue['issue_type']] : $issue['issue_type'];
+            $issue['detail'] = $this->getIntegrityDetail($issue);
+            $issue['order_url'] = $this->context->link->getAdminLink('AdminOrders') .
+                '&vieworder&id_order=' . (int) $issue['id_order'];
+        }
+        unset($issue);
+
+        return $issues;
+    }
+
+    private function getIntegrityDetail(array $issue)
+    {
+        switch ($issue['issue_type']) {
+            case 'missing_history':
+                return $this->module->l('The order has no status history.', 'AdminWildenManagerOrdersController');
+            case 'state_history_mismatch':
+                return sprintf(
+                    $this->module->l('Current status #%d; last history status #%d.', 'AdminWildenManagerOrdersController'),
+                    (int) $issue['value_a'],
+                    (int) $issue['value_b']
+                );
+            case 'delivery_address_missing':
+            case 'invoice_address_missing':
+                return sprintf(
+                    $this->module->l('Referenced address #%d does not exist.', 'AdminWildenManagerOrdersController'),
+                    (int) $issue['value_a']
+                );
+            case 'customer_missing':
+                return sprintf(
+                    $this->module->l('Referenced customer #%d does not exist.', 'AdminWildenManagerOrdersController'),
+                    (int) $issue['value_a']
+                );
+            case 'customer_incomplete':
+                return sprintf(
+                    $this->module->l('Customer #%d has empty fields: %s.', 'AdminWildenManagerOrdersController'),
+                    (int) $issue['value_a'],
+                    (string) $issue['value_b']
+                );
+            case 'invoice_number_without_date':
+                return sprintf(
+                    $this->module->l('Invoice #%d (record #%d) has no valid date.', 'AdminWildenManagerOrdersController'),
+                    (int) $issue['value_b'],
+                    (int) $issue['value_a']
+                );
+            case 'delivery_number_without_date':
+                return sprintf(
+                    $this->module->l('Delivery slip #%d (invoice record #%d) has no valid date.', 'AdminWildenManagerOrdersController'),
+                    (int) $issue['value_b'],
+                    (int) $issue['value_a']
+                );
+            case 'delivery_address_deleted':
+            case 'invoice_address_deleted':
+                return sprintf(
+                    $this->module->l('Address #%d is retained for order history and marked deleted.', 'AdminWildenManagerOrdersController'),
+                    (int) $issue['value_a']
+                );
+            case 'customer_deleted':
+                return sprintf(
+                    $this->module->l('Customer #%d is retained for order history and marked deleted.', 'AdminWildenManagerOrdersController'),
+                    (int) $issue['value_a']
+                );
+        }
+
+        return '';
+    }
+
+    private function downloadIntegrityCsv(array $issues)
+    {
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="wilden-integrity-' . date('Y-m-d-His') . '.csv"');
+        header('Cache-Control: no-store, no-cache, must-revalidate');
+        echo "\xEF\xBB\xBF";
+        $stream = fopen('php://output', 'w');
+        fputcsv($stream, array('Severity', 'Issue', 'Order ID', 'Reference', 'Order date', 'Detail'), ';');
+        foreach ($issues as $issue) {
+            $row = array(
+                $issue['severity'],
+                $issue['label'],
+                (int) $issue['id_order'],
+                $issue['reference'],
+                $issue['order_date'],
+                $issue['detail'],
+            );
+            foreach ($row as &$value) {
+                $value = (string) $value;
+                if ($value !== '' && preg_match('/^[\x00-\x20]*[=+\-@]/', $value)) {
+                    $value = "'" . $value;
+                }
+            }
+            unset($value);
+            fputcsv($stream, $row, ';');
+        }
+        fclose($stream);
+        exit;
+    }
+
     private function saveNote()
     {
         if (!$this->canEdit()) {

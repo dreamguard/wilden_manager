@@ -19,14 +19,33 @@ require_once __DIR__ . '/classes/WmOrderRepository.php';
 require_once __DIR__ . '/classes/WmBulkOrderService.php';
 require_once __DIR__ . '/classes/WmExportService.php';
 require_once __DIR__ . '/classes/WmDocumentService.php';
+require_once __DIR__ . '/classes/WmIntegrityService.php';
 
 class Wilden_manager extends Module
 {
-    const VERSION = '1.7.0';
+    const VERSION = '1.8.0';
     const TAB_CLASS = 'AdminWildenManagerOrders';
     const MAX_BULK_ORDERS = 100;
     const MAX_EXPORT_ORDERS = 1000;
     const MAX_DOCUMENT_ORDERS = 100;
+    const MAX_INTEGRITY_EXPORT = 10000;
+
+    public function getIntegrityIssueTypes()
+    {
+        return array(
+            'missing_history' => $this->l('Order without status history'),
+            'state_history_mismatch' => $this->l('Current status differs from history'),
+            'delivery_address_missing' => $this->l('Delivery address missing'),
+            'invoice_address_missing' => $this->l('Invoice address missing'),
+            'customer_missing' => $this->l('Customer missing'),
+            'customer_incomplete' => $this->l('Customer data incomplete'),
+            'invoice_number_without_date' => $this->l('Invoice number without date'),
+            'delivery_number_without_date' => $this->l('Delivery number without date'),
+            'delivery_address_deleted' => $this->l('Historical delivery address marked deleted'),
+            'invoice_address_deleted' => $this->l('Historical invoice address marked deleted'),
+            'customer_deleted' => $this->l('Historical customer marked deleted'),
+        );
+    }
 
     public function __construct()
     {
@@ -323,6 +342,9 @@ class Wilden_manager extends Module
                 'documentPreviewUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=previewDocuments',
                 'documentDownloadUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=downloadDocuments',
                 'documentZipAvailable' => class_exists('ZipArchive'),
+                'integrityScanUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=integrityScan',
+                'integrityExportUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=exportIntegrity',
+                'integrityIssueTypes' => $this->getIntegrityIssueTypes(),
                 'title' => $this->l('Configure order columns'),
                 'button' => $this->l('Columns'),
                 'save' => $this->l('Save and reload'),
@@ -369,6 +391,29 @@ class Wilden_manager extends Module
                 'documentInvoicesCount' => $this->l('Invoices available'),
                 'documentDeliveriesCount' => $this->l('Delivery slips available'),
                 'documentError' => $this->l('The documents could not be checked or generated.'),
+                'integrityButton' => $this->l('Integrity'),
+                'integrityTitle' => $this->l('Order integrity diagnostics'),
+                'integrityHelp' => $this->l('Read-only analysis. No order data will be modified.'),
+                'integrityIssue' => $this->l('Issue'),
+                'integrityAllIssues' => $this->l('All issue types'),
+                'integritySeverity' => $this->l('Severity'),
+                'integrityAllSeverities' => $this->l('All severities'),
+                'integrityHigh' => $this->l('High'),
+                'integrityMedium' => $this->l('Medium'),
+                'integrityInfo' => $this->l('Information'),
+                'integrityRefresh' => $this->l('Refresh analysis'),
+                'integrityExport' => $this->l('Export CSV'),
+                'integrityOrder' => $this->l('Order'),
+                'integrityReference' => $this->l('Reference'),
+                'integrityDate' => $this->l('Date'),
+                'integrityDetail' => $this->l('Detail'),
+                'integrityNoIssues' => $this->l('No issues match the selected filters.'),
+                'integrityLoading' => $this->l('Analysing orders...'),
+                'integrityError' => $this->l('The integrity analysis could not be completed.'),
+                'integrityPrevious' => $this->l('Previous'),
+                'integrityNext' => $this->l('Next'),
+                'integrityPage' => $this->l('Page'),
+                'integrityOf' => $this->l('of'),
             ),
         ));
     }

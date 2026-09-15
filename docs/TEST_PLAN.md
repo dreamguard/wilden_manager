@@ -49,6 +49,17 @@
 - Download both as ZIP and verify it contains the two valid PDF files.
 - Confirm orders without the requested document are skipped and displayed as missing.
 
+## Integrity diagnostics
+
+- Open **Integrity** without selecting orders and confirm the scan uses the active shop context.
+- Confirm high, medium and information totals are displayed independently.
+- Filter by each severity and by a specific issue type, then paginate the results.
+- Open a reported order using its link and confirm the order ID and reference match.
+- Export a filtered CSV and confirm it contains the same issue class and severity.
+- Confirm deleted historical addresses/customers are informational rather than errors.
+- Confirm opening, filtering and exporting the report does not change orders, histories,
+  addresses, customers, invoices or delivery slips.
+
 ## Isolation
 
 - Confirm installation and ordinary navigation do not read or write tables or

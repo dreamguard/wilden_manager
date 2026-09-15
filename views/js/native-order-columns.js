@@ -425,6 +425,144 @@
       $documentModal.modal('hide');
     });
 
+    var integrityModalId = 'wm-integrity-modal';
+    var $integrityModal = $('#' + integrityModalId);
+    if (!$integrityModal.length) {
+      $integrityModal = $(
+        '<div class="modal fade" id="' + integrityModalId + '" tabindex="-1" role="dialog" aria-hidden="true">' +
+          '<div class="modal-dialog modal-xl wm-integrity-dialog" role="document"><div class="modal-content">' +
+            '<div class="modal-header"><h4 class="modal-title"></h4><button type="button" class="close" data-dismiss="modal">&times;</button></div>' +
+            '<div class="modal-body">' +
+              '<div class="alert alert-info wm-integrity-help"></div>' +
+              '<div class="wm-integrity-summary"><span class="badge badge-danger wm-integrity-high"></span><span class="badge badge-warning wm-integrity-medium"></span><span class="badge badge-info wm-integrity-info"></span></div>' +
+              '<div class="form-row wm-integrity-filters">' +
+                '<div class="form-group col-md-5"><label class="wm-integrity-issue-label"></label><select class="form-control wm-integrity-issue"><option value=""></option></select></div>' +
+                '<div class="form-group col-md-4"><label class="wm-integrity-severity-label"></label><select class="form-control wm-integrity-severity"><option value=""></option><option value="high"></option><option value="medium"></option><option value="info"></option></select></div>' +
+                '<div class="form-group col-md-3 wm-integrity-filter-actions"><button type="button" class="btn btn-outline-primary wm-integrity-refresh"></button></div>' +
+              '</div>' +
+              '<div class="alert wm-integrity-message" hidden></div>' +
+              '<div class="wm-integrity-results"></div>' +
+              '<div class="wm-integrity-pagination" hidden><button type="button" class="btn btn-sm btn-outline-secondary wm-integrity-previous"></button><span></span><button type="button" class="btn btn-sm btn-outline-secondary wm-integrity-next"></button></div>' +
+            '</div>' +
+            '<div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-dismiss="modal"></button><button type="button" class="btn btn-primary wm-integrity-export"></button></div>' +
+          '</div></div>' +
+        '</div>'
+      ).appendTo('body');
+      $integrityModal.find('.modal-title').text(config.integrityTitle);
+      $integrityModal.find('.wm-integrity-help').text(config.integrityHelp);
+      $integrityModal.find('.wm-integrity-issue-label').text(config.integrityIssue);
+      $integrityModal.find('.wm-integrity-issue option').first().text(config.integrityAllIssues);
+      Object.keys(config.integrityIssueTypes || {}).forEach(function (id) {
+        $('<option></option>').val(id).text(config.integrityIssueTypes[id]).appendTo($integrityModal.find('.wm-integrity-issue'));
+      });
+      $integrityModal.find('.wm-integrity-severity-label').text(config.integritySeverity);
+      $integrityModal.find('.wm-integrity-severity option[value=""]').text(config.integrityAllSeverities);
+      $integrityModal.find('.wm-integrity-severity option[value="high"]').text(config.integrityHigh);
+      $integrityModal.find('.wm-integrity-severity option[value="medium"]').text(config.integrityMedium);
+      $integrityModal.find('.wm-integrity-severity option[value="info"]').text(config.integrityInfo);
+      $integrityModal.find('.wm-integrity-severity').val('high');
+      $integrityModal.find('.wm-integrity-refresh').text(config.integrityRefresh);
+      $integrityModal.find('.wm-integrity-previous').text(config.integrityPrevious);
+      $integrityModal.find('.wm-integrity-next').text(config.integrityNext);
+      $integrityModal.find('[data-dismiss="modal"]').last().text(config.cancel);
+      $integrityModal.find('.wm-integrity-export').text(config.integrityExport);
+    }
+
+    function setIntegrityMessage(type, message) {
+      $integrityModal.find('.wm-integrity-message')
+        .removeClass('alert-info alert-success alert-danger alert-warning')
+        .addClass('alert-' + type)
+        .prop('hidden', !message)
+        .text(message || '');
+    }
+
+    function renderIntegrityReport(report) {
+      var summary = report.summary || {};
+      $integrityModal.find('.wm-integrity-high').text(config.integrityHigh + ': ' + (summary.high || 0));
+      $integrityModal.find('.wm-integrity-medium').text(config.integrityMedium + ': ' + (summary.medium || 0));
+      $integrityModal.find('.wm-integrity-info').text(config.integrityInfo + ': ' + (summary.info || 0));
+      var $results = $integrityModal.find('.wm-integrity-results').empty();
+      if (!Array.isArray(report.issues) || !report.issues.length) {
+        $('<div class="alert alert-success"></div>').text(config.integrityNoIssues).appendTo($results);
+      } else {
+        var $table = $('<div class="table-responsive"><table class="table table-striped"><thead><tr><th></th><th></th><th></th><th></th><th></th><th></th></tr></thead><tbody></tbody></table></div>');
+        var headers = [config.integritySeverity, config.integrityIssue, config.integrityOrder, config.integrityReference, config.integrityDate, config.integrityDetail];
+        $table.find('th').each(function (index) { $(this).text(headers[index]); });
+        report.issues.forEach(function (issue) {
+          var $row = $('<tr><td><span class="badge"></span></td><td></td><td><a target="_blank" rel="noopener"></a></td><td></td><td></td><td></td></tr>');
+          var severityLabel = issue.severity === 'high' ? config.integrityHigh : (issue.severity === 'medium' ? config.integrityMedium : config.integrityInfo);
+          $row.find('.badge').addClass(issue.severity === 'high' ? 'badge-danger' : (issue.severity === 'medium' ? 'badge-warning' : 'badge-info')).text(severityLabel);
+          $row.children().eq(1).text(issue.label || issue.issue_type);
+          $row.children().eq(2).find('a').attr('href', issue.order_url).text('#' + parseInt(issue.id_order, 10));
+          $row.children().eq(3).text(issue.reference || '');
+          $row.children().eq(4).text(issue.order_date || '');
+          $row.children().eq(5).text(issue.detail || '');
+          $table.find('tbody').append($row);
+        });
+        $results.append($table);
+      }
+
+      var page = parseInt(report.page, 10) || 1;
+      var pages = parseInt(report.pages, 10) || 1;
+      var $pagination = $integrityModal.find('.wm-integrity-pagination').prop('hidden', pages <= 1);
+      $pagination.find('span').text(config.integrityPage + ' ' + page + ' ' + config.integrityOf + ' ' + pages);
+      $pagination.find('.wm-integrity-previous').prop('disabled', page <= 1);
+      $pagination.find('.wm-integrity-next').prop('disabled', page >= pages);
+      $integrityModal.data('page', page).data('pages', pages);
+    }
+
+    function loadIntegrity(page) {
+      page = Math.max(1, parseInt(page, 10) || 1);
+      $integrityModal.find('.wm-integrity-refresh').prop('disabled', true);
+      setIntegrityMessage('info', config.integrityLoading);
+      $.ajax({
+        url: config.integrityScanUrl,
+        method: 'POST',
+        dataType: 'json',
+        data: {
+          issue_type: $integrityModal.find('.wm-integrity-issue').val(),
+          severity: $integrityModal.find('.wm-integrity-severity').val(),
+          page: page,
+          limit: 50
+        }
+      }).done(function (response) {
+        if (!response || !response.success || !response.report) {
+          setIntegrityMessage('danger', (response && response.error) || config.integrityError);
+          return;
+        }
+        setIntegrityMessage('info', '');
+        renderIntegrityReport(response.report);
+      }).fail(function (xhr) {
+        var response = xhr.responseJSON || {};
+        setIntegrityMessage('danger', response.error || config.integrityError);
+      }).always(function () {
+        $integrityModal.find('.wm-integrity-refresh').prop('disabled', false);
+      });
+    }
+
+    var $integrityButton = $('<button type="button" class="btn btn-outline-secondary wm-integrity-button"><i class="material-icons">fact_check</i> <span></span></button>');
+    $integrityButton.find('span').text(config.integrityButton);
+    if ($actions.length) {
+      $actions.prepend($integrityButton);
+    } else {
+      $panel.find('.card-header').first().append($integrityButton);
+    }
+    $integrityButton.on('click', function () {
+      $integrityModal.modal('show');
+      loadIntegrity(1);
+    });
+    $integrityModal.on('click', '.wm-integrity-refresh', function () { loadIntegrity(1); });
+    $integrityModal.on('change', '.wm-integrity-issue, .wm-integrity-severity', function () { loadIntegrity(1); });
+    $integrityModal.on('click', '.wm-integrity-previous', function () { loadIntegrity(($integrityModal.data('page') || 1) - 1); });
+    $integrityModal.on('click', '.wm-integrity-next', function () { loadIntegrity(($integrityModal.data('page') || 1) + 1); });
+    $integrityModal.on('click', '.wm-integrity-export', function () {
+      var $form = $('<form method="post" hidden></form>').attr('action', config.integrityExportUrl).appendTo('body');
+      $('<input type="hidden" name="issue_type">').val($integrityModal.find('.wm-integrity-issue').val()).appendTo($form);
+      $('<input type="hidden" name="severity">').val($integrityModal.find('.wm-integrity-severity').val()).appendTo($form);
+      $form.trigger('submit');
+      window.setTimeout(function () { $form.remove(); }, 1000);
+    });
+
     function resetBulkPreview() {
       $bulkModal.removeData('preview').removeData('completed');
       $bulkModal.find('.wm-bulk-execute').prop('disabled', true).text(config.bulkExecute);
