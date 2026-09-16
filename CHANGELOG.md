@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.9.1 - 2026-09-16
+
+- Fixed related-order links opening the native Orders list instead of the order detail page.
+- Centralised PrestaShop-compatible order-detail URL generation for audit, integrity and quick-view links.
+
 ## 1.9.0 - 2026-09-16
 
 - Added a read-only audit-history viewer to the module control centre.

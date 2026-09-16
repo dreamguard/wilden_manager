@@ -115,8 +115,7 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
                 new Currency((int) $order['id_currency'])
             );
             $order['formatted_date'] = Tools::displayDate($order['date_add'], true);
-            $order['view_url'] = $this->context->link->getAdminLink('AdminOrders') .
-                '&vieworder&id_order=' . (int) $order['id_order'];
+            $order['view_url'] = $this->getOrderViewUrl((int) $order['id_order']);
             $order['customer_url'] = $this->context->link->getAdminLink('AdminCustomers') .
                 '&viewcustomer&id_customer=' . (int) $order['id_customer'];
             $order['invoice_url'] = $this->context->link->getAdminLink('AdminPdf') .
@@ -188,7 +187,7 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
             'wm_qv_delivery_address' => $this->formatAddressText($deliveryAddress),
             'wm_qv_note' => WmOrderNote::get($idOrder),
             'wm_qv_total' => Tools::displayPrice((float) $order->total_paid_tax_incl, $currency),
-            'wm_qv_view_url' => $this->context->link->getAdminLink('AdminOrders') . '&vieworder&id_order=' . $idOrder,
+            'wm_qv_view_url' => $this->getOrderViewUrl($idOrder),
             'wm_can_edit' => $this->canEdit(),
         ));
 
@@ -429,8 +428,7 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
                     : str_replace('_', ' ', (string) $row['action']);
                 $row['employee_name'] = trim((string) $row['employee_name']);
                 $row['order_url'] = !empty($row['id_order'])
-                    ? $this->context->link->getAdminLink('AdminOrders') .
-                        '&vieworder&id_order=' . (int) $row['id_order']
+                    ? $this->getOrderViewUrl((int) $row['id_order'])
                     : '';
             }
             unset($row);
@@ -474,14 +472,26 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         }
     }
 
+    private function getOrderViewUrl($idOrder)
+    {
+        return $this->context->link->getAdminLink(
+            'AdminOrders',
+            true,
+            array(),
+            array(
+                'vieworder' => 1,
+                'id_order' => (int) $idOrder,
+            )
+        );
+    }
+
     private function prepareIntegrityIssues(array $issues)
     {
         $labels = $this->module->getIntegrityIssueTypes();
         foreach ($issues as &$issue) {
             $issue['label'] = isset($labels[$issue['issue_type']]) ? $labels[$issue['issue_type']] : $issue['issue_type'];
             $issue['detail'] = $this->getIntegrityDetail($issue);
-            $issue['order_url'] = $this->context->link->getAdminLink('AdminOrders') .
-                '&vieworder&id_order=' . (int) $issue['id_order'];
+            $issue['order_url'] = $this->getOrderViewUrl((int) $issue['id_order']);
         }
         unset($issue);
 
