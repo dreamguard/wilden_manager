@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.8.4 - 2026-09-16
+
+- Fixed the integrity table disappearing at the legacy Bootstrap 1200-pixel breakpoint.
+- Replaced the floated diagnostic filter row with a module-owned CSS grid.
+- Cleared the results block defensively so it cannot move behind floated controls.
+
 ## 1.8.3 - 2026-09-15
 
 - Added the module version to back-office JavaScript and CSS URLs.

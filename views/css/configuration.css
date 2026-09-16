@@ -66,6 +66,22 @@
   font-size: 13px;
 }
 
+.wm-configuration .wm-integrity-filters {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 4fr) minmax(0, 3fr);
+  gap: 10px;
+  margin-right: 0;
+  margin-left: 0;
+}
+
+.wm-configuration .wm-integrity-filters > .form-group {
+  float: none;
+  width: auto;
+  max-width: none;
+  padding-right: 0;
+  padding-left: 0;
+}
+
 .wm-integrity-filter-actions {
   display: flex;
   align-items: flex-end;
@@ -80,6 +96,7 @@
 }
 
 .wm-integrity-results {
+  clear: both;
   min-height: 90px;
   max-height: 560px;
   overflow: auto;
@@ -180,6 +197,10 @@
 
 @media (max-width: 991px) {
   .wm-configuration-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .wm-configuration .wm-integrity-filters {
     grid-template-columns: 1fr;
   }
 }
