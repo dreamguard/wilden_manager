@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.11.0 - 2026-09-16
+
+- Added named views for the native PrestaShop Orders grid.
+- Stored filters, sorting, page size and configurable columns per employee and store.
+- Added create, apply, rename, update, delete and optional default-view workflows.
+- Added strict server-side validation and a limit of 25 views per employee and store.
+- Added SuperAdmin review and cleanup of native saved views under module configuration.
+- Preserved incompatible historical views without exposing or deleting them automatically.
+
 ## 1.10.1 - 2026-09-16
 
 - Fixed SuperAdmin detection by using PrestaShop's `_PS_ADMIN_PROFILE_` constant.

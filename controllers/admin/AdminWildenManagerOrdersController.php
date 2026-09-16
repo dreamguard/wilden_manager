@@ -235,6 +235,114 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         $this->ajaxDie(json_encode(array('success' => true, 'columns' => $storedColumns)));
     }
 
+    public function ajaxProcessSaveNativeView()
+    {
+        if (!$this->access('view')) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'Access denied.')));
+        }
+        if (!isset($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'POST required.')));
+        }
+
+        $name = trim((string) Tools::getValue('name'));
+        if ($name === '' || Tools::strlen($name) > 128 || !Validate::isGenericName($name)) {
+            $this->ajaxDie(json_encode(array(
+                'success' => false,
+                'error' => $this->module->l('Enter a valid saved-view name.', 'AdminWildenManagerOrdersController'),
+            )));
+        }
+
+        $availableColumns = array_keys($this->module->getNativeOrderColumns());
+        $idView = (int) Tools::getValue('id_view');
+        $existing = $idView > 0 ? WmSavedView::getNative(
+            $idView,
+            (int) $this->context->employee->id,
+            (int) $this->context->shop->id
+        ) : false;
+        if ($idView > 0 && !$existing) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'Saved view not found.')));
+        }
+        if ($existing && !(bool) Tools::getValue('replace_state')) {
+            $state = json_decode((string) $existing['filters_json'], true);
+            $columns = json_decode((string) $existing['columns_json'], true);
+            $columns = is_array($columns) ? $columns : $availableColumns;
+        } else {
+            $state = json_decode((string) Tools::getValue('state'), true);
+            $state = $this->sanitizeNativeViewState(is_array($state) ? $state : array());
+            $columns = array_values(array_unique(array_intersect(
+                (array) Tools::getValue('columns', array()),
+                $availableColumns
+            )));
+            if (!$columns) {
+                $columns = $availableColumns;
+            }
+        }
+        $savedId = WmSavedView::saveNative(
+            $idView,
+            $name,
+            $state,
+            $columns,
+            (int) $this->context->employee->id,
+            (int) $this->context->shop->id,
+            (bool) Tools::getValue('is_default')
+        );
+        if (!$savedId) {
+            $this->ajaxDie(json_encode(array(
+                'success' => false,
+                'error' => $this->module->l(
+                    'The view could not be saved. The maximum is 25 views per employee and store.',
+                    'AdminWildenManagerOrdersController'
+                ),
+            )));
+        }
+
+        WmAuditLogger::log($idView ? 'saved_view_updated' : 'saved_view_created', array(
+            'id_view' => (int) $savedId,
+            'name' => $name,
+            'is_default' => (bool) Tools::getValue('is_default'),
+        ));
+        $this->ajaxDie(json_encode(array(
+            'success' => true,
+            'id_view' => (int) $savedId,
+            'views' => WmSavedView::getNativeForEmployee(
+                (int) $this->context->employee->id,
+                (int) $this->context->shop->id
+            ),
+        ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+    }
+
+    public function ajaxProcessDeleteNativeView()
+    {
+        if (!$this->access('view')) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'Access denied.')));
+        }
+        if (!isset($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'POST required.')));
+        }
+
+        $idView = (int) Tools::getValue('id_view');
+        if ($idView <= 0 || !WmSavedView::getNative(
+            $idView,
+            (int) $this->context->employee->id,
+            (int) $this->context->shop->id
+        ) || !WmSavedView::delete(
+            $idView,
+            (int) $this->context->employee->id,
+            (int) $this->context->shop->id
+        )) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'The view could not be deleted.')));
+        }
+
+        WmAuditLogger::log('saved_view_deleted', array('id_view' => $idView));
+        $this->ajaxDie(json_encode(array(
+            'success' => true,
+            'views' => WmSavedView::getNativeForEmployee(
+                (int) $this->context->employee->id,
+                (int) $this->context->shop->id
+            ),
+        ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+    }
+
     public function ajaxProcessPreviewBulkStatus()
     {
         if (!$this->canEdit()) {
@@ -482,6 +590,55 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
                 'vieworder' => 1,
                 'id_order' => (int) $idOrder,
             )
+        );
+    }
+
+    private function sanitizeNativeViewState(array $state)
+    {
+        $allowed = array_keys($this->module->getNativeOrderColumns());
+        $filters = array();
+        foreach (array_slice((array) (isset($state['filters']) ? $state['filters'] : array()), 0, 30) as $filter) {
+            if (!is_array($filter) || empty($filter['path'])) {
+                continue;
+            }
+            $path = (string) $filter['path'];
+            if (!preg_match('/^[a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+){0,2}$/', $path)) {
+                continue;
+            }
+            $parts = explode('.', $path);
+            if (!in_array($parts[0], $allowed, true)) {
+                continue;
+            }
+            $values = array();
+            foreach (array_slice((array) (isset($filter['values']) ? $filter['values'] : array()), 0, 25) as $value) {
+                $value = Tools::substr(trim((string) $value), 0, 255);
+                if ($value !== '' && strpos($value, "\0") === false) {
+                    $values[] = $value;
+                }
+            }
+            if ($values) {
+                $filters[] = array(
+                    'path' => $path,
+                    'values' => array_values(array_unique($values)),
+                    'multiple' => !empty($filter['multiple']),
+                );
+            }
+        }
+
+        $orderBy = isset($state['order_by']) ? (string) $state['order_by'] : 'date_add';
+        if (!in_array($orderBy, $allowed, true)) {
+            $orderBy = 'date_add';
+        }
+        $limit = (int) (isset($state['limit']) ? $state['limit'] : 50);
+
+        return array(
+            'native_grid' => 1,
+            'filters' => $filters,
+            'order_by' => $orderBy,
+            'sort_order' => strtolower((string) (isset($state['sort_order']) ? $state['sort_order'] : 'desc')) === 'asc'
+                ? 'asc'
+                : 'desc',
+            'limit' => max(10, min(100, $limit)),
         );
     }
 

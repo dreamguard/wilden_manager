@@ -174,6 +174,290 @@
       $panel.find('.card-header').first().append($button);
     }
 
+    var $filterForm = $('#order_filter_form');
+    if (!$filterForm.length) {
+      $filterForm = $panel.find('form').first();
+    }
+
+    function getGridPrefix() {
+      var prefix = $panel.find('.ps-sortable-column[data-sort-prefix]').first().attr('data-sort-prefix');
+      if (prefix) {
+        return prefix;
+      }
+      var inputName = $filterForm.find(':input[name]').first().attr('name') || '';
+      var match = inputName.match(/^([^[]+)\[/);
+
+      return match ? match[1] : 'order';
+    }
+
+    function collectViewState() {
+      var prefix = getGridPrefix();
+      var grouped = {};
+      $filterForm.find(':input[name]').each(function () {
+        var $input = $(this);
+        var type = String($input.attr('type') || '').toLowerCase();
+        var name = String($input.attr('name') || '');
+        if (!name || ['submit', 'reset', 'button', 'hidden'].indexOf(type) !== -1) {
+          return;
+        }
+        if ((type === 'checkbox' || type === 'radio') && !$input.prop('checked')) {
+          return;
+        }
+        var segments = [];
+        name.replace(/\[([^\]]*)\]/g, function (whole, segment) {
+          if (segment) {
+            segments.push(segment);
+          }
+          return whole;
+        });
+        if (name.indexOf(prefix + '[') !== 0 || !segments.length) {
+          return;
+        }
+        if (segments[0] === 'filters') {
+          segments.shift();
+        }
+        if (!segments.length || segments[0] === 'actions' || segments[0].charAt(0) === '_') {
+          return;
+        }
+        var values = $input.val();
+        values = Array.isArray(values) ? values : [values];
+        values = values.map(function (value) { return String(value || '').trim(); }).filter(Boolean);
+        if (!values.length) {
+          return;
+        }
+        var path = segments.join('.');
+        if (!grouped[path]) {
+          grouped[path] = { path: path, values: [], multiple: false };
+        }
+        grouped[path].multiple = grouped[path].multiple || $input.is('[multiple]') || /\[\]$/.test(name);
+        values.forEach(function (value) {
+          if (grouped[path].values.indexOf(value) === -1) {
+            grouped[path].values.push(value);
+          }
+        });
+      });
+
+      var $currentSort = $panel.find('.ps-sortable-column[data-sort-is-current="true"]').first();
+      var limit = parseInt($('#order_grid_table').attr('data-limit'), 10) || 50;
+
+      return {
+        native_grid: 1,
+        filters: Object.keys(grouped).map(function (key) { return grouped[key]; }),
+        order_by: $currentSort.attr('data-sort-col-name') || 'date_add',
+        sort_order: $currentSort.attr('data-sort-direction') === 'asc' ? 'asc' : 'desc',
+        limit: limit
+      };
+    }
+
+    function buildViewUrl(view) {
+      var url = new URL(config.ordersUrl, window.location.origin);
+      var prefix = getGridPrefix();
+      var state = view.state || {};
+      var availableColumns = (config.columns || []).map(function (column) { return column.id; });
+      (state.filters || []).forEach(function (filter) {
+        var path = String(filter.path || '').split('.').filter(Boolean);
+        if (!path.length || availableColumns.indexOf(path[0]) === -1) {
+          return;
+        }
+        var parameter = prefix + '[filters]' + path.map(function (part) { return '[' + part + ']'; }).join('');
+        if (filter.multiple) {
+          parameter += '[]';
+        }
+        (filter.values || []).forEach(function (value) {
+          url.searchParams.append(parameter, value);
+        });
+      });
+      var orderBy = availableColumns.indexOf(state.order_by) !== -1 ? state.order_by : 'date_add';
+      url.searchParams.set(prefix + '[orderBy]', orderBy);
+      url.searchParams.set(prefix + '[sortOrder]', state.sort_order === 'asc' ? 'asc' : 'desc');
+      url.searchParams.set(prefix + '[limit]', parseInt(state.limit, 10) || 50);
+      url.searchParams.set(prefix + '[offset]', 0);
+      url.searchParams.set('wm_saved_view', view.id);
+
+      return url.toString();
+    }
+
+    function applySavedView(view) {
+      if (!view) {
+        return;
+      }
+      if (window.sessionStorage && config.viewStorageKey) {
+        window.sessionStorage.setItem(config.viewStorageKey + '_default_applied', String(view.id));
+      }
+      $.ajax({
+        url: config.saveUrl,
+        method: 'POST',
+        dataType: 'json',
+        data: { columns: view.columns || [] }
+      }).done(function (response) {
+        if (!response || !response.success) {
+          window.alert((response && response.error) || config.error);
+          return;
+        }
+        if (window.localStorage && config.storageKey) {
+          window.localStorage.setItem(config.storageKey, JSON.stringify(view.columns || []));
+        }
+        window.location.href = buildViewUrl(view);
+      }).fail(function () {
+        window.alert(config.error);
+      });
+    }
+
+    var viewsModalId = 'wm-saved-view-modal';
+    var $viewsModal = $('#' + viewsModalId);
+    if (!$viewsModal.length) {
+      $viewsModal = $(
+        '<div class="modal fade" id="' + viewsModalId + '" tabindex="-1" role="dialog" aria-hidden="true">' +
+          '<div class="modal-dialog" role="document"><div class="modal-content">' +
+            '<div class="modal-header"><h4 class="modal-title"></h4><button type="button" class="close" data-dismiss="modal">&times;</button></div>' +
+            '<div class="modal-body">' +
+              '<div class="form-group"><label class="wm-view-name-label"></label><input type="text" maxlength="128" class="form-control wm-view-name"></div>' +
+              '<div class="form-check"><label><input type="checkbox" class="wm-view-default"> <span></span></label></div>' +
+              '<div class="form-check wm-view-replace-group"><label><input type="checkbox" class="wm-view-replace"> <span></span></label></div>' +
+              '<div class="alert alert-danger wm-view-error" hidden></div>' +
+            '</div>' +
+            '<div class="modal-footer"><button type="button" class="btn btn-outline-danger wm-view-delete"></button><button type="button" class="btn btn-outline-secondary" data-dismiss="modal"></button><button type="button" class="btn btn-primary wm-view-save"></button></div>' +
+          '</div></div>' +
+        '</div>'
+      ).appendTo('body');
+      $viewsModal.find('.wm-view-name-label').text(config.viewsName);
+      $viewsModal.find('.wm-view-default + span').text(config.viewsDefault);
+      $viewsModal.find('.wm-view-replace + span').text(config.viewsReplace);
+      $viewsModal.find('.wm-view-delete').text(config.viewsDelete);
+      $viewsModal.find('[data-dismiss="modal"]').last().text(config.cancel);
+      $viewsModal.find('.wm-view-save').text(config.viewsSave);
+    }
+
+    var $viewsControl = $(
+      '<div class="wm-saved-views-control">' +
+        '<label class="sr-only"></label>' +
+        '<select class="form-control wm-saved-views-select"></select>' +
+        '<button type="button" class="btn btn-outline-secondary wm-view-apply"></button>' +
+        '<button type="button" class="btn btn-outline-secondary wm-view-edit"><i class="material-icons">edit</i></button>' +
+        '<button type="button" class="btn btn-outline-secondary wm-view-new"><i class="material-icons">add</i> <span></span></button>' +
+      '</div>'
+    );
+    $viewsControl.find('label').text(config.viewsLabel);
+    $viewsControl.find('.wm-view-apply').text(config.viewsApply);
+    $viewsControl.find('.wm-view-new span').text(config.viewsNew);
+    if ($actions.length) {
+      $actions.prepend($viewsControl);
+    } else {
+      $panel.find('.card-header').first().append($viewsControl);
+    }
+
+    function findSavedView(id) {
+      id = parseInt(id, 10);
+
+      return (config.savedViews || []).find(function (view) { return parseInt(view.id, 10) === id; });
+    }
+
+    function renderSavedViews(selectedId) {
+      var $select = $viewsControl.find('.wm-saved-views-select').empty();
+      $('<option value=""></option>').text(config.viewsNone).appendTo($select);
+      (config.savedViews || []).forEach(function (view) {
+        var label = view.name + (view.is_default ? ' (' + config.viewsDefaultSuffix + ')' : '');
+        $('<option></option>').val(view.id).text(label).appendTo($select);
+      });
+      if (selectedId) {
+        $select.val(String(selectedId));
+      }
+      var hasSelection = !!$select.val();
+      $viewsControl.find('.wm-view-apply, .wm-view-edit').prop('disabled', !hasSelection);
+    }
+
+    var currentViewId = parseInt(new URL(window.location.href).searchParams.get('wm_saved_view'), 10) || 0;
+    renderSavedViews(currentViewId);
+    $viewsControl.on('change', '.wm-saved-views-select', function () {
+      var enabled = !!$(this).val();
+      $viewsControl.find('.wm-view-apply, .wm-view-edit').prop('disabled', !enabled);
+    });
+    $viewsControl.on('click', '.wm-view-apply', function () {
+      applySavedView(findSavedView($viewsControl.find('.wm-saved-views-select').val()));
+    });
+    $viewsControl.on('click', '.wm-view-new', function () {
+      $viewsModal.data('view-id', 0);
+      $viewsModal.find('.modal-title').text(config.viewsTitleNew);
+      $viewsModal.find('.wm-view-name').val('');
+      $viewsModal.find('.wm-view-default').prop('checked', false);
+      $viewsModal.find('.wm-view-replace').prop('checked', true);
+      $viewsModal.find('.wm-view-replace-group').prop('hidden', true);
+      $viewsModal.find('.wm-view-delete').prop('hidden', true);
+      $viewsModal.find('.wm-view-error').prop('hidden', true).text('');
+      $viewsModal.modal('show');
+    });
+    $viewsControl.on('click', '.wm-view-edit', function () {
+      var view = findSavedView($viewsControl.find('.wm-saved-views-select').val());
+      if (!view) {
+        return;
+      }
+      $viewsModal.data('view-id', view.id);
+      $viewsModal.find('.modal-title').text(config.viewsTitleEdit);
+      $viewsModal.find('.wm-view-name').val(view.name);
+      $viewsModal.find('.wm-view-default').prop('checked', !!view.is_default);
+      $viewsModal.find('.wm-view-replace').prop('checked', false);
+      $viewsModal.find('.wm-view-replace-group').prop('hidden', false);
+      $viewsModal.find('.wm-view-delete').prop('hidden', false);
+      $viewsModal.find('.wm-view-error').prop('hidden', true).text('');
+      $viewsModal.modal('show');
+    });
+    $viewsModal.on('click', '.wm-view-save', function () {
+      var idView = parseInt($viewsModal.data('view-id'), 10) || 0;
+      var $save = $(this).prop('disabled', true);
+      $.ajax({
+        url: config.saveViewUrl,
+        method: 'POST',
+        dataType: 'json',
+        data: {
+          id_view: idView,
+          name: $viewsModal.find('.wm-view-name').val(),
+          is_default: $viewsModal.find('.wm-view-default').prop('checked') ? 1 : 0,
+          replace_state: $viewsModal.find('.wm-view-replace').prop('checked') ? 1 : 0,
+          state: JSON.stringify(collectViewState()),
+          columns: getSelectedColumns()
+        }
+      }).done(function (response) {
+        if (!response || !response.success) {
+          $viewsModal.find('.wm-view-error').prop('hidden', false).text((response && response.error) || config.viewsError);
+          return;
+        }
+        config.savedViews = response.views || [];
+        renderSavedViews(response.id_view);
+        $viewsModal.modal('hide');
+      }).fail(function () {
+        $viewsModal.find('.wm-view-error').prop('hidden', false).text(config.viewsError);
+      }).always(function () {
+        $save.prop('disabled', false);
+      });
+    });
+    $viewsModal.on('click', '.wm-view-delete', function () {
+      var idView = parseInt($viewsModal.data('view-id'), 10) || 0;
+      if (!idView || !window.confirm(config.viewsDeleteConfirm)) {
+        return;
+      }
+      $.ajax({ url: config.deleteViewUrl, method: 'POST', dataType: 'json', data: { id_view: idView } })
+        .done(function (response) {
+          if (!response || !response.success) {
+            $viewsModal.find('.wm-view-error').prop('hidden', false).text((response && response.error) || config.viewsError);
+            return;
+          }
+          config.savedViews = response.views || [];
+          renderSavedViews(0);
+          $viewsModal.modal('hide');
+        }).fail(function () {
+          $viewsModal.find('.wm-view-error').prop('hidden', false).text(config.viewsError);
+        });
+    });
+
+    var defaultView = (config.savedViews || []).find(function (view) { return !!view.is_default; });
+    var defaultAppliedKey = config.viewStorageKey ? config.viewStorageKey + '_default_applied' : '';
+    var defaultAlreadyApplied = window.sessionStorage && defaultAppliedKey
+      ? window.sessionStorage.getItem(defaultAppliedKey)
+      : '1';
+    if (!currentViewId && defaultView && defaultAlreadyApplied !== String(defaultView.id)) {
+      applySavedView(defaultView);
+    }
+
     var bulkModalId = 'wm-bulk-status-modal';
     var $bulkModal = $('#' + bulkModalId);
     if (!$bulkModal.length) {

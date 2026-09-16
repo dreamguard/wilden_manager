@@ -51,6 +51,56 @@
       </section>
       {/if}
 
+      {if $wm_is_super_admin}
+      <section class="card wm-configuration-card" id="wm-saved-views-admin">
+        <div class="card-header">
+          <h3><i class="material-icons">bookmarks</i> {l s='Saved order views' mod='wilden_manager'}</h3>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-info">
+            {l s='Employees create and edit their own views from the native Orders list. SuperAdmin can review and remove obsolete views here.' mod='wilden_manager'}
+          </div>
+          {if $wm_saved_views_admin|count}
+          <div class="wm-permissions-table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>{l s='View' mod='wilden_manager'}</th>
+                  <th>{l s='Employee' mod='wilden_manager'}</th>
+                  <th>{l s='Store' mod='wilden_manager'}</th>
+                  <th>{l s='Default' mod='wilden_manager'}</th>
+                  <th>{l s='Updated' mod='wilden_manager'}</th>
+                  <th>{l s='Actions' mod='wilden_manager'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {foreach from=$wm_saved_views_admin item=view}
+                <tr>
+                  <td>{$view.name|escape:'htmlall':'UTF-8'}</td>
+                  <td>{$view.employee_name|escape:'htmlall':'UTF-8'}</td>
+                  <td>{$view.shop_name|escape:'htmlall':'UTF-8'}</td>
+                  <td>{if $view.is_default}{l s='Yes' mod='wilden_manager'}{else}{l s='No' mod='wilden_manager'}{/if}</td>
+                  <td>{$view.date_upd|escape:'htmlall':'UTF-8'}</td>
+                  <td>
+                    <form method="post" action="{$wm_permissions_action|escape:'htmlall':'UTF-8'}" onsubmit="return confirm('{l s='Delete this saved view?' mod='wilden_manager' js=1}');">
+                      <input type="hidden" name="id_view" value="{$view.id_wilden_manager_saved_view|intval}">
+                      <button type="submit" name="submitWmDeleteSavedView" value="1" class="btn btn-sm btn-outline-danger">
+                        <i class="material-icons">delete</i> {l s='Delete' mod='wilden_manager'}
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+                {/foreach}
+              </tbody>
+            </table>
+          </div>
+          {else}
+          <p class="text-muted">{l s='No native order views have been saved yet.' mod='wilden_manager'}</p>
+          {/if}
+        </div>
+      </section>
+      {/if}
+
       {if $wm_can_view_diagnostics}
       <section class="card wm-configuration-card" id="wm-integrity-dashboard">
         <div class="card-header">

@@ -130,3 +130,40 @@
   margin-top: 5px;
   overflow: auto;
 }
+.wm-saved-views-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.wm-saved-views-control .wm-saved-views-select {
+  width: 220px;
+  min-width: 180px;
+}
+
+.wm-saved-views-control .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.wm-saved-views-control .material-icons {
+  font-size: 18px;
+}
+
+@media (max-width: 1199px) {
+  .wm-saved-views-control {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    margin: 0 0 8px;
+  }
+
+  .wm-saved-views-control .wm-saved-views-select {
+    flex: 1 1 220px;
+    width: auto;
+  }
+}

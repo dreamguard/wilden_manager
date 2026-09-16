@@ -24,7 +24,7 @@ require_once __DIR__ . '/classes/WmProfilePermission.php';
 
 class Wilden_manager extends Module
 {
-    const VERSION = '1.10.1';
+    const VERSION = '1.11.0';
     const TAB_CLASS = 'AdminWildenManagerOrders';
     const MAX_BULK_ORDERS = 100;
     const MAX_EXPORT_ORDERS = 1000;
@@ -59,8 +59,9 @@ class Wilden_manager extends Module
             'integrity_report_exported' => $this->l('Integrity report exported'),
             'profile_permissions_updated' => $this->l('Profile permissions updated'),
             'note_updated' => $this->l('Internal note updated (historical)'),
-            'saved_view_created' => $this->l('Saved view created (historical)'),
-            'saved_view_deleted' => $this->l('Saved view deleted (historical)'),
+            'saved_view_created' => $this->l('Saved view created'),
+            'saved_view_updated' => $this->l('Saved view updated'),
+            'saved_view_deleted' => $this->l('Saved view deleted'),
         );
     }
 
@@ -120,6 +121,21 @@ class Wilden_manager extends Module
                 $messages .= $this->displayError($this->l('Profile permissions could not be saved.'));
             }
         }
+        if (Tools::isSubmit('submitWmDeleteSavedView')) {
+            if (!$isSuperAdmin) {
+                $messages .= $this->displayError($this->l('Only SuperAdmin can delete another employee\'s saved view.'));
+            } elseif (!isset($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
+                $messages .= $this->displayError($this->l('This action requires a POST request.'));
+            } else {
+                $idView = (int) Tools::getValue('id_view');
+                if ($idView > 0 && WmSavedView::deleteAny($idView)) {
+                    WmAuditLogger::log('saved_view_deleted', array('id_view' => $idView, 'deleted_by_admin' => true));
+                    $messages .= $this->displayConfirmation($this->l('The saved view has been deleted.'));
+                } else {
+                    $messages .= $this->displayError($this->l('The saved view could not be deleted.'));
+                }
+            }
+        }
 
         $this->context->controller->addCSS($this->getVersionedAssetUrl('views/css/configuration.css'));
         if ($canViewDiagnostics) {
@@ -140,6 +156,7 @@ class Wilden_manager extends Module
             'wm_permissions_action' => $this->context->link->getAdminLink('AdminModules', true, array(), array(
                 'configure' => $this->name,
             )),
+            'wm_saved_views_admin' => $isSuperAdmin ? WmSavedView::getAllNative() : array(),
         ));
 
         return $messages . $this->display(__FILE__, 'views/templates/admin/configuration.tpl');
@@ -415,6 +432,15 @@ class Wilden_manager extends Module
                 'bulkExecuteUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=executeBulkStatus',
                 'orderStates' => OrderState::getOrderStates((int) $this->context->language->id),
                 'maxBulk' => self::MAX_BULK_ORDERS,
+                'savedViews' => WmSavedView::getNativeForEmployee(
+                    (int) $this->context->employee->id,
+                    (int) $this->context->shop->id
+                ),
+                'ordersUrl' => $this->context->link->getAdminLink('AdminOrders'),
+                'saveViewUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=saveNativeView',
+                'deleteViewUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=deleteNativeView',
+                'viewStorageKey' => 'wilden_manager_native_view_' . (int) $this->context->employee->id . '_' .
+                    (int) $this->context->shop->id,
                 'canExport' => $canExport,
                 'exportUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=exportSelectedOrders',
                 'exportColumns' => $exportColumnOptions,
@@ -429,6 +455,23 @@ class Wilden_manager extends Module
                 'reset' => $this->l('Restore defaults'),
                 'cancel' => $this->l('Cancel'),
                 'error' => $this->l('The column preference could not be saved.'),
+                'viewsLabel' => $this->l('Saved views'),
+                'viewsNone' => $this->l('Choose a saved view'),
+                'viewsApply' => $this->l('Apply view'),
+                'viewsNew' => $this->l('Save current view'),
+                'viewsEdit' => $this->l('Edit selected view'),
+                'viewsTitleNew' => $this->l('Save current order view'),
+                'viewsTitleEdit' => $this->l('Edit saved order view'),
+                'viewsName' => $this->l('View name'),
+                'viewsDefault' => $this->l('Apply this view by default when opening Orders'),
+                'viewsReplace' => $this->l('Replace its filters, sorting and columns with the current list'),
+                'viewsSave' => $this->l('Save view'),
+                'viewsDelete' => $this->l('Delete view'),
+                'viewsDeleteConfirm' => $this->l('Delete this saved view?'),
+                'viewsSaved' => $this->l('The view has been saved.'),
+                'viewsDeleted' => $this->l('The view has been deleted.'),
+                'viewsError' => $this->l('The saved view operation could not be completed.'),
+                'viewsDefaultSuffix' => $this->l('default'),
                 'bulkButton' => $this->l('Safe status change'),
                 'bulkTitle' => $this->l('Bulk order status change'),
                 'bulkState' => $this->l('New status'),
