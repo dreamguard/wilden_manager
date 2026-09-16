@@ -54,6 +54,26 @@
   font-size: 20px;
 }
 
+.wm-permissions-table-wrap {
+  overflow-x: auto;
+}
+
+.wm-permissions-table th:not(:first-child),
+.wm-permissions-table td:not(:first-child) {
+  width: 190px;
+  text-align: center;
+}
+
+.wm-permissions-table .badge {
+  margin-left: 8px;
+}
+
+#wm-profile-permissions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .wm-integrity-summary {
   display: flex;
   flex-wrap: wrap;

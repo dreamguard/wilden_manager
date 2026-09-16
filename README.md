@@ -3,7 +3,7 @@
 Private order-management module developed from scratch for PrestaShop 8.2 and
 Wilden Militaria S.L.
 
-## Version 1.9.1
+## Version 1.10.0
 
 The initial version provides:
 
@@ -15,6 +15,8 @@ The initial version provides:
 - Native order columns can be shown, hidden and reordered per employee and shop.
 - Customer email and shipping method columns, including native-grid filters and sorting.
 - Configurable CSV and XLSX exports from the native order selection.
+- Independent export and diagnostics/audit permissions for each employee profile.
+- Secure upgrade defaults that grant both new permissions only to SuperAdmin.
 - Spreadsheet-formula injection protection for exported text values.
 - Combined native invoice and delivery-slip PDFs from the selected orders.
 - Optional ZIP download containing both document batches.

@@ -283,7 +283,7 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
 
     public function ajaxProcessExportSelectedOrders()
     {
-        if (!$this->access('view')) {
+        if (!$this->access('view') || !$this->module->canCurrentEmployeeExport()) {
             $this->ajaxDie(json_encode(array(
                 'success' => false,
                 'error' => $this->module->l('You do not have permission to export orders.', 'AdminWildenManagerOrdersController'),
@@ -376,7 +376,7 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
 
     public function ajaxProcessIntegrityScan()
     {
-        if (!$this->access('view')) {
+        if (!$this->access('view') || !$this->module->canCurrentEmployeeViewDiagnostics()) {
             $this->ajaxDie(json_encode(array('success' => false, 'error' => 'Access denied.')));
         }
 
@@ -397,7 +397,7 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
 
     public function ajaxProcessAuditLog()
     {
-        if (!$this->access('view')) {
+        if (!$this->access('view') || !$this->module->canCurrentEmployeeViewDiagnostics()) {
             $this->ajaxDie(json_encode(array('success' => false, 'error' => 'Access denied.')));
         }
 
@@ -450,7 +450,7 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
 
     public function ajaxProcessExportIntegrity()
     {
-        if (!$this->access('view')) {
+        if (!$this->access('view') || !$this->module->canCurrentEmployeeViewDiagnostics()) {
             $this->ajaxDie(json_encode(array('success' => false, 'error' => 'Access denied.')));
         }
 
@@ -708,6 +708,15 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
 
     private function exportOrders()
     {
+        if (!$this->access('view') || !$this->module->canCurrentEmployeeExport()) {
+            $this->errors[] = $this->module->l(
+                'You do not have permission to export orders.',
+                'AdminWildenManagerOrdersController'
+            );
+
+            return;
+        }
+
         $filters = $this->getFilters();
         $sort = (string) Tools::getValue('sort', 'date_add');
         $direction = (string) Tools::getValue('direction', 'DESC');

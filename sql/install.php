@@ -8,6 +8,15 @@ $engine = _MYSQL_ENGINE_;
 $prefix = _DB_PREFIX_;
 
 return array(
+    "CREATE TABLE IF NOT EXISTS `{$prefix}wilden_manager_profile_permission` (
+        `id_profile` INT UNSIGNED NOT NULL,
+        `can_export` TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
+        `can_view_diagnostics` TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
+        `date_add` DATETIME NOT NULL,
+        `date_upd` DATETIME NOT NULL,
+        PRIMARY KEY (`id_profile`)
+    ) ENGINE={$engine} DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+
     "CREATE TABLE IF NOT EXISTS `{$prefix}wilden_manager_grid_preference` (
         `id_wilden_manager_grid_preference` INT UNSIGNED NOT NULL AUTO_INCREMENT,
         `id_employee` INT UNSIGNED NOT NULL,

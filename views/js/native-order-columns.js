@@ -215,9 +215,10 @@
       $panel.find('.card-header').first().append($bulkButton);
     }
 
-    var exportModalId = 'wm-export-modal';
-    var $exportModal = $('#' + exportModalId);
-    if (!$exportModal.length) {
+    if (config.canExport) {
+      var exportModalId = 'wm-export-modal';
+      var $exportModal = $('#' + exportModalId);
+      if (!$exportModal.length) {
       $exportModal = $(
         '<div class="modal fade" id="' + exportModalId + '" tabindex="-1" role="dialog" aria-hidden="true">' +
           '<div class="modal-dialog" role="document"><div class="modal-content">' +
@@ -241,9 +242,9 @@
       }
       $exportModal.find('[data-dismiss="modal"]').last().text(config.cancel);
       $exportModal.find('.wm-export-download').text(config.exportDownload);
-    }
+      }
 
-    function getSavedExportColumns() {
+      function getSavedExportColumns() {
       var defaults = ['id_order', 'reference', 'date_add', 'customer', 'email', 'total_paid_tax_incl', 'state_name', 'carrier_name'];
       if (config.exportStorageKey && window.localStorage) {
         try {
@@ -256,9 +257,9 @@
         }
       }
       return defaults;
-    }
+      }
 
-    function renderExportColumns() {
+      function renderExportColumns() {
       var selected = getSavedExportColumns();
       var $list = $exportModal.find('.wm-export-columns').empty();
       (config.exportColumns || []).forEach(function (column) {
@@ -267,17 +268,17 @@
         $label.find('span').text(column.label);
         $list.append($label);
       });
-    }
+      }
 
-    var $exportButton = $('<button type="button" class="btn btn-outline-secondary wm-export-button"><i class="material-icons">download</i> <span></span></button>');
-    $exportButton.find('span').text(config.exportButton);
-    if ($actions.length) {
-      $actions.prepend($exportButton);
-    } else {
-      $panel.find('.card-header').first().append($exportButton);
-    }
+      var $exportButton = $('<button type="button" class="btn btn-outline-secondary wm-export-button"><i class="material-icons">download</i> <span></span></button>');
+      $exportButton.find('span').text(config.exportButton);
+      if ($actions.length) {
+        $actions.prepend($exportButton);
+      } else {
+        $panel.find('.card-header').first().append($exportButton);
+      }
 
-    $exportButton.on('click', function () {
+      $exportButton.on('click', function () {
       var ids = getSelectedOrderIds();
       if (!ids.length) {
         window.alert(config.bulkNoSelection);
@@ -288,9 +289,9 @@
       $exportModal.find('.wm-export-selection').text(ids.length + ' ' + config.bulkSelected);
       $exportModal.find('.wm-export-error').prop('hidden', true).text('');
       $exportModal.modal('show');
-    });
+      });
 
-    $exportModal.on('click', '.wm-export-download', function () {
+      $exportModal.on('click', '.wm-export-download', function () {
       var columns = [];
       $exportModal.find('.wm-export-columns input:checked').each(function () {
         columns.push($(this).val());
@@ -314,7 +315,8 @@
       $form.trigger('submit');
       window.setTimeout(function () { $form.remove(); }, 1000);
       $exportModal.modal('hide');
-    });
+      });
+    }
 
     var documentModalId = 'wm-document-modal';
     var $documentModal = $('#' + documentModalId);

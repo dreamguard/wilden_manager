@@ -20,10 +20,11 @@ require_once __DIR__ . '/classes/WmBulkOrderService.php';
 require_once __DIR__ . '/classes/WmExportService.php';
 require_once __DIR__ . '/classes/WmDocumentService.php';
 require_once __DIR__ . '/classes/WmIntegrityService.php';
+require_once __DIR__ . '/classes/WmProfilePermission.php';
 
 class Wilden_manager extends Module
 {
-    const VERSION = '1.9.1';
+    const VERSION = '1.10.0';
     const TAB_CLASS = 'AdminWildenManagerOrders';
     const MAX_BULK_ORDERS = 100;
     const MAX_EXPORT_ORDERS = 1000;
@@ -56,6 +57,7 @@ class Wilden_manager extends Module
             'orders_exported' => $this->l('Orders exported'),
             'documents_download_requested' => $this->l('Order documents downloaded'),
             'integrity_report_exported' => $this->l('Integrity report exported'),
+            'profile_permissions_updated' => $this->l('Profile permissions updated'),
             'note_updated' => $this->l('Internal note updated (historical)'),
             'saved_view_created' => $this->l('Saved view created (historical)'),
             'saved_view_deleted' => $this->l('Saved view deleted (historical)'),
@@ -98,18 +100,67 @@ class Wilden_manager extends Module
 
     public function getContent()
     {
-        $this->context->controller->addJS($this->getVersionedAssetUrl('views/js/configuration.js'));
+        $isSuperAdmin = $this->isCurrentEmployeeSuperAdmin();
+        $canViewDiagnostics = $this->canCurrentEmployeeViewDiagnostics();
+        $messages = '';
+
+        if (Tools::isSubmit('submitWmProfilePermissions')) {
+            if (!$isSuperAdmin) {
+                $messages .= $this->displayError($this->l('Only SuperAdmin can change profile permissions.'));
+            } elseif (!isset($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
+                $messages .= $this->displayError($this->l('This action requires a POST request.'));
+            } elseif (WmProfilePermission::save(
+                (array) Tools::getValue('wm_export_profiles', array()),
+                (array) Tools::getValue('wm_diagnostic_profiles', array()),
+                (int) $this->context->language->id
+            )) {
+                WmAuditLogger::log('profile_permissions_updated');
+                $messages .= $this->displayConfirmation($this->l('Profile permissions have been saved.'));
+            } else {
+                $messages .= $this->displayError($this->l('Profile permissions could not be saved.'));
+            }
+        }
+
         $this->context->controller->addCSS($this->getVersionedAssetUrl('views/css/configuration.css'));
-        $jsConfiguration = $this->getIntegrityJsConfiguration();
-        $jsConfiguration['audit'] = $this->getAuditJsConfiguration();
-        Media::addJsDef(array('wildenManagerConfiguration' => $jsConfiguration));
+        if ($canViewDiagnostics) {
+            $this->context->controller->addJS($this->getVersionedAssetUrl('views/js/configuration.js'));
+            $jsConfiguration = $this->getIntegrityJsConfiguration();
+            $jsConfiguration['audit'] = $this->getAuditJsConfiguration();
+            Media::addJsDef(array('wildenManagerConfiguration' => $jsConfiguration));
+        }
 
         $this->context->smarty->assign(array(
             'wm_module_version' => self::VERSION,
             'wm_orders_url' => $this->context->link->getAdminLink('AdminOrders'),
+            'wm_can_view_diagnostics' => $canViewDiagnostics,
+            'wm_is_super_admin' => $isSuperAdmin,
+            'wm_profile_permissions' => $isSuperAdmin
+                ? WmProfilePermission::getProfiles((int) $this->context->language->id)
+                : array(),
+            'wm_permissions_action' => $this->context->link->getAdminLink('AdminModules', true, array(), array(
+                'configure' => $this->name,
+            )),
         ));
 
-        return $this->display(__FILE__, 'views/templates/admin/configuration.tpl');
+        return $messages . $this->display(__FILE__, 'views/templates/admin/configuration.tpl');
+    }
+
+    public function isCurrentEmployeeSuperAdmin()
+    {
+        return isset($this->context->employee)
+            && WmProfilePermission::isSuperAdmin((int) $this->context->employee->id_profile);
+    }
+
+    public function canCurrentEmployeeExport()
+    {
+        return isset($this->context->employee)
+            && WmProfilePermission::canExport((int) $this->context->employee->id_profile);
+    }
+
+    public function canCurrentEmployeeViewDiagnostics()
+    {
+        return isset($this->context->employee)
+            && WmProfilePermission::canViewDiagnostics((int) $this->context->employee->id_profile);
     }
 
     public function getNativeOrderColumns()
@@ -344,8 +395,11 @@ class Wilden_manager extends Module
             $columnOptions[] = array('id' => $id, 'label' => $label);
         }
         $exportColumnOptions = array();
-        foreach ($this->getExportColumns() as $id => $label) {
-            $exportColumnOptions[] = array('id' => $id, 'label' => $label);
+        $canExport = $this->canCurrentEmployeeExport();
+        if ($canExport) {
+            foreach ($this->getExportColumns() as $id => $label) {
+                $exportColumnOptions[] = array('id' => $id, 'label' => $label);
+            }
         }
 
         $this->context->controller->addJS($this->getVersionedAssetUrl('views/js/native-order-columns.js'));
@@ -361,6 +415,7 @@ class Wilden_manager extends Module
                 'bulkExecuteUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=executeBulkStatus',
                 'orderStates' => OrderState::getOrderStates((int) $this->context->language->id),
                 'maxBulk' => self::MAX_BULK_ORDERS,
+                'canExport' => $canExport,
                 'exportUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=exportSelectedOrders',
                 'exportColumns' => $exportColumnOptions,
                 'xlsxAvailable' => class_exists('ZipArchive'),
@@ -513,7 +568,7 @@ class Wilden_manager extends Module
             }
         }
 
-        return true;
+        return WmProfilePermission::installDefaults((int) $this->context->language->id);
     }
 
     private function uninstallDatabase()

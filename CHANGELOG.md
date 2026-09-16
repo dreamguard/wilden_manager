@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.10.0 - 2026-09-16
+
+- Added independent profile permissions for CSV/XLSX exports and diagnostics/audit.
+- Added a SuperAdmin-only permissions matrix to the module configuration page.
+- Enforced permissions both in the interface and on every protected server endpoint.
+- Granted both permissions only to SuperAdmin on installation and upgrade.
+- Kept document downloads and bulk status changes outside these new restrictions.
+
 ## 1.9.1 - 2026-09-16
 
 - Fixed related-order links opening the native Orders list instead of the order detail page.

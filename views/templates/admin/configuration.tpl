@@ -10,6 +10,48 @@
 
   <div class="wm-configuration-layout">
     <main class="wm-configuration-main">
+      {if $wm_is_super_admin}
+      <section class="card wm-configuration-card" id="wm-profile-permissions">
+        <div class="card-header">
+          <h3><i class="material-icons">admin_panel_settings</i> {l s='Permissions by profile' mod='wilden_manager'}</h3>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-info">
+            {l s='Permissions are enforced both in the interface and on the server. SuperAdmin always retains full access.' mod='wilden_manager'}
+          </div>
+          <form method="post" action="{$wm_permissions_action|escape:'htmlall':'UTF-8'}">
+            <div class="wm-permissions-table-wrap">
+              <table class="table wm-permissions-table">
+                <thead>
+                  <tr>
+                    <th>{l s='Profile' mod='wilden_manager'}</th>
+                    <th>{l s='CSV/XLSX exports' mod='wilden_manager'}</th>
+                    <th>{l s='Diagnostics and audit' mod='wilden_manager'}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {foreach from=$wm_profile_permissions item=profile}
+                  <tr>
+                    <td>
+                      {$profile.name|escape:'htmlall':'UTF-8'}
+                      {if $profile.is_super_admin}<span class="badge badge-primary">SuperAdmin</span>{/if}
+                    </td>
+                    <td><input type="checkbox" name="wm_export_profiles[]" value="{$profile.id_profile|intval}"{if $profile.can_export} checked{/if}{if $profile.is_super_admin} disabled{/if}></td>
+                    <td><input type="checkbox" name="wm_diagnostic_profiles[]" value="{$profile.id_profile|intval}"{if $profile.can_view_diagnostics} checked{/if}{if $profile.is_super_admin} disabled{/if}></td>
+                  </tr>
+                  {/foreach}
+                </tbody>
+              </table>
+            </div>
+            <button type="submit" name="submitWmProfilePermissions" value="1" class="btn btn-primary">
+              <i class="material-icons">save</i> {l s='Save permissions' mod='wilden_manager'}
+            </button>
+          </form>
+        </div>
+      </section>
+      {/if}
+
+      {if $wm_can_view_diagnostics}
       <section class="card wm-configuration-card" id="wm-integrity-dashboard">
         <div class="card-header">
           <h3><i class="material-icons">fact_check</i> {l s='Order integrity diagnostics' mod='wilden_manager'}</h3>
@@ -143,23 +185,28 @@
           </div>
         </div>
       </section>
+      {else}
+      <div class="alert alert-warning">
+        {l s='Your employee profile does not have permission to access diagnostics or audit history.' mod='wilden_manager'}
+      </div>
+      {/if}
     </main>
 
     <aside class="wm-configuration-sidebar">
       <section class="card wm-configuration-card">
         <div class="card-header"><h3>{l s='Module areas' mod='wilden_manager'}</h3></div>
         <div class="card-body">
-          <div class="wm-area wm-area-active">
+          <div class="wm-area {if $wm_can_view_diagnostics}wm-area-active{else}wm-area-future{/if}">
             <i class="material-icons">health_and_safety</i>
             <div><strong>{l s='Diagnostics' mod='wilden_manager'}</strong><span>{l s='Integrity checks and reports' mod='wilden_manager'}</span></div>
           </div>
-          <div class="wm-area wm-area-active">
+          <div class="wm-area {if $wm_can_view_diagnostics}wm-area-active{else}wm-area-future{/if}">
             <i class="material-icons">history</i>
             <div><strong>{l s='Audit' mod='wilden_manager'}</strong><span>{l s='Module activity history' mod='wilden_manager'}</span></div>
           </div>
-          <div class="wm-area wm-area-future">
-            <i class="material-icons">settings</i>
-            <div><strong>{l s='Settings' mod='wilden_manager'}</strong><span>{l s='Future module options will be added here' mod='wilden_manager'}</span></div>
+          <div class="wm-area {if $wm_is_super_admin}wm-area-active{else}wm-area-future{/if}">
+            <i class="material-icons">admin_panel_settings</i>
+            <div><strong>{l s='Permissions' mod='wilden_manager'}</strong><span>{l s='Access by employee profile' mod='wilden_manager'}</span></div>
           </div>
         </div>
       </section>
