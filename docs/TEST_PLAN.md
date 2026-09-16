@@ -66,6 +66,20 @@
 
 ## Isolation
 
-- Confirm installation and ordinary navigation do not read or write tables or
+- Confirm installation and ordinary navigation do not write tables or
   configuration belonging to `idxrcustomproduct`, `autostockpack`, Redsys or
-  any other module.
+  any other module. The stock diagnostic may read the clone mapping only to
+  classify custom products.
+
+## Stock, cancellation and refund diagnostics
+
+- Open **Configure** and confirm the stock scan starts automatically below order integrity.
+- Confirm the default filter shows only high severity and that zero results remain visible as a valid result.
+- Switch to medium and information, filter by issue and product type, and paginate.
+- Confirm order-level cancellation rows link to the correct order.
+- Confirm product findings link to the correct product editor and show the attribute ID when applicable.
+- Confirm standard products, packs and mapped custom clones are labelled separately.
+- Export each filtered severity to CSV and confirm the exported rows match the active filters.
+- Confirm formula-control characters in product names or references are neutralized in CSV.
+- Confirm scanning, filtering and exporting do not change orders, order details, returns,
+  credit slips, stock movements, stock availability, packs or custom-product data.

@@ -171,6 +171,83 @@
         </div>
       </section>
 
+      <section class="card wm-configuration-card" id="wm-stock-integrity-dashboard">
+        <div class="card-header">
+          <h3><i class="material-icons">inventory_2</i> {l s='Stock, cancellation and refund diagnostics' mod='wilden_manager'}</h3>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-info">
+            {l s='This analysis is read-only. High severity is reserved for impossible quantities. Informational rows identify cases that need human interpretation and are not proof of an incorrect stock change.' mod='wilden_manager'}
+          </div>
+
+          <div class="wm-stock-summary">
+            <span class="badge badge-danger wm-stock-high"></span>
+            <span class="badge badge-warning wm-stock-medium"></span>
+            <span class="badge badge-info wm-stock-info"></span>
+          </div>
+
+          <div class="wm-stock-filters">
+            <div class="form-group">
+              <label for="wm-stock-issue">{l s='Issue type' mod='wilden_manager'}</label>
+              <select id="wm-stock-issue" class="form-control wm-stock-issue"><option value=""></option></select>
+            </div>
+            <div class="form-group">
+              <label for="wm-stock-severity">{l s='Severity' mod='wilden_manager'}</label>
+              <select id="wm-stock-severity" class="form-control wm-stock-severity">
+                <option value=""></option>
+                <option value="high"></option>
+                <option value="medium"></option>
+                <option value="info"></option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="wm-stock-kind">{l s='Product type' mod='wilden_manager'}</label>
+              <select id="wm-stock-kind" class="form-control wm-stock-kind">
+                <option value=""></option>
+                <option value="standard"></option>
+                <option value="pack"></option>
+                <option value="custom"></option>
+                <option value="order"></option>
+              </select>
+            </div>
+            <div class="form-group wm-stock-filter-actions">
+              <button type="button" class="btn btn-outline-primary wm-stock-refresh">
+                <i class="material-icons">refresh</i> {l s='Refresh analysis' mod='wilden_manager'}
+              </button>
+            </div>
+          </div>
+
+          <div class="alert wm-stock-message" hidden></div>
+          <div class="alert alert-success wm-stock-empty" hidden></div>
+          <div class="wm-stock-table-wrap" hidden>
+            <table class="wm-stock-table">
+              <thead>
+                <tr>
+                  <th>{l s='Severity' mod='wilden_manager'}</th>
+                  <th>{l s='Issue' mod='wilden_manager'}</th>
+                  <th>{l s='Type' mod='wilden_manager'}</th>
+                  <th>{l s='Order' mod='wilden_manager'}</th>
+                  <th>{l s='Product' mod='wilden_manager'}</th>
+                  <th>{l s='Date' mod='wilden_manager'}</th>
+                  <th>{l s='Detail' mod='wilden_manager'}</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="wm-stock-pagination" hidden>
+            <button type="button" class="btn btn-sm btn-outline-secondary wm-stock-previous"></button>
+            <span></span>
+            <button type="button" class="btn btn-sm btn-outline-secondary wm-stock-next"></button>
+          </div>
+          <div class="wm-stock-footer">
+            <button type="button" class="btn btn-primary wm-stock-export">
+              <i class="material-icons">download</i> {l s='Export filtered CSV' mod='wilden_manager'}
+            </button>
+          </div>
+        </div>
+      </section>
+
       <section class="card wm-configuration-card" id="wm-audit-dashboard">
         <div class="card-header">
           <h3><i class="material-icons">history</i> {l s='Audit history' mod='wilden_manager'}</h3>
@@ -253,6 +330,10 @@
           <div class="wm-area {if $wm_can_view_diagnostics}wm-area-active{else}wm-area-future{/if}">
             <i class="material-icons">history</i>
             <div><strong>{l s='Audit' mod='wilden_manager'}</strong><span>{l s='Module activity history' mod='wilden_manager'}</span></div>
+          </div>
+          <div class="wm-area {if $wm_can_view_diagnostics}wm-area-active{else}wm-area-future{/if}">
+            <i class="material-icons">inventory_2</i>
+            <div><strong>{l s='Stock diagnostics' mod='wilden_manager'}</strong><span>{l s='Cancellations, refunds and stock consistency' mod='wilden_manager'}</span></div>
           </div>
           <div class="wm-area {if $wm_is_super_admin}wm-area-active{else}wm-area-future{/if}">
             <i class="material-icons">admin_panel_settings</i>

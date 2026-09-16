@@ -16,6 +16,7 @@ Orders page; diagnostics and future settings live in the module control centre.
 - `WmExportService`: safe CSV and XLSX output for selected orders.
 - `WmDocumentService`: combined native invoices and delivery slips.
 - `WmIntegrityService`: read-only order consistency checks scoped by shop.
+- `WmStockIntegrityService`: read-only quantity, refund, cancellation and stock-cache checks scoped by shop.
 - `AdminWildenManagerOrdersController`: authorization, validation, exports and
   AJAX actions.
 - `configuration.tpl` and `configuration.js`: diagnostics and future module
@@ -33,5 +34,6 @@ Orders page; diagnostics and future settings live in the module control centre.
   status-update failure.
 - CSV text cells beginning with formula-control characters are neutralized.
 - Integrity diagnostics never repair or update business data.
+- Stock diagnostics classify uncertain cancellation, refund and pack evidence as informational rather than errors.
 - Notes are rendered escaped and limited to 5,000 characters.
 - The module contains no third-party integrations or inherited source.

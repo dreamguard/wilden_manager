@@ -20,16 +20,18 @@ require_once __DIR__ . '/classes/WmBulkOrderService.php';
 require_once __DIR__ . '/classes/WmExportService.php';
 require_once __DIR__ . '/classes/WmDocumentService.php';
 require_once __DIR__ . '/classes/WmIntegrityService.php';
+require_once __DIR__ . '/classes/WmStockIntegrityService.php';
 require_once __DIR__ . '/classes/WmProfilePermission.php';
 
 class Wilden_manager extends Module
 {
-    const VERSION = '1.11.0';
+    const VERSION = '1.12.0';
     const TAB_CLASS = 'AdminWildenManagerOrders';
     const MAX_BULK_ORDERS = 100;
     const MAX_EXPORT_ORDERS = 1000;
     const MAX_DOCUMENT_ORDERS = 100;
     const MAX_INTEGRITY_EXPORT = 10000;
+    const MAX_STOCK_INTEGRITY_EXPORT = 10000;
 
     public function getIntegrityIssueTypes()
     {
@@ -57,11 +59,28 @@ class Wilden_manager extends Module
             'orders_exported' => $this->l('Orders exported'),
             'documents_download_requested' => $this->l('Order documents downloaded'),
             'integrity_report_exported' => $this->l('Integrity report exported'),
+            'stock_integrity_report_exported' => $this->l('Stock diagnostic report exported'),
             'profile_permissions_updated' => $this->l('Profile permissions updated'),
             'note_updated' => $this->l('Internal note updated (historical)'),
             'saved_view_created' => $this->l('Saved view created'),
             'saved_view_updated' => $this->l('Saved view updated'),
             'saved_view_deleted' => $this->l('Saved view deleted'),
+        );
+    }
+
+    public function getStockIntegrityIssueTypes()
+    {
+        return array(
+            'refunded_exceeds_ordered' => $this->l('Refunded quantity exceeds ordered quantity'),
+            'returned_exceeds_ordered' => $this->l('Returned quantity exceeds ordered quantity'),
+            'reinjected_exceeds_ordered' => $this->l('Reinjected quantity exceeds ordered quantity'),
+            'credit_slip_exceeds_ordered' => $this->l('Credit-slip quantity exceeds ordered quantity'),
+            'return_request_exceeds_ordered' => $this->l('Return-request quantity exceeds ordered quantity'),
+            'refund_without_credit_slip' => $this->l('Refund counter is not covered by credit slips'),
+            'refund_not_reinjected' => $this->l('Refund or return without equal stock reinjection'),
+            'cancelled_restock_evidence_missing' => $this->l('Cancellation has no persistent restock evidence'),
+            'stock_cache_mismatch' => $this->l('Available, reserved and physical stock do not reconcile'),
+            'pack_stock_cache_mismatch' => $this->l('Pack stock cache does not reconcile'),
         );
     }
 
@@ -142,6 +161,7 @@ class Wilden_manager extends Module
             $this->context->controller->addJS($this->getVersionedAssetUrl('views/js/configuration.js'));
             $jsConfiguration = $this->getIntegrityJsConfiguration();
             $jsConfiguration['audit'] = $this->getAuditJsConfiguration();
+            $jsConfiguration['stock'] = $this->getStockIntegrityJsConfiguration();
             Media::addJsDef(array('wildenManagerConfiguration' => $jsConfiguration));
         }
 
@@ -598,6 +618,44 @@ class Wilden_manager extends Module
             'of' => $this->l('of'),
             'system' => $this->l('System'),
             'details' => $this->l('Details'),
+        );
+    }
+
+    private function getStockIntegrityJsConfiguration()
+    {
+        return array(
+            'scanUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=stockIntegrityScan',
+            'exportUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=exportStockIntegrity',
+            'issueTypes' => $this->getStockIntegrityIssueTypes(),
+            'issueSeverities' => array(
+                'refunded_exceeds_ordered' => 'high',
+                'returned_exceeds_ordered' => 'high',
+                'reinjected_exceeds_ordered' => 'high',
+                'credit_slip_exceeds_ordered' => 'high',
+                'return_request_exceeds_ordered' => 'high',
+                'refund_without_credit_slip' => 'medium',
+                'refund_not_reinjected' => 'info',
+                'cancelled_restock_evidence_missing' => 'info',
+                'stock_cache_mismatch' => 'medium',
+                'pack_stock_cache_mismatch' => 'info',
+            ),
+            'allIssues' => $this->l('All stock issue types'),
+            'allSeverities' => $this->l('All severities'),
+            'allKinds' => $this->l('All product types'),
+            'high' => $this->l('High'),
+            'medium' => $this->l('Medium'),
+            'info' => $this->l('Information'),
+            'standard' => $this->l('Standard'),
+            'pack' => $this->l('Pack'),
+            'custom' => $this->l('Custom product'),
+            'orderLevel' => $this->l('Order-level'),
+            'noIssues' => $this->l('No stock issues match the selected filters.'),
+            'loading' => $this->l('Analysing stock, cancellations and refunds...'),
+            'error' => $this->l('The stock analysis could not be completed.'),
+            'previous' => $this->l('Previous'),
+            'next' => $this->l('Next'),
+            'page' => $this->l('Page'),
+            'of' => $this->l('of'),
         );
     }
 

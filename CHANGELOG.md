@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.12.0 - 2026-09-16
+
+- Added read-only stock, cancellation and refund diagnostics to the module control centre.
+- Added high-severity checks for impossible refunded, returned, reinjected, credit-slip and return-request quantities.
+- Added medium-severity checks for refund/credit-slip evidence and standard stock-cache reconciliation.
+- Added informational review queues for non-reinjected refunds, cancellations without persistent restock evidence and pack stock caches.
+- Added filters by issue, severity and standard/pack/custom/order-level scope.
+- Added direct links to related orders and products, pagination and safe filtered CSV export.
+- Kept every diagnostic endpoint read-only and protected by the existing diagnostics permission.
+
 ## 1.11.0 - 2026-09-16
 
 - Added named views for the native PrestaShop Orders grid.

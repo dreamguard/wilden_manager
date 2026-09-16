@@ -135,6 +135,174 @@
       window.setTimeout(function () { $form.remove(); }, 1000);
     });
 
+    function initStockIntegrity() {
+      var stockConfig = config.stock;
+      var $stock = $('#wm-stock-integrity-dashboard');
+      if (!stockConfig || !$stock.length || $stock.data('wm-stock-initialized')) {
+        return;
+      }
+      $stock.data('wm-stock-initialized', true);
+
+      var $stockIssue = $stock.find('.wm-stock-issue');
+      var $stockSeverity = $stock.find('.wm-stock-severity');
+      var $stockKind = $stock.find('.wm-stock-kind');
+      var activeStockRequest = null;
+      var stockSequence = 0;
+
+      $stockIssue.find('option').first().text(stockConfig.allIssues);
+      Object.keys(stockConfig.issueTypes || {}).forEach(function (id) {
+        $('<option></option>').val(id).text(stockConfig.issueTypes[id]).appendTo($stockIssue);
+      });
+      $stockSeverity.find('option[value=""]').text(stockConfig.allSeverities);
+      $stockSeverity.find('option[value="high"]').text(stockConfig.high);
+      $stockSeverity.find('option[value="medium"]').text(stockConfig.medium);
+      $stockSeverity.find('option[value="info"]').text(stockConfig.info);
+      $stockKind.find('option[value=""]').text(stockConfig.allKinds);
+      $stockKind.find('option[value="standard"]').text(stockConfig.standard);
+      $stockKind.find('option[value="pack"]').text(stockConfig.pack);
+      $stockKind.find('option[value="custom"]').text(stockConfig.custom);
+      $stockKind.find('option[value="order"]').text(stockConfig.orderLevel);
+      $stockSeverity.val('high');
+      $stock.find('.wm-stock-previous').text(stockConfig.previous);
+      $stock.find('.wm-stock-next').text(stockConfig.next);
+
+      function stockKindLabel(kind) {
+        if (kind === 'pack') { return stockConfig.pack; }
+        if (kind === 'custom') { return stockConfig.custom; }
+        if (kind === 'order') { return stockConfig.orderLevel; }
+        return stockConfig.standard;
+      }
+
+      function setStockMessage(type, message) {
+        $stock.find('.wm-stock-message')
+          .removeClass('alert-info alert-success alert-danger alert-warning')
+          .addClass('alert-' + type)
+          .prop('hidden', !message)
+          .text(message || '');
+      }
+
+      function renderStockReport(report) {
+        var summary = report.summary || {};
+        $stock.find('.wm-stock-high').text(stockConfig.high + ': ' + (summary.high || 0));
+        $stock.find('.wm-stock-medium').text(stockConfig.medium + ': ' + (summary.medium || 0));
+        $stock.find('.wm-stock-info').text(stockConfig.info + ': ' + (summary.info || 0));
+
+        var issues = Array.isArray(report.issues) ? report.issues : [];
+        var $tbody = $stock.find('.wm-stock-table tbody').empty();
+        var $empty = $stock.find('.wm-stock-empty');
+        var $table = $stock.find('.wm-stock-table-wrap');
+        if (!issues.length) {
+          $table.prop('hidden', true);
+          $empty.text(stockConfig.noIssues).prop('hidden', false);
+        } else {
+          issues.forEach(function (issue) {
+            var $row = $('<tr><td><span class="badge"></span></td><td></td><td><span class="badge badge-secondary"></span></td><td></td><td><div></div><small></small></td><td></td><td></td></tr>');
+            var severityLabel = issue.severity === 'high' ? stockConfig.high : (issue.severity === 'medium' ? stockConfig.medium : stockConfig.info);
+            var badgeClass = issue.severity === 'high' ? 'badge-danger' : (issue.severity === 'medium' ? 'badge-warning' : 'badge-info');
+            $row.children().eq(0).find('.badge').addClass(badgeClass).text(severityLabel);
+            $row.children().eq(1).text(issue.label || issue.issue_type || '');
+            $row.children().eq(2).find('.badge').text(stockKindLabel(issue.product_kind));
+            if (issue.id_order && issue.order_url) {
+              $('<a target="_blank" rel="noopener"></a>')
+                .attr('href', issue.order_url)
+                .text('#' + parseInt(issue.id_order, 10))
+                .appendTo($row.children().eq(3));
+              if (issue.reference) {
+                $('<small></small>').text(issue.reference).appendTo($row.children().eq(3));
+              }
+            } else {
+              $row.children().eq(3).text('—');
+            }
+            if (issue.id_product && issue.product_url) {
+              $('<a target="_blank" rel="noopener"></a>')
+                .attr('href', issue.product_url)
+                .text(issue.product_name || ('#' + parseInt(issue.id_product, 10)))
+                .appendTo($row.children().eq(4).find('div'));
+              $row.children().eq(4).find('small').text(
+                '#' + parseInt(issue.id_product, 10) +
+                (parseInt(issue.id_product_attribute, 10) ? ' / attr #' + parseInt(issue.id_product_attribute, 10) : '')
+              );
+            } else {
+              $row.children().eq(4).find('div').text(issue.product_name || '—');
+            }
+            $row.children().eq(5).text(issue.order_date || '');
+            $row.children().eq(6).text(issue.detail || '');
+            $tbody.append($row);
+          });
+          $empty.prop('hidden', true);
+          $table.prop('hidden', false);
+        }
+
+        var page = parseInt(report.page, 10) || 1;
+        var pages = parseInt(report.pages, 10) || 1;
+        var $pagination = $stock.find('.wm-stock-pagination').prop('hidden', pages <= 1);
+        $pagination.find('span').text(stockConfig.page + ' ' + page + ' ' + stockConfig.of + ' ' + pages);
+        $pagination.find('.wm-stock-previous').prop('disabled', page <= 1);
+        $pagination.find('.wm-stock-next').prop('disabled', page >= pages);
+        $stock.data('page', page).data('pages', pages);
+      }
+
+      function loadStockReport(page) {
+        page = Math.max(1, parseInt(page, 10) || 1);
+        stockSequence += 1;
+        var currentSequence = stockSequence;
+        if (activeStockRequest && activeStockRequest.readyState !== 4) {
+          activeStockRequest.abort();
+        }
+        $stock.find('.wm-stock-refresh').prop('disabled', true);
+        setStockMessage('info', stockConfig.loading);
+        activeStockRequest = $.ajax({
+          url: stockConfig.scanUrl,
+          method: 'POST',
+          dataType: 'json',
+          data: {
+            issue_type: $stockIssue.val(),
+            severity: $stockSeverity.val(),
+            product_kind: $stockKind.val(),
+            page: page,
+            limit: 50
+          }
+        }).done(function (response) {
+          if (currentSequence !== stockSequence) { return; }
+          if (!response || !response.success || !response.report) {
+            setStockMessage('danger', (response && response.error) || stockConfig.error);
+            return;
+          }
+          setStockMessage('info', '');
+          renderStockReport(response.report);
+        }).fail(function (xhr, textStatus) {
+          if (textStatus === 'abort' || currentSequence !== stockSequence) { return; }
+          var response = xhr.responseJSON || {};
+          setStockMessage('danger', response.error || stockConfig.error);
+        }).always(function () {
+          if (currentSequence === stockSequence) {
+            $stock.find('.wm-stock-refresh').prop('disabled', false);
+            activeStockRequest = null;
+          }
+        });
+      }
+
+      $stock.on('click', '.wm-stock-refresh', function () { loadStockReport(1); });
+      $stock.on('change', '.wm-stock-issue', function () {
+        var expectedSeverity = (stockConfig.issueSeverities || {})[$stockIssue.val()];
+        if (expectedSeverity) { $stockSeverity.val(expectedSeverity); }
+        loadStockReport(1);
+      });
+      $stock.on('change', '.wm-stock-severity, .wm-stock-kind', function () { loadStockReport(1); });
+      $stock.on('click', '.wm-stock-previous', function () { loadStockReport(($stock.data('page') || 1) - 1); });
+      $stock.on('click', '.wm-stock-next', function () { loadStockReport(($stock.data('page') || 1) + 1); });
+      $stock.on('click', '.wm-stock-export', function () {
+        var $form = $('<form method="post" hidden></form>').attr('action', stockConfig.exportUrl).appendTo('body');
+        $('<input type="hidden" name="issue_type">').val($stockIssue.val()).appendTo($form);
+        $('<input type="hidden" name="severity">').val($stockSeverity.val()).appendTo($form);
+        $('<input type="hidden" name="product_kind">').val($stockKind.val()).appendTo($form);
+        $form.trigger('submit');
+        window.setTimeout(function () { $form.remove(); }, 1000);
+      });
+
+      loadStockReport(1);
+    }
+
     function initAudit() {
       var auditConfig = config.audit;
       var $audit = $('#wm-audit-dashboard');
@@ -273,6 +441,7 @@
     }
 
     loadReport(1);
+    initStockIntegrity();
     initAudit();
   });
 })(window.jQuery);

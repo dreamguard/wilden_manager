@@ -503,6 +503,31 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         }
     }
 
+    public function ajaxProcessStockIntegrityScan()
+    {
+        if (!$this->access('view') || !$this->module->canCurrentEmployeeViewDiagnostics()) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'Access denied.')));
+        }
+
+        try {
+            $service = new WmStockIntegrityService($this->context);
+            $report = $service->scan(
+                (string) Tools::getValue('issue_type'),
+                (string) Tools::getValue('severity'),
+                (string) Tools::getValue('product_kind'),
+                (int) Tools::getValue('page', 1),
+                (int) Tools::getValue('limit', 50)
+            );
+            $report['issues'] = $this->prepareStockIntegrityIssues($report['issues']);
+            $this->ajaxDie(json_encode(
+                array('success' => true, 'report' => $report),
+                JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+            ));
+        } catch (Exception $exception) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => $exception->getMessage())));
+        }
+    }
+
     public function ajaxProcessAuditLog()
     {
         if (!$this->access('view') || !$this->module->canCurrentEmployeeViewDiagnostics()) {
@@ -580,6 +605,32 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         }
     }
 
+    public function ajaxProcessExportStockIntegrity()
+    {
+        if (!$this->access('view') || !$this->module->canCurrentEmployeeViewDiagnostics()) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'Access denied.')));
+        }
+
+        try {
+            $service = new WmStockIntegrityService($this->context);
+            $issues = $this->prepareStockIntegrityIssues($service->getForExport(
+                (string) Tools::getValue('issue_type'),
+                (string) Tools::getValue('severity'),
+                (string) Tools::getValue('product_kind'),
+                Wilden_manager::MAX_STOCK_INTEGRITY_EXPORT
+            ));
+            WmAuditLogger::log('stock_integrity_report_exported', array(
+                'issue_type' => (string) Tools::getValue('issue_type'),
+                'severity' => (string) Tools::getValue('severity'),
+                'product_kind' => (string) Tools::getValue('product_kind'),
+                'rows' => count($issues),
+            ));
+            $this->downloadStockIntegrityCsv($issues);
+        } catch (Exception $exception) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => $exception->getMessage())));
+        }
+    }
+
     private function getOrderViewUrl($idOrder)
     {
         return $this->context->link->getAdminLink(
@@ -589,6 +640,18 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
             array(
                 'vieworder' => 1,
                 'id_order' => (int) $idOrder,
+            )
+        );
+    }
+
+    private function getProductEditUrl($idProduct)
+    {
+        return $this->context->link->getAdminLink(
+            'AdminProducts',
+            true,
+            array(
+                'route' => 'admin_product_form',
+                'id' => (int) $idProduct,
             )
         );
     }
@@ -711,6 +774,93 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         return '';
     }
 
+    private function prepareStockIntegrityIssues(array $issues)
+    {
+        $labels = $this->module->getStockIntegrityIssueTypes();
+        foreach ($issues as &$issue) {
+            $issue['label'] = isset($labels[$issue['issue_type']])
+                ? $labels[$issue['issue_type']]
+                : $issue['issue_type'];
+            $issue['detail'] = $this->getStockIntegrityDetail($issue);
+            $issue['order_url'] = !empty($issue['id_order'])
+                ? $this->getOrderViewUrl((int) $issue['id_order'])
+                : '';
+            $issue['product_url'] = !empty($issue['id_product'])
+                ? $this->getProductEditUrl((int) $issue['id_product'])
+                : '';
+        }
+        unset($issue);
+
+        return $issues;
+    }
+
+    private function getStockIntegrityDetail(array $issue)
+    {
+        switch ($issue['issue_type']) {
+            case 'refunded_exceeds_ordered':
+                return sprintf(
+                    $this->module->l('Ordered: %d; refunded counter: %d.', 'AdminWildenManagerOrdersController'),
+                    (int) $issue['value_a'],
+                    (int) $issue['value_b']
+                );
+            case 'returned_exceeds_ordered':
+                return sprintf(
+                    $this->module->l('Ordered: %d; returned counter: %d.', 'AdminWildenManagerOrdersController'),
+                    (int) $issue['value_a'],
+                    (int) $issue['value_b']
+                );
+            case 'reinjected_exceeds_ordered':
+                return sprintf(
+                    $this->module->l('Ordered: %d; reinjected into stock: %d.', 'AdminWildenManagerOrdersController'),
+                    (int) $issue['value_a'],
+                    (int) $issue['value_b']
+                );
+            case 'credit_slip_exceeds_ordered':
+                return sprintf(
+                    $this->module->l('Ordered: %d; cumulative credit-slip quantity: %d.', 'AdminWildenManagerOrdersController'),
+                    (int) $issue['value_a'],
+                    (int) $issue['value_b']
+                );
+            case 'return_request_exceeds_ordered':
+                return sprintf(
+                    $this->module->l('Ordered: %d; cumulative return-request quantity: %d.', 'AdminWildenManagerOrdersController'),
+                    (int) $issue['value_a'],
+                    (int) $issue['value_b']
+                );
+            case 'refund_without_credit_slip':
+                return sprintf(
+                    $this->module->l('Refunded counter: %d; quantity covered by credit slips: %d; ordered: %d.', 'AdminWildenManagerOrdersController'),
+                    (int) $issue['value_a'],
+                    (int) $issue['value_b'],
+                    (int) $issue['value_c']
+                );
+            case 'refund_not_reinjected':
+                return sprintf(
+                    $this->module->l('Refunded/returned evidence: %d; stock reinjection marker: %d; ordered: %d. The absence of reinjection may be intentional.', 'AdminWildenManagerOrdersController'),
+                    (int) $issue['value_a'],
+                    (int) $issue['value_b'],
+                    (int) $issue['value_c']
+                );
+            case 'cancelled_restock_evidence_missing':
+                return sprintf(
+                    $this->module->l('The cancelled order previously had a stock-affecting status. Ordered: %d; line reinjection markers: %d. No persistent positive movement evidence is available; manual verification may be required.', 'AdminWildenManagerOrdersController'),
+                    (int) $issue['value_a'],
+                    (int) $issue['value_b']
+                );
+            case 'stock_cache_mismatch':
+            case 'pack_stock_cache_mismatch':
+                return sprintf(
+                    $this->module->l('Available: %d; reserved: %d; physical: %d. Expected physical quantity: %d.', 'AdminWildenManagerOrdersController'),
+                    (int) $issue['value_a'],
+                    (int) $issue['value_b'],
+                    (int) $issue['value_c'],
+                    (int) $issue['value_a'] + (int) $issue['value_b']
+                );
+        }
+
+        return '';
+    }
+
     private function downloadIntegrityCsv(array $issues)
     {
         header('Content-Type: text/csv; charset=UTF-8');
@@ -726,6 +876,49 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
                 (int) $issue['id_order'],
                 $issue['reference'],
                 $issue['order_date'],
+                $issue['detail'],
+            );
+            foreach ($row as &$value) {
+                $value = (string) $value;
+                if ($value !== '' && preg_match('/^[\x00-\x20]*[=+\-@]/', $value)) {
+                    $value = "'" . $value;
+                }
+            }
+            unset($value);
+            fputcsv($stream, $row, ';');
+        }
+        fclose($stream);
+        exit;
+    }
+
+    private function downloadStockIntegrityCsv(array $issues)
+    {
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="wilden-stock-integrity-' . date('Y-m-d-His') . '.csv"');
+        header('Cache-Control: no-store, no-cache, must-revalidate');
+        echo "\xEF\xBB\xBF";
+        $stream = fopen('php://output', 'w');
+        fputcsv($stream, array(
+            'Severity', 'Issue', 'Product type', 'Order ID', 'Reference', 'Order date',
+            'Order detail ID', 'Product ID', 'Attribute ID', 'Product', 'Ordered',
+            'Refunded', 'Returned', 'Reinjected', 'Detail',
+        ), ';');
+        foreach ($issues as $issue) {
+            $row = array(
+                $issue['severity'],
+                $issue['label'],
+                $issue['product_kind'],
+                $issue['id_order'],
+                $issue['reference'],
+                $issue['order_date'],
+                $issue['id_order_detail'],
+                $issue['id_product'],
+                $issue['id_product_attribute'],
+                $issue['product_name'],
+                $issue['ordered_quantity'],
+                $issue['refunded_quantity'],
+                $issue['returned_quantity'],
+                $issue['reinjected_quantity'],
                 $issue['detail'],
             );
             foreach ($row as &$value) {

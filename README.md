@@ -3,7 +3,7 @@
 Private order-management module developed from scratch for PrestaShop 8.2 and
 Wilden Militaria S.L.
 
-## Version 1.11.0
+## Version 1.12.0
 
 The initial version provides:
 
@@ -31,6 +31,9 @@ The initial version provides:
   incomplete customers and invalid document dates.
 - Informational visibility of historical addresses and customers marked deleted.
 - Filtered integrity-report export to CSV.
+- Read-only stock, cancellation and refund diagnostics with conservative severity levels.
+- Separate identification of standard products, packs and `idxrcustomproduct` clones when available.
+- Direct order/product links and filtered CSV export for stock findings.
 - Dedicated module control centre for diagnostics and future settings.
 - Append-only audit trail for actions performed through the module, with a
   read-only, shop-scoped viewer and action, employee, order and date filters.
@@ -41,8 +44,9 @@ Existing stored notes are preserved during upgrades to avoid destructive data lo
 
 ## Explicit exclusions
 
-Version 1.0.0 does not integrate with `idxrcustomproduct`, `autostockpack`,
-Redsys, or any other third-party module.
+The module does not modify or call `idxrcustomproduct`, `autostockpack`, Redsys,
+or any other third-party module. Stock diagnostics may read the optional
+`idxrcustomproduct` clone mapping solely to label custom products separately.
 
 ## Installation
 
@@ -58,6 +62,12 @@ new release to production.
 The integrity panel on the module configuration page never repairs or updates
 data. Review each reported order before deciding whether a manual correction
 is appropriate.
+
+Stock diagnostics are evidence-based and intentionally conservative. An
+informational result is a review candidate, not proof that stock was changed
+incorrectly. In particular, historical cancellations cannot always be fully
+reconstructed because PrestaShop does not preserve product-level stock movement
+evidence indefinitely.
 
 Run `bash tools/validate.sh` in an environment with PHP and Node.js before
 packaging a release. The repository workflow validates PHP 8.1, 8.2 and 8.3.
