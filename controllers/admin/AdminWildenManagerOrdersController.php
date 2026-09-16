@@ -528,6 +528,81 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         }
     }
 
+    public function ajaxProcessUpdateIntegrityReview()
+    {
+        if (!$this->access('view') || !$this->module->canCurrentEmployeeViewDiagnostics()) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'Access denied.')));
+        }
+        if (!isset($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'POST required.')));
+        }
+
+        try {
+            $idShop = (int) Tools::getValue('id_shop');
+            $allowedShopIds = array_map('intval', Shop::getContextListShopID());
+            if (!$allowedShopIds && isset($this->context->shop->id)) {
+                $allowedShopIds = array((int) $this->context->shop->id);
+            }
+            if (!in_array($idShop, $allowedShopIds, true)) {
+                throw new RuntimeException('The incident does not belong to the active shop context.');
+            }
+            $scope = (string) Tools::getValue('scope');
+            $issueKey = (string) Tools::getValue('issue_key');
+            $issueType = (string) Tools::getValue('issue_type');
+            $status = (string) Tools::getValue('status');
+            $result = WmIntegrityReview::save(
+                $scope,
+                $issueKey,
+                $issueType,
+                $status,
+                (string) Tools::getValue('note'),
+                (string) Tools::getValue('snapshot_hash'),
+                $idShop
+            );
+            $auditOrderId = 0;
+            if (preg_match('/^(?:order|stock):[a-z0-9_]+:o:(\d+)/', $issueKey, $orderMatch)) {
+                $auditOrderId = (int) $orderMatch[1];
+            } elseif (preg_match('/^stock:[a-z0-9_]+:od:(\d+)$/', $issueKey, $detailMatch)) {
+                $auditOrderId = (int) Db::getInstance()->getValue(
+                    'SELECT id_order FROM `' . _DB_PREFIX_ . 'order_detail`
+                     WHERE id_order_detail = ' . (int) $detailMatch[1],
+                    false
+                );
+            }
+            WmAuditLogger::log('integrity_review_updated', array(
+                'scope' => $scope,
+                'issue_key' => $issueKey,
+                'issue_type' => $issueType,
+                'status' => $status,
+                'note' => $result['note'],
+            ), $auditOrderId ?: null);
+            $this->ajaxDie(json_encode(array('success' => true, 'review' => $result), JSON_UNESCAPED_UNICODE));
+        } catch (Exception $exception) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => $exception->getMessage())));
+        }
+    }
+
+    public function ajaxProcessRepairStockIntegrity()
+    {
+        if (!$this->access('edit') || !$this->module->isCurrentEmployeeSuperAdmin()) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'Only SuperAdmin can repair a confirmed incident.')));
+        }
+        if (!isset($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'POST required.')));
+        }
+
+        try {
+            $service = new WmStockRepairService($this->context);
+            $result = $service->repair(
+                (string) Tools::getValue('issue_key'),
+                (string) Tools::getValue('snapshot_hash')
+            );
+            $this->ajaxDie(json_encode(array('success' => true, 'result' => $result), JSON_UNESCAPED_UNICODE));
+        } catch (Exception $exception) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => $exception->getMessage())));
+        }
+    }
+
     public function ajaxProcessAuditLog()
     {
         if (!$this->access('view') || !$this->module->canCurrentEmployeeViewDiagnostics()) {
@@ -715,7 +790,7 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         }
         unset($issue);
 
-        return $issues;
+        return WmIntegrityReview::attach('order_integrity', $issues);
     }
 
     private function getIntegrityDetail(array $issue)
@@ -777,6 +852,25 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
     private function prepareStockIntegrityIssues(array $issues)
     {
         $labels = $this->module->getStockIntegrityIssueTypes();
+        $activeProducts = array();
+        $productIds = array();
+        foreach ($issues as $candidate) {
+            if ($candidate['issue_type'] === 'stock_cache_mismatch' && !empty($candidate['id_product'])) {
+                $productIds[] = (int) $candidate['id_product'];
+            }
+        }
+        $productIds = array_values(array_unique(array_filter($productIds)));
+        if ($productIds) {
+            $productRows = Db::getInstance()->executeS(
+                'SELECT id_product, active FROM `' . _DB_PREFIX_ . 'product`
+                 WHERE id_product IN (' . implode(',', $productIds) . ')',
+                true,
+                false
+            );
+            foreach ((array) $productRows as $productRow) {
+                $activeProducts[(int) $productRow['id_product']] = (bool) $productRow['active'];
+            }
+        }
         foreach ($issues as &$issue) {
             $issue['label'] = isset($labels[$issue['issue_type']])
                 ? $labels[$issue['issue_type']]
@@ -788,10 +882,25 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
             $issue['product_url'] = !empty($issue['id_product'])
                 ? $this->getProductEditUrl((int) $issue['id_product'])
                 : '';
+            $issue['repair_eligible'] = $this->module->isCurrentEmployeeSuperAdmin()
+                && $issue['issue_type'] === 'stock_cache_mismatch'
+                && $issue['product_kind'] === 'standard'
+                && !empty($activeProducts[(int) $issue['id_product']]);
+            if ($issue['issue_type'] === 'stock_cache_mismatch') {
+                $issue['repair_classification'] = !empty($activeProducts[(int) $issue['id_product']])
+                    ? 'safe'
+                    : 'review';
+            } elseif ($issue['issue_type'] === 'refund_without_credit_slip'
+                || in_array($issue['severity'], array('high', 'medium'), true)
+            ) {
+                $issue['repair_classification'] = 'review';
+            } else {
+                $issue['repair_classification'] = 'do_not_repair';
+            }
         }
         unset($issue);
 
-        return $issues;
+        return WmIntegrityReview::attach('stock_integrity', $issues);
     }
 
     private function getStockIntegrityDetail(array $issue)
@@ -868,7 +977,10 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         header('Cache-Control: no-store, no-cache, must-revalidate');
         echo "\xEF\xBB\xBF";
         $stream = fopen('php://output', 'w');
-        fputcsv($stream, array('Severity', 'Issue', 'Order ID', 'Reference', 'Order date', 'Detail'), ';');
+        fputcsv($stream, array(
+            'Severity', 'Issue', 'Order ID', 'Reference', 'Order date', 'Detail',
+            'Review status', 'Review note', 'Reviewed by', 'Review date',
+        ), ';');
         foreach ($issues as $issue) {
             $row = array(
                 $issue['severity'],
@@ -877,6 +989,10 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
                 $issue['reference'],
                 $issue['order_date'],
                 $issue['detail'],
+                $issue['review_status'],
+                $issue['review_note'],
+                $issue['review_employee'],
+                $issue['review_date'],
             );
             foreach ($row as &$value) {
                 $value = (string) $value;
@@ -901,7 +1017,8 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         fputcsv($stream, array(
             'Severity', 'Issue', 'Product type', 'Order ID', 'Reference', 'Order date',
             'Order detail ID', 'Product ID', 'Attribute ID', 'Product', 'Ordered',
-            'Refunded', 'Returned', 'Reinjected', 'Detail',
+            'Refunded', 'Returned', 'Reinjected', 'Detail', 'Review status',
+            'Review note', 'Reviewed by', 'Review date',
         ), ';');
         foreach ($issues as $issue) {
             $row = array(
@@ -920,6 +1037,10 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
                 $issue['returned_quantity'],
                 $issue['reinjected_quantity'],
                 $issue['detail'],
+                $issue['review_status'],
+                $issue['review_note'],
+                $issue['review_employee'],
+                $issue['review_date'],
             );
             foreach ($row as &$value) {
                 $value = (string) $value;

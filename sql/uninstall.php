@@ -7,6 +7,7 @@ if (!defined('_PS_VERSION_')) {
 $prefix = _DB_PREFIX_;
 
 return array(
+    "DROP TABLE IF EXISTS `{$prefix}wilden_manager_integrity_review`",
     "DROP TABLE IF EXISTS `{$prefix}wilden_manager_profile_permission`",
     "DROP TABLE IF EXISTS `{$prefix}wilden_manager_grid_preference`",
     "DROP TABLE IF EXISTS `{$prefix}wilden_manager_audit`",

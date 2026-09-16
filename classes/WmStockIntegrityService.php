@@ -77,7 +77,7 @@ class WmStockIntegrityService
         $page = min($page, $pages);
         $offset = ($page - 1) * $limit;
         $rows = Db::getInstance()->executeS(
-            'SELECT severity, issue_type, product_kind, id_order, reference, order_date,
+            'SELECT severity, issue_type, product_kind, id_shop, id_order, reference, order_date,
                     id_order_detail, id_product, id_product_attribute, product_name,
                     ordered_quantity, refunded_quantity, returned_quantity,
                     reinjected_quantity, value_a, value_b, value_c
@@ -109,7 +109,7 @@ class WmStockIntegrityService
         );
 
         return Db::getInstance()->executeS(
-            'SELECT severity, issue_type, product_kind, id_order, reference, order_date,
+            'SELECT severity, issue_type, product_kind, id_shop, id_order, reference, order_date,
                     id_order_detail, id_product, id_product_attribute, product_name,
                     ordered_quantity, refunded_quantity, returned_quantity,
                     reinjected_quantity, value_a, value_b, value_c
@@ -138,7 +138,7 @@ class WmStockIntegrityService
         $stockKind = "CASE WHEN {$customCondition} THEN 'custom'
             WHEN p.cache_is_pack = 1 OR p.product_type = 'pack' THEN 'pack'
             ELSE 'standard' END";
-        $orderFields = "o.id_order, o.reference, o.date_add AS order_date,
+        $orderFields = "o.id_shop, o.id_order, o.reference, o.date_add AS order_date,
             od.id_order_detail, od.product_id AS id_product,
             od.product_attribute_id AS id_product_attribute, od.product_name,
             od.product_quantity AS ordered_quantity,
@@ -195,7 +195,7 @@ class WmStockIntegrityService
                 GROUP BY id_order_detail
              ) wm_return ON wm_return.id_order_detail = od.id_order_detail
              WHERE o.id_shop IN ({$shops}) AND wm_return.quantity > od.product_quantity",
-            "SELECT 2 severity_rank, 'medium' severity, 'refund_without_credit_slip' issue_type,
+            "SELECT 1 severity_rank, 'info' severity, 'refund_without_credit_slip' issue_type,
                     {$orderKind} product_kind, {$orderFields},
                     od.product_quantity_refunded value_a, COALESCE(wm_slip.quantity, 0) value_b,
                     od.product_quantity value_c
@@ -219,7 +219,7 @@ class WmStockIntegrityService
                AND GREATEST(od.product_quantity_refunded, od.product_quantity_return)
                     > od.product_quantity_reinjected",
             "SELECT 1 severity_rank, 'info' severity, 'cancelled_restock_evidence_missing' issue_type,
-                    'order' product_kind, o.id_order, o.reference, o.date_add order_date,
+                    'order' product_kind, o.id_shop, o.id_order, o.reference, o.date_add order_date,
                     NULL id_order_detail, NULL id_product, NULL id_product_attribute,
                     NULL product_name, SUM(od.product_quantity) ordered_quantity,
                     SUM(od.product_quantity_refunded) refunded_quantity,
@@ -241,10 +241,10 @@ class WmStockIntegrityService
                     SELECT 1 FROM `{$prefix}stock_mvt` sm
                     WHERE sm.id_order = o.id_order AND sm.`sign` = 1
                )
-             GROUP BY o.id_order, o.reference, o.date_add
+             GROUP BY o.id_shop, o.id_order, o.reference, o.date_add
              HAVING SUM(od.product_quantity_reinjected) < SUM(od.product_quantity)",
             "SELECT 2 severity_rank, 'medium' severity, 'stock_cache_mismatch' issue_type,
-                    {$stockKind} product_kind, NULL id_order, NULL reference,
+                    {$stockKind} product_kind, sa.id_shop, NULL id_order, NULL reference,
                     p.date_upd order_date, NULL id_order_detail, sa.id_product,
                     sa.id_product_attribute, pl.name product_name,
                     NULL ordered_quantity, NULL refunded_quantity, NULL returned_quantity,
@@ -261,7 +261,7 @@ class WmStockIntegrityService
                AND NOT (p.product_type = 'combinations' AND sa.id_product_attribute = 0)
                AND NOT (p.cache_is_pack = 1 OR p.product_type = 'pack')",
             "SELECT 1 severity_rank, 'info' severity, 'pack_stock_cache_mismatch' issue_type,
-                    {$stockKind} product_kind, NULL id_order, NULL reference,
+                    {$stockKind} product_kind, sa.id_shop, NULL id_order, NULL reference,
                     p.date_upd order_date, NULL id_order_detail, sa.id_product,
                     sa.id_product_attribute, pl.name product_name,
                     NULL ordered_quantity, NULL refunded_quantity, NULL returned_quantity,

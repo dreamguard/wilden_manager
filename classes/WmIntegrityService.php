@@ -36,7 +36,7 @@ class WmIntegrityService
             false
         );
         $rows = Db::getInstance()->executeS(
-            'SELECT severity, issue_type, id_order, reference, order_date, value_a, value_b
+            'SELECT severity, issue_type, id_shop, id_order, reference, order_date, value_a, value_b
              FROM (' . $union . ') wm_integrity' . $where . '
              ORDER BY severity_rank DESC, id_order DESC, issue_type ASC
              LIMIT ' . $offset . ', ' . $limit,
@@ -79,7 +79,7 @@ class WmIntegrityService
         );
 
         return Db::getInstance()->executeS(
-            'SELECT severity, issue_type, id_order, reference, order_date, value_a, value_b
+            'SELECT severity, issue_type, id_shop, id_order, reference, order_date, value_a, value_b
              FROM (' . $this->getUnionSql() . ') wm_integrity' . $where . '
              ORDER BY severity_rank DESC, id_order DESC, issue_type ASC
              LIMIT ' . max(1, (int) $maxRows),
@@ -129,7 +129,7 @@ class WmIntegrityService
     {
         $prefix = _DB_PREFIX_;
         $shops = implode(',', $this->allowedShopIds ?: array(0));
-        $baseFields = "o.id_order, o.reference, o.date_add AS order_date";
+        $baseFields = "o.id_shop, o.id_order, o.reference, o.date_add AS order_date";
         $latestHistory = '(SELECT oh.id_order, oh.id_order_state
             FROM `' . $prefix . 'order_history` oh
             INNER JOIN (

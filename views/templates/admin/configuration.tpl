@@ -8,8 +8,23 @@
     <span class="wm-version">v{$wm_module_version|escape:'htmlall':'UTF-8'}</span>
   </div>
 
+  <nav class="wm-tabs" aria-label="{l s='Module configuration areas' mod='wilden_manager'}">
+    {if $wm_can_view_diagnostics}
+    <button type="button" class="wm-tab is-active" data-wm-tab="orders"><i class="material-icons">fact_check</i> {l s='Order integrity' mod='wilden_manager'}</button>
+    <button type="button" class="wm-tab" data-wm-tab="stock"><i class="material-icons">inventory_2</i> {l s='Stock and refunds' mod='wilden_manager'}</button>
+    <button type="button" class="wm-tab" data-wm-tab="audit"><i class="material-icons">history</i> {l s='Audit' mod='wilden_manager'}</button>
+    {/if}
+    {if $wm_is_super_admin}
+    <button type="button" class="wm-tab{if !$wm_can_view_diagnostics} is-active{/if}" data-wm-tab="admin"><i class="material-icons">admin_panel_settings</i> {l s='Administration' mod='wilden_manager'}</button>
+    {/if}
+    <a class="btn btn-outline-secondary wm-orders-link" href="{$wm_orders_url|escape:'htmlall':'UTF-8'}">
+      <i class="material-icons">list_alt</i> {l s='Open Orders' mod='wilden_manager'}
+    </a>
+  </nav>
+
   <div class="wm-configuration-layout">
     <main class="wm-configuration-main">
+      <div class="wm-tab-panel" data-wm-panel="admin"{if $wm_can_view_diagnostics} hidden{/if}>
       {if $wm_is_super_admin}
       <section class="card wm-configuration-card" id="wm-profile-permissions">
         <div class="card-header">
@@ -100,8 +115,10 @@
         </div>
       </section>
       {/if}
+      </div>
 
       {if $wm_can_view_diagnostics}
+      <div class="wm-tab-panel" data-wm-panel="orders">
       <section class="card wm-configuration-card" id="wm-integrity-dashboard">
         <div class="card-header">
           <h3><i class="material-icons">fact_check</i> {l s='Order integrity diagnostics' mod='wilden_manager'}</h3>
@@ -151,6 +168,7 @@
                     <th>{l s='Reference' mod='wilden_manager'}</th>
                     <th>{l s='Date' mod='wilden_manager'}</th>
                     <th>{l s='Detail' mod='wilden_manager'}</th>
+                    <th>{l s='Review' mod='wilden_manager'}</th>
                   </tr>
                 </thead>
                 <tbody></tbody>
@@ -170,14 +188,16 @@
           </div>
         </div>
       </section>
+      </div>
 
+      <div class="wm-tab-panel" data-wm-panel="stock" hidden>
       <section class="card wm-configuration-card" id="wm-stock-integrity-dashboard">
         <div class="card-header">
           <h3><i class="material-icons">inventory_2</i> {l s='Stock, cancellation and refund diagnostics' mod='wilden_manager'}</h3>
         </div>
         <div class="card-body">
           <div class="alert alert-info">
-            {l s='This analysis is read-only. High severity is reserved for impossible quantities. Informational rows identify cases that need human interpretation and are not proof of an incorrect stock change.' mod='wilden_manager'}
+            {l s='Analysis and review states do not modify shop data. Only SuperAdmin can repair an individually confirmed physical-cache mismatch; sellable and reserved quantities remain unchanged.' mod='wilden_manager'}
           </div>
 
           <div class="wm-stock-summary">
@@ -230,6 +250,7 @@
                   <th>{l s='Product' mod='wilden_manager'}</th>
                   <th>{l s='Date' mod='wilden_manager'}</th>
                   <th>{l s='Detail' mod='wilden_manager'}</th>
+                  <th>{l s='Review and action' mod='wilden_manager'}</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -247,7 +268,9 @@
           </div>
         </div>
       </section>
+      </div>
 
+      <div class="wm-tab-panel" data-wm-panel="audit" hidden>
       <section class="card wm-configuration-card" id="wm-audit-dashboard">
         <div class="card-header">
           <h3><i class="material-icons">history</i> {l s='Audit history' mod='wilden_manager'}</h3>
@@ -312,39 +335,12 @@
           </div>
         </div>
       </section>
+      </div>
       {else}
       <div class="alert alert-warning">
         {l s='Your employee profile does not have permission to access diagnostics or audit history.' mod='wilden_manager'}
       </div>
       {/if}
     </main>
-
-    <aside class="wm-configuration-sidebar">
-      <section class="card wm-configuration-card">
-        <div class="card-header"><h3>{l s='Module areas' mod='wilden_manager'}</h3></div>
-        <div class="card-body">
-          <div class="wm-area {if $wm_can_view_diagnostics}wm-area-active{else}wm-area-future{/if}">
-            <i class="material-icons">health_and_safety</i>
-            <div><strong>{l s='Diagnostics' mod='wilden_manager'}</strong><span>{l s='Integrity checks and reports' mod='wilden_manager'}</span></div>
-          </div>
-          <div class="wm-area {if $wm_can_view_diagnostics}wm-area-active{else}wm-area-future{/if}">
-            <i class="material-icons">history</i>
-            <div><strong>{l s='Audit' mod='wilden_manager'}</strong><span>{l s='Module activity history' mod='wilden_manager'}</span></div>
-          </div>
-          <div class="wm-area {if $wm_can_view_diagnostics}wm-area-active{else}wm-area-future{/if}">
-            <i class="material-icons">inventory_2</i>
-            <div><strong>{l s='Stock diagnostics' mod='wilden_manager'}</strong><span>{l s='Cancellations, refunds and stock consistency' mod='wilden_manager'}</span></div>
-          </div>
-          <div class="wm-area {if $wm_is_super_admin}wm-area-active{else}wm-area-future{/if}">
-            <i class="material-icons">admin_panel_settings</i>
-            <div><strong>{l s='Permissions' mod='wilden_manager'}</strong><span>{l s='Access by employee profile' mod='wilden_manager'}</span></div>
-          </div>
-        </div>
-      </section>
-
-      <a class="btn btn-outline-secondary wm-orders-link" href="{$wm_orders_url|escape:'htmlall':'UTF-8'}">
-        <i class="material-icons">list_alt</i> {l s='Open native Orders list' mod='wilden_manager'}
-      </a>
-    </aside>
   </div>
 </div>

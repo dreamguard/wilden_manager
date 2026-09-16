@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.13.0
+
+- Split the module control centre into Order integrity, Stock and refunds, Audit, and Administration tabs.
+- Added auditable Reviewed, Justified, and Confirmed states with employee notes for diagnostic findings.
+- Added a SuperAdmin-only, one-row-at-a-time physical stock cache repair guarded by confirmation, snapshot matching, reservation verification, a transaction, and a post-write check.
+- Kept sellable and reserved quantities unchanged during the controlled repair.
+- Reclassified missing credit-slip evidence as informational because it can be an intentional refund option.
+
 ## 1.12.0 - 2026-09-16
 
 - Added read-only stock, cancellation and refund diagnostics to the module control centre.

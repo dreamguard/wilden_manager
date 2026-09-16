@@ -3,7 +3,7 @@
 Private order-management module developed from scratch for PrestaShop 8.2 and
 Wilden Militaria S.L.
 
-## Version 1.12.0
+## Version 1.13.0
 
 The initial version provides:
 
@@ -34,6 +34,9 @@ The initial version provides:
 - Read-only stock, cancellation and refund diagnostics with conservative severity levels.
 - Separate identification of standard products, packs and `idxrcustomproduct` clones when available.
 - Direct order/product links and filtered CSV export for stock findings.
+- Reviewed, Justified and Confirmed workflow with employee notes for every diagnostic finding.
+- SuperAdmin-only individual repair for confirmed standard-product physical-cache mismatches.
+- Separate Order integrity, Stock and refunds, Audit, and Administration tabs.
 - Dedicated module control centre for diagnostics and future settings.
 - Append-only audit trail for actions performed through the module, with a
   read-only, shop-scoped viewer and action, employee, order and date filters.
@@ -59,9 +62,12 @@ or any other third-party module. Stock diagnostics may read the optional
 Always test state changes and customer emails in staging before deploying a
 new release to production.
 
-The integrity panel on the module configuration page never repairs or updates
-data. Review each reported order before deciding whether a manual correction
-is appropriate.
+Reviewing or classifying an incident never changes shop data. The only repair
+available is an individual SuperAdmin action for a confirmed standard-product
+physical-cache mismatch. It leaves sellable and reserved quantities unchanged,
+requires an exact snapshot match and reservation check, and verifies the result
+inside a transaction. Orders, refunds, packs, custom products and inactive
+products are never repaired automatically.
 
 Stock diagnostics are evidence-based and intentionally conservative. An
 informational result is a review candidate, not proof that stock was changed

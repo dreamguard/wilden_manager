@@ -33,9 +33,56 @@
 }
 
 .wm-configuration-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
-  gap: 20px;
+  display: block;
+}
+
+.wm-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 8px;
+  border: 1px solid #dbe1e8;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.wm-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 13px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #4b5563;
+  cursor: pointer;
+}
+
+.wm-tab:hover,
+.wm-tab:focus {
+  background: #eef6f8;
+  color: #16788c;
+}
+
+.wm-tab.is-active {
+  background: #25b9d7;
+  color: #fff;
+}
+
+.wm-tab .material-icons,
+.wm-tabs .wm-orders-link .material-icons {
+  font-size: 18px;
+}
+
+.wm-tabs .wm-orders-link {
+  width: auto;
+  margin-left: auto;
+}
+
+.wm-tab-panel[hidden] {
+  display: none !important;
 }
 
 .wm-configuration-card {
@@ -129,7 +176,7 @@
 
 .wm-stock-table {
   width: 100%;
-  min-width: 1120px;
+  min-width: 1320px;
   border-collapse: collapse;
 }
 
@@ -222,6 +269,7 @@
 
 .wm-integrity-report-table {
   width: 100%;
+  min-width: 1120px;
   border-collapse: collapse;
   margin-bottom: 0;
 }
@@ -355,6 +403,42 @@
   margin-top: 14px;
 }
 
+.wm-review-editor {
+  margin-top: 7px;
+}
+
+.wm-repair-classification {
+  display: table;
+  margin-bottom: 6px;
+}
+
+.wm-review-editor summary {
+  color: #25b9d7;
+  cursor: pointer;
+}
+
+.wm-review-fields {
+  display: grid;
+  gap: 7px;
+  min-width: 230px;
+  margin-top: 8px;
+}
+
+.wm-review-note {
+  resize: vertical;
+}
+
+.wm-review-meta {
+  display: block;
+  margin-top: 5px;
+  color: #6c757d;
+}
+
+.wm-stock-repair {
+  display: block;
+  margin-top: 8px;
+}
+
 .wm-area {
   display: flex;
   gap: 10px;
@@ -405,5 +489,10 @@
 
   .wm-stock-filters {
     grid-template-columns: 1fr;
+  }
+
+  .wm-tabs .wm-orders-link {
+    width: 100%;
+    margin-left: 0;
   }
 }

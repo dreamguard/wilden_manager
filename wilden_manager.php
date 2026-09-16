@@ -21,11 +21,13 @@ require_once __DIR__ . '/classes/WmExportService.php';
 require_once __DIR__ . '/classes/WmDocumentService.php';
 require_once __DIR__ . '/classes/WmIntegrityService.php';
 require_once __DIR__ . '/classes/WmStockIntegrityService.php';
+require_once __DIR__ . '/classes/WmIntegrityReview.php';
+require_once __DIR__ . '/classes/WmStockRepairService.php';
 require_once __DIR__ . '/classes/WmProfilePermission.php';
 
 class Wilden_manager extends Module
 {
-    const VERSION = '1.12.0';
+    const VERSION = '1.13.0';
     const TAB_CLASS = 'AdminWildenManagerOrders';
     const MAX_BULK_ORDERS = 100;
     const MAX_EXPORT_ORDERS = 1000;
@@ -60,6 +62,8 @@ class Wilden_manager extends Module
             'documents_download_requested' => $this->l('Order documents downloaded'),
             'integrity_report_exported' => $this->l('Integrity report exported'),
             'stock_integrity_report_exported' => $this->l('Stock diagnostic report exported'),
+            'integrity_review_updated' => $this->l('Diagnostic review updated'),
+            'stock_integrity_cache_repaired' => $this->l('Physical stock cache repaired'),
             'profile_permissions_updated' => $this->l('Profile permissions updated'),
             'note_updated' => $this->l('Internal note updated (historical)'),
             'saved_view_created' => $this->l('Saved view created'),
@@ -175,7 +179,7 @@ class Wilden_manager extends Module
                 : array(),
             'wm_permissions_action' => $this->context->link->getAdminLink('AdminModules', true, array(), array(
                 'configure' => $this->name,
-            )),
+            )) . '#wm-admin',
             'wm_saved_views_admin' => $isSuperAdmin ? WmSavedView::getAllNative() : array(),
         ));
 
@@ -546,6 +550,7 @@ class Wilden_manager extends Module
         return array(
             'scanUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=integrityScan',
             'exportUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=exportIntegrity',
+            'reviewUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=updateIntegrityReview',
             'issueTypes' => $this->getIntegrityIssueTypes(),
             'issueSeverities' => array(
                 'missing_history' => 'high',
@@ -578,6 +583,15 @@ class Wilden_manager extends Module
             'next' => $this->l('Next'),
             'page' => $this->l('Page'),
             'of' => $this->l('of'),
+            'pendingReview' => $this->l('Pending review'),
+            'reviewed' => $this->l('Reviewed'),
+            'justified' => $this->l('Justified'),
+            'confirmed' => $this->l('Confirmed'),
+            'review' => $this->l('Review'),
+            'reviewNote' => $this->l('Justification or review note'),
+            'saveReview' => $this->l('Save review'),
+            'reviewSaved' => $this->l('The incident review has been saved.'),
+            'noteRequired' => $this->l('A note is required for justified or confirmed incidents.'),
         );
     }
 
@@ -626,6 +640,9 @@ class Wilden_manager extends Module
         return array(
             'scanUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=stockIntegrityScan',
             'exportUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=exportStockIntegrity',
+            'reviewUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=updateIntegrityReview',
+            'repairUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=repairStockIntegrity',
+            'isSuperAdmin' => $this->isCurrentEmployeeSuperAdmin(),
             'issueTypes' => $this->getStockIntegrityIssueTypes(),
             'issueSeverities' => array(
                 'refunded_exceeds_ordered' => 'high',
@@ -633,7 +650,7 @@ class Wilden_manager extends Module
                 'reinjected_exceeds_ordered' => 'high',
                 'credit_slip_exceeds_ordered' => 'high',
                 'return_request_exceeds_ordered' => 'high',
-                'refund_without_credit_slip' => 'medium',
+                'refund_without_credit_slip' => 'info',
                 'refund_not_reinjected' => 'info',
                 'cancelled_restock_evidence_missing' => 'info',
                 'stock_cache_mismatch' => 'medium',
@@ -656,6 +673,21 @@ class Wilden_manager extends Module
             'next' => $this->l('Next'),
             'page' => $this->l('Page'),
             'of' => $this->l('of'),
+            'pendingReview' => $this->l('Pending review'),
+            'reviewed' => $this->l('Reviewed'),
+            'justified' => $this->l('Justified'),
+            'confirmed' => $this->l('Confirmed'),
+            'review' => $this->l('Review'),
+            'reviewNote' => $this->l('Justification or review note'),
+            'saveReview' => $this->l('Save review'),
+            'reviewSaved' => $this->l('The incident review has been saved.'),
+            'noteRequired' => $this->l('A note is required for justified or confirmed incidents.'),
+            'repair' => $this->l('Repair physical cache'),
+            'repairConfirm' => $this->l('Repair only this physical stock cache value? Sellable and reserved quantities will remain unchanged.'),
+            'repairDone' => $this->l('The physical stock cache was repaired and verified.'),
+            'safeRepair' => $this->l('Safely repairable'),
+            'needsReview' => $this->l('Requires review'),
+            'doNotRepair' => $this->l('Do not repair'),
         );
     }
 

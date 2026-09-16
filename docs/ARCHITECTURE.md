@@ -17,6 +17,8 @@ Orders page; diagnostics and future settings live in the module control centre.
 - `WmDocumentService`: combined native invoices and delivery slips.
 - `WmIntegrityService`: read-only order consistency checks scoped by shop.
 - `WmStockIntegrityService`: read-only quantity, refund, cancellation and stock-cache checks scoped by shop.
+- `WmIntegrityReview`: module-owned human review states and notes; it never changes shop records.
+- `WmStockRepairService`: exact-snapshot, transactional repair of one eligible physical stock cache row.
 - `AdminWildenManagerOrdersController`: authorization, validation, exports and
   AJAX actions.
 - `configuration.tpl` and `configuration.js`: diagnostics and future module

@@ -15,6 +15,100 @@
     }
     $dashboard.data('wm-integrity-initialized', true);
 
+    function activateTab(name) {
+      var $target = $('[data-wm-panel="' + name + '"]');
+      if (!$target.length) { return; }
+      $('.wm-tab').removeClass('is-active').attr('aria-selected', 'false');
+      $('.wm-tab[data-wm-tab="' + name + '"]').addClass('is-active').attr('aria-selected', 'true');
+      $('.wm-tab-panel').prop('hidden', true);
+      $target.prop('hidden', false);
+      window.location.hash = 'wm-' + name;
+    }
+
+    $('.wm-tabs').on('click', '.wm-tab', function () { activateTab($(this).data('wm-tab')); });
+    var requestedTab = String(window.location.hash || '').replace('#wm-', '');
+    if (requestedTab && $('[data-wm-panel="' + requestedTab + '"]').length) {
+      activateTab(requestedTab);
+    }
+
+    function reviewStatusLabel(cfg, status) {
+      if (status === 'reviewed') { return cfg.reviewed; }
+      if (status === 'justified') { return cfg.justified; }
+      if (status === 'confirmed') { return cfg.confirmed; }
+      return cfg.pendingReview;
+    }
+
+    function renderReviewCell($cell, issue, cfg, includeRepair) {
+      $cell.empty();
+      if (includeRepair && issue.repair_classification) {
+        var classificationLabel = issue.repair_classification === 'safe' ? cfg.safeRepair :
+          (issue.repair_classification === 'review' ? cfg.needsReview : cfg.doNotRepair);
+        var classificationClass = issue.repair_classification === 'safe' ? 'badge-success' :
+          (issue.repair_classification === 'review' ? 'badge-warning' : 'badge-secondary');
+        $('<span class="badge wm-repair-classification"></span>')
+          .addClass(classificationClass).text(classificationLabel).appendTo($cell);
+      }
+      var status = issue.review_status || '';
+      var badgeClass = status === 'confirmed' ? 'badge-danger' :
+        (status === 'justified' ? 'badge-success' : (status === 'reviewed' ? 'badge-info' : 'badge-secondary'));
+      $('<span class="badge wm-review-badge"></span>').addClass(badgeClass)
+        .text(reviewStatusLabel(cfg, status)).appendTo($cell);
+      var $details = $('<details class="wm-review-editor"><summary></summary><div class="wm-review-fields"></div></details>').appendTo($cell);
+      $details.find('summary').text(cfg.review);
+      var $fields = $details.find('.wm-review-fields');
+      var $select = $('<select class="form-control form-control-sm wm-review-status"></select>').appendTo($fields);
+      $('<option></option>').val('reviewed').text(cfg.reviewed).appendTo($select);
+      $('<option></option>').val('justified').text(cfg.justified).appendTo($select);
+      $('<option></option>').val('confirmed').text(cfg.confirmed).appendTo($select);
+      $select.val(status || 'reviewed');
+      $('<textarea class="form-control form-control-sm wm-review-note" rows="3"></textarea>')
+        .attr('placeholder', cfg.reviewNote).val(issue.review_note || '').appendTo($fields);
+      $('<button type="button" class="btn btn-sm btn-primary wm-review-save"></button>')
+        .text(cfg.saveReview).appendTo($fields);
+      if (issue.review_employee || issue.review_date) {
+        $('<small class="wm-review-meta"></small>')
+          .text([issue.review_employee || '', issue.review_date || ''].filter(Boolean).join(' · '))
+          .appendTo($cell);
+      }
+      if (includeRepair && issue.repair_eligible) {
+        $('<button type="button" class="btn btn-sm btn-outline-danger wm-stock-repair"></button>')
+          .prop('disabled', status !== 'confirmed')
+          .text(cfg.repair).appendTo($cell);
+      }
+    }
+
+    function bindReviewActions($container, cfg, scope, reload, setPanelMessage) {
+      $container.on('click', '.wm-review-save', function () {
+        var $row = $(this).closest('tr');
+        var issue = $row.data('wm-issue');
+        var status = $row.find('.wm-review-status').val();
+        var note = $.trim($row.find('.wm-review-note').val() || '');
+        if ((status === 'justified' || status === 'confirmed') && !note) {
+          setPanelMessage('warning', cfg.noteRequired);
+          return;
+        }
+        var $button = $(this).prop('disabled', true);
+        $.ajax({
+          url: cfg.reviewUrl,
+          method: 'POST',
+          dataType: 'json',
+          data: {
+            scope: scope, issue_key: issue.review_key, issue_type: issue.issue_type,
+            status: status, note: note, snapshot_hash: issue.snapshot_hash, id_shop: issue.id_shop
+          }
+        }).done(function (response) {
+          if (!response || !response.success) {
+            setPanelMessage('danger', (response && response.error) || cfg.error);
+            return;
+          }
+          setPanelMessage('success', cfg.reviewSaved);
+          reload();
+        }).fail(function (xhr) {
+          setPanelMessage('danger', (xhr.responseJSON && xhr.responseJSON.error) || cfg.error);
+        }).always(function () { $button.prop('disabled', false); });
+      });
+    }
+
     var $issue = $dashboard.find('.wm-integrity-issue');
     var $severity = $dashboard.find('.wm-integrity-severity');
     var activeRequest = null;
@@ -54,7 +148,7 @@
         $empty.text(config.noIssues).prop('hidden', false);
       } else {
         issues.forEach(function (issue) {
-          var $row = $('<tr><td><span class="badge"></span></td><td></td><td><a target="_blank" rel="noopener"></a></td><td></td><td></td><td></td></tr>');
+          var $row = $('<tr><td><span class="badge"></span></td><td></td><td><a target="_blank" rel="noopener"></a></td><td></td><td></td><td></td><td></td></tr>');
           var severityLabel = issue.severity === 'high' ? config.high : (issue.severity === 'medium' ? config.medium : config.info);
           var badgeClass = issue.severity === 'high' ? 'badge-danger' : (issue.severity === 'medium' ? 'badge-warning' : 'badge-info');
           $row.find('.badge').addClass(badgeClass).text(severityLabel);
@@ -63,6 +157,8 @@
           $row.children().eq(3).text(issue.reference || '');
           $row.children().eq(4).text(issue.order_date || '');
           $row.children().eq(5).text(issue.detail || '');
+          $row.data('wm-issue', issue);
+          renderReviewCell($row.children().eq(6), issue, config, false);
           $tbody.append($row);
         });
         $empty.prop('hidden', true);
@@ -134,6 +230,9 @@
       $form.trigger('submit');
       window.setTimeout(function () { $form.remove(); }, 1000);
     });
+    bindReviewActions($dashboard, config, 'order_integrity', function () {
+      loadReport($dashboard.data('page') || 1);
+    }, setMessage);
 
     function initStockIntegrity() {
       var stockConfig = config.stock;
@@ -196,7 +295,7 @@
           $empty.text(stockConfig.noIssues).prop('hidden', false);
         } else {
           issues.forEach(function (issue) {
-            var $row = $('<tr><td><span class="badge"></span></td><td></td><td><span class="badge badge-secondary"></span></td><td></td><td><div></div><small></small></td><td></td><td></td></tr>');
+            var $row = $('<tr><td><span class="badge"></span></td><td></td><td><span class="badge badge-secondary"></span></td><td></td><td><div></div><small></small></td><td></td><td></td><td></td></tr>');
             var severityLabel = issue.severity === 'high' ? stockConfig.high : (issue.severity === 'medium' ? stockConfig.medium : stockConfig.info);
             var badgeClass = issue.severity === 'high' ? 'badge-danger' : (issue.severity === 'medium' ? 'badge-warning' : 'badge-info');
             $row.children().eq(0).find('.badge').addClass(badgeClass).text(severityLabel);
@@ -227,6 +326,8 @@
             }
             $row.children().eq(5).text(issue.order_date || '');
             $row.children().eq(6).text(issue.detail || '');
+            $row.data('wm-issue', issue);
+            renderReviewCell($row.children().eq(7), issue, stockConfig, true);
             $tbody.append($row);
           });
           $empty.prop('hidden', true);
@@ -298,6 +399,30 @@
         $('<input type="hidden" name="product_kind">').val($stockKind.val()).appendTo($form);
         $form.trigger('submit');
         window.setTimeout(function () { $form.remove(); }, 1000);
+      });
+      bindReviewActions($stock, stockConfig, 'stock_integrity', function () {
+        loadStockReport($stock.data('page') || 1);
+      }, setStockMessage);
+      $stock.on('click', '.wm-stock-repair', function () {
+        var $row = $(this).closest('tr');
+        var issue = $row.data('wm-issue');
+        if (!window.confirm(stockConfig.repairConfirm)) { return; }
+        var $button = $(this).prop('disabled', true);
+        $.ajax({
+          url: stockConfig.repairUrl,
+          method: 'POST',
+          dataType: 'json',
+          data: { issue_key: issue.review_key, snapshot_hash: issue.snapshot_hash }
+        }).done(function (response) {
+          if (!response || !response.success) {
+            setStockMessage('danger', (response && response.error) || stockConfig.error);
+            return;
+          }
+          setStockMessage('success', stockConfig.repairDone);
+          loadStockReport($stock.data('page') || 1);
+        }).fail(function (xhr) {
+          setStockMessage('danger', (xhr.responseJSON && xhr.responseJSON.error) || stockConfig.error);
+        }).always(function () { $button.prop('disabled', false); });
       });
 
       loadStockReport(1);

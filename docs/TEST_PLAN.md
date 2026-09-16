@@ -73,7 +73,7 @@
 
 ## Stock, cancellation and refund diagnostics
 
-- Open **Configure** and confirm the stock scan starts automatically below order integrity.
+- Open **Configure → Stock and refunds** and confirm the stock scan starts automatically.
 - Confirm the default filter shows only high severity and that zero results remain visible as a valid result.
 - Switch to medium and information, filter by issue and product type, and paginate.
 - Confirm order-level cancellation rows link to the correct order.
@@ -83,3 +83,16 @@
 - Confirm formula-control characters in product names or references are neutralized in CSV.
 - Confirm scanning, filtering and exporting do not change orders, order details, returns,
   credit slips, stock movements, stock availability, packs or custom-product data.
+
+## Diagnostic review and controlled repair
+
+- Mark findings as Reviewed, Justified and Confirmed and verify employee, note and date persist after refresh.
+- Verify Justified and Confirmed require a non-empty note.
+- Verify review changes appear in the audit history and do not change order, product or stock records.
+- Verify only SuperAdmin sees and can call the physical-cache repair action.
+- Verify repair is offered only for active standard-product `stock_cache_mismatch` rows marked Confirmed.
+- Change the stock snapshot before repair and verify the action refuses to write.
+- For an eligible test row, verify `quantity` and `reserved_quantity` remain unchanged while only `physical_quantity` becomes their sum.
+- Verify the repaired incident disappears after refresh and the before/after values are recorded in audit.
+- Verify packs, virtual products, custom clones, inactive products and orphan combinations are rejected server-side.
+- Verify the four configuration areas are independent tabs and a direct URL hash reopens the selected tab.
