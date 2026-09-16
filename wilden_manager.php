@@ -24,7 +24,7 @@ require_once __DIR__ . '/classes/WmProfilePermission.php';
 
 class Wilden_manager extends Module
 {
-    const VERSION = '1.10.0';
+    const VERSION = '1.10.1';
     const TAB_CLASS = 'AdminWildenManagerOrders';
     const MAX_BULK_ORDERS = 100;
     const MAX_EXPORT_ORDERS = 1000;

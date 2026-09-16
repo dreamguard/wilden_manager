@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.10.1 - 2026-09-16
+
+- Fixed SuperAdmin detection by using PrestaShop's `_PS_ADMIN_PROFILE_` constant.
+- Added an upgrade repair that grants both module permissions to SuperAdmin.
+- Preserved permissions already assigned to every other employee profile.
+
 ## 1.10.0 - 2026-09-16
 
 - Added independent profile permissions for CSV/XLSX exports and diagnostics/audit.
