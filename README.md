@@ -3,7 +3,7 @@
 Private order-management module developed from scratch for PrestaShop 8.2 and
 Wilden Militaria S.L.
 
-## Version 1.8.4
+## Version 1.9.0
 
 The initial version provides:
 
@@ -27,7 +27,8 @@ The initial version provides:
 - Informational visibility of historical addresses and customers marked deleted.
 - Filtered integrity-report export to CSV.
 - Dedicated module control centre for diagnostics and future settings.
-- Append-only audit trail for actions performed through the module.
+- Append-only audit trail for actions performed through the module, with a
+  read-only, shop-scoped viewer and action, employee, order and date filters.
 - Native links to the full PrestaShop order page and invoice PDF.
 
 Internal notes are not exposed in the native order list as of version 1.5.0.

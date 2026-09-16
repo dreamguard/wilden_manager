@@ -54,6 +54,7 @@ return array(
         `details_json` TEXT NOT NULL,
         `date_add` DATETIME NOT NULL,
         PRIMARY KEY (`id_wilden_manager_audit`),
+        KEY `idx_wm_audit_shop` (`id_shop`, `date_add`),
         KEY `idx_wm_audit_order` (`id_order`, `date_add`),
         KEY `idx_wm_audit_employee` (`id_employee`, `date_add`),
         KEY `idx_wm_audit_action` (`action`, `date_add`)

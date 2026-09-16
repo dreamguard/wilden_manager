@@ -151,7 +151,6 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
             'wm_bulk_preview' => $this->bulkPreview,
             'wm_bulk_results' => $this->bulkResults,
             'wm_selected_order_ids' => array_map('intval', (array) Tools::getValue('order_ids', array())),
-            'wm_recent_audit' => WmAuditLogger::getRecent(20),
             'wm_can_edit' => $this->canEdit(),
             'wm_max_bulk' => Wilden_manager::MAX_BULK_ORDERS,
         ));
@@ -392,6 +391,60 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
             );
             $report['issues'] = $this->prepareIntegrityIssues($report['issues']);
             $this->ajaxDie(json_encode(array('success' => true, 'report' => $report)));
+        } catch (Exception $exception) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => $exception->getMessage())));
+        }
+    }
+
+    public function ajaxProcessAuditLog()
+    {
+        if (!$this->access('view')) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'Access denied.')));
+        }
+
+        try {
+            $employeeFilter = trim((string) Tools::getValue('audit_employee'));
+            $filters = array(
+                'action' => Tools::substr(trim((string) Tools::getValue('audit_action')), 0, 64),
+                'id_employee' => $employeeFilter === '' ? null : max(0, (int) $employeeFilter),
+                'id_order' => max(0, (int) Tools::getValue('audit_order')),
+                'date_from' => trim((string) Tools::getValue('audit_date_from')),
+                'date_to' => trim((string) Tools::getValue('audit_date_to')),
+            );
+            $page = max(1, (int) Tools::getValue('page', 1));
+            $limit = max(10, min(100, (int) Tools::getValue('limit', 50)));
+            $idShop = (int) $this->context->shop->id;
+            $total = WmAuditLogger::count($filters, $idShop);
+            $pages = max(1, (int) ceil($total / $limit));
+            $page = min($page, $pages);
+            $rows = WmAuditLogger::search($filters, $page, $limit, $idShop);
+            $labels = $this->module->getAuditActionLabels();
+
+            foreach ($rows as &$row) {
+                $details = json_decode((string) $row['details_json'], true);
+                $row['details'] = is_array($details) ? $details : array('raw' => (string) $row['details_json']);
+                unset($row['details_json']);
+                $row['action_label'] = isset($labels[$row['action']])
+                    ? $labels[$row['action']]
+                    : str_replace('_', ' ', (string) $row['action']);
+                $row['employee_name'] = trim((string) $row['employee_name']);
+                $row['order_url'] = !empty($row['id_order'])
+                    ? $this->context->link->getAdminLink('AdminOrders') .
+                        '&vieworder&id_order=' . (int) $row['id_order']
+                    : '';
+            }
+            unset($row);
+
+            $this->ajaxDie(json_encode(array(
+                'success' => true,
+                'report' => array(
+                    'rows' => $rows,
+                    'total' => $total,
+                    'page' => $page,
+                    'pages' => $pages,
+                    'limit' => $limit,
+                ),
+            ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
         } catch (Exception $exception) {
             $this->ajaxDie(json_encode(array('success' => false, 'error' => $exception->getMessage())));
         }

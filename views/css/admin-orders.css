@@ -260,8 +260,7 @@
 .wm-view-toolbar .material-icons,
 .wm-actions .material-icons,
 .wm-pagination .material-icons,
-.wm-bulk-controls .material-icons,
-.wm-audit-panel .material-icons {
+.wm-bulk-controls .material-icons {
   font-size: 18px;
   line-height: 1;
   vertical-align: middle;
@@ -404,18 +403,6 @@
 
 .wm-pagination .form-control {
   width: 72px;
-}
-
-.wm-audit-panel {
-  margin-top: 18px;
-}
-
-.wm-audit-panel summary {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-weight: 600;
 }
 
 .wm-empty-grid {

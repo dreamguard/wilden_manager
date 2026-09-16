@@ -23,7 +23,7 @@ require_once __DIR__ . '/classes/WmIntegrityService.php';
 
 class Wilden_manager extends Module
 {
-    const VERSION = '1.8.4';
+    const VERSION = '1.9.0';
     const TAB_CLASS = 'AdminWildenManagerOrders';
     const MAX_BULK_ORDERS = 100;
     const MAX_EXPORT_ORDERS = 1000;
@@ -44,6 +44,21 @@ class Wilden_manager extends Module
             'delivery_address_deleted' => $this->l('Historical delivery address marked deleted'),
             'invoice_address_deleted' => $this->l('Historical invoice address marked deleted'),
             'customer_deleted' => $this->l('Historical customer marked deleted'),
+        );
+    }
+
+    public function getAuditActionLabels()
+    {
+        return array(
+            'native_order_columns_updated' => $this->l('Order columns updated'),
+            'bulk_status_change' => $this->l('Order status changed'),
+            'bulk_status_error' => $this->l('Order status change failed'),
+            'orders_exported' => $this->l('Orders exported'),
+            'documents_download_requested' => $this->l('Order documents downloaded'),
+            'integrity_report_exported' => $this->l('Integrity report exported'),
+            'note_updated' => $this->l('Internal note updated (historical)'),
+            'saved_view_created' => $this->l('Saved view created (historical)'),
+            'saved_view_deleted' => $this->l('Saved view deleted (historical)'),
         );
     }
 
@@ -85,9 +100,9 @@ class Wilden_manager extends Module
     {
         $this->context->controller->addJS($this->getVersionedAssetUrl('views/js/configuration.js'));
         $this->context->controller->addCSS($this->getVersionedAssetUrl('views/css/configuration.css'));
-        Media::addJsDef(array(
-            'wildenManagerConfiguration' => $this->getIntegrityJsConfiguration(),
-        ));
+        $jsConfiguration = $this->getIntegrityJsConfiguration();
+        $jsConfiguration['audit'] = $this->getAuditJsConfiguration();
+        Media::addJsDef(array('wildenManagerConfiguration' => $jsConfiguration));
 
         $this->context->smarty->assign(array(
             'wm_module_version' => self::VERSION,
@@ -445,6 +460,46 @@ class Wilden_manager extends Module
             'next' => $this->l('Next'),
             'page' => $this->l('Page'),
             'of' => $this->l('of'),
+        );
+    }
+
+    private function getAuditJsConfiguration()
+    {
+        $idShop = (int) $this->context->shop->id;
+        $labels = $this->getAuditActionLabels();
+        $actions = array();
+        foreach (WmAuditLogger::getActions($idShop) as $action) {
+            $actions[] = array(
+                'id' => $action,
+                'label' => isset($labels[$action]) ? $labels[$action] : str_replace('_', ' ', $action),
+            );
+        }
+
+        $employees = array();
+        foreach (WmAuditLogger::getEmployees($idShop) as $employee) {
+            $idEmployee = isset($employee['id_employee']) ? (int) $employee['id_employee'] : 0;
+            $name = isset($employee['employee_name']) ? trim((string) $employee['employee_name']) : '';
+            $employees[] = array(
+                'id' => $idEmployee,
+                'label' => $name !== '' ? $name : ($idEmployee ? $this->l('Employee') . ' #' . $idEmployee : $this->l('System')),
+            );
+        }
+
+        return array(
+            'url' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=auditLog',
+            'actions' => $actions,
+            'employees' => $employees,
+            'allActions' => $this->l('All actions'),
+            'allEmployees' => $this->l('All employees'),
+            'loading' => $this->l('Loading audit history...'),
+            'empty' => $this->l('No audit records match the selected filters.'),
+            'error' => $this->l('The audit history could not be loaded.'),
+            'previous' => $this->l('Previous'),
+            'next' => $this->l('Next'),
+            'page' => $this->l('Page'),
+            'of' => $this->l('of'),
+            'system' => $this->l('System'),
+            'details' => $this->l('Details'),
         );
     }
 

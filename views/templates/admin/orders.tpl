@@ -104,8 +104,6 @@
       </div>
     </div>
   </form>
-
-  <details class="card wm-audit-panel"><summary class="card-header"><i class="material-icons">history</i> {l s='Recent Wilden Manager activity' mod='wilden_manager'}</summary><div class="table-responsive"><table class="table"><thead><tr><th>{l s='Date' mod='wilden_manager'}</th><th>{l s='Employee' mod='wilden_manager'}</th><th>{l s='Order' mod='wilden_manager'}</th><th>{l s='Action' mod='wilden_manager'}</th></tr></thead><tbody>{foreach from=$wm_recent_audit item=audit}<tr><td>{$audit.date_add|escape:'htmlall':'UTF-8'}</td><td>{$audit.employee_name|escape:'htmlall':'UTF-8'}</td><td>{if $audit.id_order}#{$audit.id_order|intval}{else}—{/if}</td><td><code>{$audit.action|escape:'htmlall':'UTF-8'}</code></td></tr>{foreachelse}<tr><td colspan="4" class="text-muted text-center">{l s='No activity recorded yet.' mod='wilden_manager'}</td></tr>{/foreach}</tbody></table></div></details>
 </div>
 
 <div class="modal fade" id="wm-quick-view-modal" tabindex="-1" role="dialog" aria-hidden="true"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><h4 class="modal-title">{l s='Order quick view' mod='wilden_manager'}</h4><button type="button" class="close" data-dismiss="modal">&times;</button></div><div class="modal-body"><div class="wm-loading"><i class="icon-refresh icon-spin"></i> {l s='Loading…' mod='wilden_manager'}</div></div></div></div></div>

@@ -160,6 +160,92 @@
   border-top: 1px solid #dbe1e8;
 }
 
+.wm-audit-filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.wm-audit-filter-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.wm-audit-filter-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wm-audit-table-wrap {
+  max-height: 560px;
+  overflow: auto;
+}
+
+.wm-audit-table-wrap[hidden],
+.wm-audit-empty[hidden],
+.wm-audit-pagination[hidden] {
+  display: none !important;
+}
+
+.wm-audit-table {
+  width: 100%;
+  min-width: 900px;
+  border-collapse: collapse;
+}
+
+.wm-audit-table th,
+.wm-audit-table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid #dbe1e8;
+  vertical-align: top;
+  text-align: left;
+}
+
+.wm-audit-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #f4f6f8;
+}
+
+.wm-audit-table tbody tr:nth-child(even) {
+  background: #f8f9fa;
+}
+
+.wm-audit-table code {
+  white-space: nowrap;
+}
+
+.wm-audit-details summary {
+  color: #25b9d7;
+  cursor: pointer;
+}
+
+.wm-audit-details pre {
+  max-width: 440px;
+  max-height: 220px;
+  margin: 8px 0 0;
+  padding: 8px;
+  overflow: auto;
+  border: 1px solid #dbe1e8;
+  border-radius: 4px;
+  background: #fff;
+  color: #363a41;
+  font-size: 11px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.wm-audit-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+
 .wm-area {
   display: flex;
   gap: 10px;
@@ -201,6 +287,10 @@
   }
 
   .wm-configuration .wm-integrity-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .wm-audit-filters {
     grid-template-columns: 1fr;
   }
 }

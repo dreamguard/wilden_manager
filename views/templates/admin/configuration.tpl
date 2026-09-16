@@ -78,6 +78,71 @@
           </div>
         </div>
       </section>
+
+      <section class="card wm-configuration-card" id="wm-audit-dashboard">
+        <div class="card-header">
+          <h3><i class="material-icons">history</i> {l s='Audit history' mod='wilden_manager'}</h3>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-info">
+            {l s='This append-only history records actions performed through Wilden Manager. Viewing it never modifies shop data.' mod='wilden_manager'}
+          </div>
+
+          <div class="wm-audit-filters">
+            <div class="form-group">
+              <label for="wm-audit-action">{l s='Action' mod='wilden_manager'}</label>
+              <select id="wm-audit-action" class="form-control wm-audit-action"><option value=""></option></select>
+            </div>
+            <div class="form-group">
+              <label for="wm-audit-employee">{l s='Employee' mod='wilden_manager'}</label>
+              <select id="wm-audit-employee" class="form-control wm-audit-employee"><option value=""></option></select>
+            </div>
+            <div class="form-group">
+              <label for="wm-audit-order">{l s='Order ID' mod='wilden_manager'}</label>
+              <input id="wm-audit-order" class="form-control wm-audit-order" type="number" min="1" step="1">
+            </div>
+            <div class="form-group">
+              <label for="wm-audit-date-from">{l s='From' mod='wilden_manager'}</label>
+              <input id="wm-audit-date-from" class="form-control wm-audit-date-from" type="date">
+            </div>
+            <div class="form-group">
+              <label for="wm-audit-date-to">{l s='To' mod='wilden_manager'}</label>
+              <input id="wm-audit-date-to" class="form-control wm-audit-date-to" type="date">
+            </div>
+            <div class="form-group wm-audit-filter-actions">
+              <button type="button" class="btn btn-outline-primary wm-audit-apply">
+                <i class="material-icons">filter_alt</i> {l s='Apply filters' mod='wilden_manager'}
+              </button>
+              <button type="button" class="btn btn-outline-secondary wm-audit-reset">
+                {l s='Clear' mod='wilden_manager'}
+              </button>
+            </div>
+          </div>
+
+          <div class="alert wm-audit-message" hidden></div>
+          <div class="alert alert-secondary wm-audit-empty" hidden></div>
+          <div class="wm-audit-table-wrap" hidden>
+            <table class="wm-audit-table">
+              <thead>
+                <tr>
+                  <th>{l s='Date' mod='wilden_manager'}</th>
+                  <th>{l s='Employee' mod='wilden_manager'}</th>
+                  <th>{l s='Action' mod='wilden_manager'}</th>
+                  <th>{l s='Order' mod='wilden_manager'}</th>
+                  <th>{l s='Store' mod='wilden_manager'}</th>
+                  <th>{l s='Details' mod='wilden_manager'}</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="wm-audit-pagination" hidden>
+            <button type="button" class="btn btn-sm btn-outline-secondary wm-audit-previous"></button>
+            <span></span>
+            <button type="button" class="btn btn-sm btn-outline-secondary wm-audit-next"></button>
+          </div>
+        </div>
+      </section>
     </main>
 
     <aside class="wm-configuration-sidebar">
@@ -87,6 +152,10 @@
           <div class="wm-area wm-area-active">
             <i class="material-icons">health_and_safety</i>
             <div><strong>{l s='Diagnostics' mod='wilden_manager'}</strong><span>{l s='Integrity checks and reports' mod='wilden_manager'}</span></div>
+          </div>
+          <div class="wm-area wm-area-active">
+            <i class="material-icons">history</i>
+            <div><strong>{l s='Audit' mod='wilden_manager'}</strong><span>{l s='Module activity history' mod='wilden_manager'}</span></div>
           </div>
           <div class="wm-area wm-area-future">
             <i class="material-icons">settings</i>

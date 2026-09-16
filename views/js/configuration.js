@@ -135,6 +135,144 @@
       window.setTimeout(function () { $form.remove(); }, 1000);
     });
 
+    function initAudit() {
+      var auditConfig = config.audit;
+      var $audit = $('#wm-audit-dashboard');
+      if (!auditConfig || !$audit.length || $audit.data('wm-audit-initialized')) {
+        return;
+      }
+      $audit.data('wm-audit-initialized', true);
+
+      var $action = $audit.find('.wm-audit-action');
+      var $employee = $audit.find('.wm-audit-employee');
+      var activeAuditRequest = null;
+      var auditSequence = 0;
+      $action.find('option').first().text(auditConfig.allActions);
+      $employee.find('option').first().text(auditConfig.allEmployees);
+      (auditConfig.actions || []).forEach(function (item) {
+        $('<option></option>').val(item.id).text(item.label).appendTo($action);
+      });
+      (auditConfig.employees || []).forEach(function (item) {
+        $('<option></option>').val(item.id).text(item.label).appendTo($employee);
+      });
+      $audit.find('.wm-audit-previous').text(auditConfig.previous);
+      $audit.find('.wm-audit-next').text(auditConfig.next);
+
+      function setAuditMessage(type, message) {
+        $audit.find('.wm-audit-message')
+          .removeClass('alert-info alert-success alert-danger alert-warning')
+          .addClass('alert-' + type)
+          .prop('hidden', !message)
+          .text(message || '');
+      }
+
+      function renderAudit(report) {
+        var rows = Array.isArray(report.rows) ? report.rows : [];
+        var $tbody = $audit.find('.wm-audit-table tbody').empty();
+        var $empty = $audit.find('.wm-audit-empty');
+        var $table = $audit.find('.wm-audit-table-wrap');
+        if (!rows.length) {
+          $table.prop('hidden', true);
+          $empty.text(auditConfig.empty).prop('hidden', false);
+        } else {
+          rows.forEach(function (row) {
+            var $tr = $('<tr><td></td><td></td><td><div></div><code></code></td><td></td><td></td><td><details class="wm-audit-details"><summary></summary><pre></pre></details></td></tr>');
+            $tr.children().eq(0).text(row.date_add || '');
+            $tr.children().eq(1).text(row.employee_name || auditConfig.system);
+            $tr.children().eq(2).find('div').text(row.action_label || row.action || '');
+            $tr.children().eq(2).find('code').text(row.action || '');
+            if (row.id_order && row.order_url) {
+              $('<a target="_blank" rel="noopener"></a>')
+                .attr('href', row.order_url)
+                .text('#' + parseInt(row.id_order, 10))
+                .appendTo($tr.children().eq(3));
+            } else {
+              $tr.children().eq(3).text('—');
+            }
+            $tr.children().eq(4).text(row.shop_name || '—');
+            $tr.children().eq(5).find('summary').text(auditConfig.details);
+            $tr.children().eq(5).find('pre').text(JSON.stringify(row.details || {}, null, 2));
+            $tbody.append($tr);
+          });
+          $empty.prop('hidden', true);
+          $table.prop('hidden', false);
+        }
+
+        var page = parseInt(report.page, 10) || 1;
+        var pages = parseInt(report.pages, 10) || 1;
+        var $pagination = $audit.find('.wm-audit-pagination').prop('hidden', pages <= 1);
+        $pagination.find('span').text(auditConfig.page + ' ' + page + ' ' + auditConfig.of + ' ' + pages);
+        $pagination.find('.wm-audit-previous').prop('disabled', page <= 1);
+        $pagination.find('.wm-audit-next').prop('disabled', page >= pages);
+        $audit.data('page', page).data('pages', pages);
+      }
+
+      function loadAudit(page) {
+        page = Math.max(1, parseInt(page, 10) || 1);
+        auditSequence += 1;
+        var currentSequence = auditSequence;
+        if (activeAuditRequest && activeAuditRequest.readyState !== 4) {
+          activeAuditRequest.abort();
+        }
+        $audit.find('.wm-audit-apply, .wm-audit-reset').prop('disabled', true);
+        setAuditMessage('info', auditConfig.loading);
+        activeAuditRequest = $.ajax({
+          url: auditConfig.url,
+          method: 'GET',
+          dataType: 'json',
+          data: {
+            audit_action: $action.val(),
+            audit_employee: $employee.val(),
+            audit_order: $audit.find('.wm-audit-order').val(),
+            audit_date_from: $audit.find('.wm-audit-date-from').val(),
+            audit_date_to: $audit.find('.wm-audit-date-to').val(),
+            page: page,
+            limit: 50
+          }
+        }).done(function (response) {
+          if (currentSequence !== auditSequence) {
+            return;
+          }
+          if (!response || !response.success || !response.report) {
+            setAuditMessage('danger', (response && response.error) || auditConfig.error);
+            return;
+          }
+          setAuditMessage('info', '');
+          renderAudit(response.report);
+        }).fail(function (xhr, textStatus) {
+          if (textStatus === 'abort' || currentSequence !== auditSequence) {
+            return;
+          }
+          var response = xhr.responseJSON || {};
+          setAuditMessage('danger', response.error || auditConfig.error);
+        }).always(function () {
+          if (currentSequence === auditSequence) {
+            $audit.find('.wm-audit-apply, .wm-audit-reset').prop('disabled', false);
+            activeAuditRequest = null;
+          }
+        });
+      }
+
+      $audit.on('click', '.wm-audit-apply', function () { loadAudit(1); });
+      $audit.on('click', '.wm-audit-reset', function () {
+        $action.val('');
+        $employee.val('');
+        $audit.find('.wm-audit-order, .wm-audit-date-from, .wm-audit-date-to').val('');
+        loadAudit(1);
+      });
+      $audit.on('click', '.wm-audit-previous', function () { loadAudit(($audit.data('page') || 1) - 1); });
+      $audit.on('click', '.wm-audit-next', function () { loadAudit(($audit.data('page') || 1) + 1); });
+      $audit.on('keydown', 'input', function (event) {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          loadAudit(1);
+        }
+      });
+
+      loadAudit(1);
+    }
+
     loadReport(1);
+    initAudit();
   });
 })(window.jQuery);

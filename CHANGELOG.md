@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.9.0 - 2026-09-16
+
+- Added a read-only audit-history viewer to the module control centre.
+- Added shop-scoped filters for action, employee, order and date range.
+- Added pagination and safe, expandable JSON details for every audit entry.
+- Added a shop/date audit index for efficient scoped history queries.
+- Removed the obsolete audit block from the retired parallel order-list template.
+
 ## 1.8.4 - 2026-09-16
 
 - Fixed the integrity table disappearing at the legacy Bootstrap 1200-pixel breakpoint.
