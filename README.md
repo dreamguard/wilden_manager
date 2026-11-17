@@ -3,7 +3,7 @@
 Private order-management module developed from scratch for PrestaShop 8.2 and
 Wilden Militaria S.L.
 
-## Version 1.13.3
+## Version 1.14.0
 
 The initial version provides:
 
@@ -34,6 +34,10 @@ The initial version provides:
 - Append-only audit trail for actions performed through the module, with a
   read-only, shop-scoped viewer and action, employee, order and date filters.
 - Native links to the full PrestaShop order page and invoice PDF.
+- SuperAdmin-only permanent deletion of individual non-invoiced orders from the
+  order page or the native row-actions column.
+- Transactional cleanup and verification of direct and indirect database
+  relations, including third-party tables that expose supported order keys.
 
 Internal notes are not exposed in the native order list as of version 1.5.0.
 Existing stored notes are preserved during upgrades to avoid destructive data loss.
@@ -64,6 +68,13 @@ informational result is a review candidate, not proof that stock was changed
 incorrectly. In particular, historical cancellations cannot always be fully
 reconstructed because PrestaShop does not preserve product-level stock movement
 evidence indefinitely.
+
+Permanent order deletion is intentionally conservative. It is disabled when an
+invoice exists, requires the exact order ID as confirmation, does not reinject
+stock and refuses to run when an affected table cannot participate in the
+transaction. Prior order-linked audit rows are removed with the order. A new
+anonymous audit event retains only the employee, store, time and the fact that a
+deletion occurred; it stores no order ID, reference, customer or order content.
 
 Run `bash tools/validate.sh` in an environment with PHP and Node.js before
 packaging a release. The repository workflow validates PHP 8.1, 8.2 and 8.3.

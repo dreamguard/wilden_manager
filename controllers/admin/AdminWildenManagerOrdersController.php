@@ -188,6 +188,64 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         $this->ajaxDie(json_encode(array('success' => true, 'columns' => $storedColumns)));
     }
 
+    public function ajaxProcessOrderDeletionEligibility()
+    {
+        if (!$this->module->isCurrentEmployeeSuperAdmin()) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'Access denied.')));
+        }
+
+        $ids = array_slice(array_values(array_unique(array_filter(array_map(
+            'intval',
+            (array) Tools::getValue('order_ids', array())
+        )))), 0, 100);
+        $service = new WmOrderDeletionService();
+
+        try {
+            $this->ajaxDie(json_encode(array(
+                'success' => true,
+                'orders' => $service->inspectMany($ids, (int) $this->context->shop->id),
+            ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        } catch (Exception $exception) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => $exception->getMessage())));
+        }
+    }
+
+    public function ajaxProcessDeleteOrderPermanently()
+    {
+        if (!isset($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'POST required.')));
+        }
+        if (!$this->module->isCurrentEmployeeSuperAdmin()) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'Only SuperAdmin can delete an order.')));
+        }
+
+        $idOrder = (int) Tools::getValue('id_order');
+        $confirmation = trim((string) Tools::getValue('confirmation'));
+        if ($idOrder <= 0 || !hash_equals((string) $idOrder, $confirmation)) {
+            $this->ajaxDie(json_encode(array(
+                'success' => false,
+                'error' => 'The confirmation does not match the order ID.',
+            )));
+        }
+
+        try {
+            $result = (new WmOrderDeletionService())->delete(
+                $idOrder,
+                (int) $this->context->shop->id
+            );
+            WmAuditLogger::log('order_deleted_anonymously', array(
+                'id_shop' => (int) $result['id_shop'],
+                'stock_reinjected' => false,
+                'order_identifier_retained' => false,
+            ));
+            $this->ajaxDie(json_encode(array('success' => true), JSON_UNESCAPED_UNICODE));
+        } catch (Exception $exception) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => $exception->getMessage())));
+        } catch (Throwable $throwable) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => $throwable->getMessage())));
+        }
+    }
+
     public function ajaxProcessExportSelectedOrders()
     {
         if (!$this->access('view') || !$this->module->canCurrentEmployeeExport()) {

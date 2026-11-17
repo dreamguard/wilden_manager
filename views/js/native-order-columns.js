@@ -10,6 +10,84 @@
       return;
     }
 
+    var deleteModalId = 'wm-delete-order-modal';
+    var $deleteModal = $('#' + deleteModalId);
+
+    function initializeDeleteModal() {
+      if (!config.canDeleteOrders || $deleteModal.length) {
+        return;
+      }
+      $deleteModal = $(
+        '<div class="modal fade" id="' + deleteModalId + '" tabindex="-1" role="dialog" aria-hidden="true">' +
+          '<div class="modal-dialog" role="document"><div class="modal-content">' +
+            '<div class="modal-header"><h4 class="modal-title"></h4><button type="button" class="close" data-dismiss="modal">&times;</button></div>' +
+            '<div class="modal-body"><div class="alert alert-danger wm-delete-warning"></div>' +
+              '<p class="wm-delete-order-summary"></p>' +
+              '<div class="form-group"><label class="wm-delete-confirm-label"></label><input type="text" inputmode="numeric" autocomplete="off" class="form-control wm-delete-confirm-input"></div>' +
+              '<div class="alert alert-danger wm-delete-error" hidden></div>' +
+            '</div>' +
+            '<div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-dismiss="modal"></button><button type="button" class="btn btn-danger wm-delete-confirm-button" disabled></button></div>' +
+          '</div></div>' +
+        '</div>'
+      ).appendTo('body');
+      $deleteModal.find('.modal-title').text(config.deleteTitle);
+      $deleteModal.find('.wm-delete-warning').text(config.deleteWarning);
+      $deleteModal.find('.wm-delete-confirm-label').text(config.deletePrompt);
+      $deleteModal.find('[data-dismiss="modal"]').last().text(config.cancel);
+      $deleteModal.find('.wm-delete-confirm-button').text(config.deleteConfirm);
+    }
+
+    initializeDeleteModal();
+
+    $(document).on('click', '.wm-delete-order-trigger', function (event) {
+      event.preventDefault();
+      var $trigger = $(this);
+      if ($trigger.hasClass('disabled') || $trigger.attr('aria-disabled') === 'true') {
+        return;
+      }
+      initializeDeleteModal();
+      var id = parseInt($trigger.attr('data-order-id'), 10);
+      if (!id || !$deleteModal.length) {
+        return;
+      }
+      var reference = $trigger.attr('data-order-reference') || '';
+      $deleteModal.data('order-id', id);
+      $deleteModal.find('.wm-delete-order-summary').text('#' + id + (reference ? ' — ' + reference : ''));
+      $deleteModal.find('.wm-delete-confirm-input').val('');
+      $deleteModal.find('.wm-delete-confirm-button').prop('disabled', true);
+      $deleteModal.find('.wm-delete-error').prop('hidden', true).text('');
+      $deleteModal.modal('show');
+      window.setTimeout(function () { $deleteModal.find('.wm-delete-confirm-input').trigger('focus'); }, 250);
+    });
+
+    $deleteModal.on('input', '.wm-delete-confirm-input', function () {
+      var expected = String($deleteModal.data('order-id') || '');
+      $deleteModal.find('.wm-delete-confirm-button').prop('disabled', $.trim($(this).val()) !== expected);
+    });
+
+    $deleteModal.on('click', '.wm-delete-confirm-button', function () {
+      var $button = $(this).prop('disabled', true);
+      var id = parseInt($deleteModal.data('order-id'), 10);
+      $.ajax({
+        url: config.deleteUrl,
+        method: 'POST',
+        dataType: 'json',
+        data: { id_order: id, confirmation: $.trim($deleteModal.find('.wm-delete-confirm-input').val()) }
+      }).done(function (response) {
+        if (response && response.success) {
+          window.alert(config.deleteSuccess);
+          window.location.href = config.ordersUrl;
+          return;
+        }
+        $deleteModal.find('.wm-delete-error').prop('hidden', false).text((response && response.error) || config.deleteError);
+      }).fail(function (xhr) {
+        var response = xhr.responseJSON || {};
+        $deleteModal.find('.wm-delete-error').prop('hidden', false).text(response.error || config.deleteError);
+      }).always(function () {
+        $button.prop('disabled', false);
+      });
+    });
+
     var $panel = $('#order_grid_panel');
     if (!$panel.length) {
       $panel = $('[id*="order_grid"]').first();
@@ -17,6 +95,52 @@
     if (!$panel.length) {
       return;
     }
+
+    function addDeleteActions() {
+      if (!config.canDeleteOrders || !config.deleteEligibilityUrl) {
+        return;
+      }
+      var ids = [];
+      $('#order_grid_table tbody tr').each(function () {
+        var id = parseInt($(this).find('input[name="order_orders_bulk[]"], input[name$="[orders_bulk][]"], .js-bulk-action-checkbox').first().val(), 10);
+        if (id > 0 && ids.indexOf(id) === -1) {
+          ids.push(id);
+          $(this).attr('data-wm-order-id', id);
+        }
+      });
+      if (!ids.length) {
+        return;
+      }
+      $.ajax({
+        url: config.deleteEligibilityUrl,
+        method: 'POST',
+        dataType: 'json',
+        data: { order_ids: ids }
+      }).done(function (response) {
+        if (!response || !response.success || !response.orders) {
+          return;
+        }
+        ids.forEach(function (id) {
+          var info = response.orders[id] || response.orders[String(id)];
+          var $row = $('#order_grid_table tbody tr[data-wm-order-id="' + id + '"]');
+          var $cell = $row.find('.column-actions, [data-column-id="actions"]').last();
+          if (!info || !$cell.length || $cell.find('.wm-delete-order-trigger').length) {
+            return;
+          }
+          var disabled = !info.eligible;
+          var $action = $('<a href="#" class="btn btn-link wm-delete-order-trigger" aria-label=""><i class="material-icons">delete</i></a>')
+            .attr('data-order-id', id)
+            .attr('data-order-reference', info.reference || '')
+            .attr('aria-label', config.deleteActionLabel)
+            .attr('title', disabled ? config.deleteInvoiceBlocked : config.deleteActionLabel)
+            .toggleClass('disabled', disabled)
+            .attr('aria-disabled', disabled ? 'true' : 'false');
+          $cell.append($action);
+        });
+      });
+    }
+
+    addDeleteActions();
 
     function getSelectedColumns() {
       if (config.storageKey && window.localStorage) {

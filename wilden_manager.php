@@ -22,10 +22,11 @@ require_once __DIR__ . '/classes/WmStockIntegrityService.php';
 require_once __DIR__ . '/classes/WmIntegrityReview.php';
 require_once __DIR__ . '/classes/WmStockRepairService.php';
 require_once __DIR__ . '/classes/WmProfilePermission.php';
+require_once __DIR__ . '/classes/WmOrderDeletionService.php';
 
 class Wilden_manager extends Module
 {
-    const VERSION = '1.13.3';
+    const VERSION = '1.14.0';
     const TAB_CLASS = 'AdminWildenManagerOrders';
     const MAX_EXPORT_ORDERS = 1000;
     const MAX_DOCUMENT_ORDERS = 100;
@@ -62,6 +63,7 @@ class Wilden_manager extends Module
             'integrity_review_updated' => $this->l('Diagnostic review updated'),
             'stock_integrity_cache_repaired' => $this->l('Physical stock cache repaired'),
             'profile_permissions_updated' => $this->l('Profile permissions updated'),
+            'order_deleted_anonymously' => $this->l('Order permanently deleted'),
             'note_updated' => $this->l('Internal note updated (historical)'),
             'saved_view_created' => $this->l('Saved view created'),
             'saved_view_updated' => $this->l('Saved view updated'),
@@ -109,6 +111,7 @@ class Wilden_manager extends Module
             && $this->installTab()
             && $this->registerHook('actionOrderGridDefinitionModifier')
             && $this->registerHook('actionOrderGridQueryBuilderModifier')
+            && $this->registerHook('actionGetAdminOrderButtons')
             && $this->registerHook('displayBackOfficeHeader');
     }
 
@@ -386,6 +389,44 @@ class Wilden_manager extends Module
         }
     }
 
+    public function hookActionGetAdminOrderButtons(array $params)
+    {
+        if (!$this->isCurrentEmployeeSuperAdmin()
+            || empty($params['id_order'])
+            || empty($params['actions_bar_buttons_collection'])
+        ) {
+            return;
+        }
+
+        $idOrder = (int) $params['id_order'];
+        $inspection = (new WmOrderDeletionService())->inspect($idOrder, (int) $this->context->shop->id);
+        if (empty($inspection['exists'])) {
+            return;
+        }
+
+        $attributes = array(
+            'href' => '#',
+            'class' => 'wm-delete-order-trigger',
+            'data-order-id' => $idOrder,
+            'data-order-reference' => (string) $inspection['reference'],
+        );
+        $class = 'btn-danger';
+        if (empty($inspection['eligible'])) {
+            $class = 'btn-outline-secondary disabled';
+            $attributes['class'] .= ' disabled';
+            $attributes['aria-disabled'] = 'true';
+            $attributes['title'] = $this->l('Orders with an invoice cannot be deleted.');
+        }
+
+        $params['actions_bar_buttons_collection']->add(
+            new \PrestaShop\PrestaShop\Core\Action\ActionsBarButton(
+                $class,
+                $attributes,
+                $this->l('Delete order permanently')
+            )
+        );
+    }
+
     private function applyNativeTextFilter(
         $searchQueryBuilder,
         $countQueryBuilder,
@@ -491,6 +532,18 @@ class Wilden_manager extends Module
                 'selectionRequired' => $this->l('Select at least one order in the native list.'),
                 'selectedOrders' => $this->l('selected orders'),
                 'tooManyDocuments' => $this->l('The maximum number of orders per document operation is'),
+                'canDeleteOrders' => $this->isCurrentEmployeeSuperAdmin(),
+                'deleteEligibilityUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=orderDeletionEligibility',
+                'deleteUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=deleteOrderPermanently',
+                'ordersUrl' => $this->context->link->getAdminLink('AdminOrders'),
+                'deleteTitle' => $this->l('Permanently delete order'),
+                'deleteWarning' => $this->l('This operation is irreversible. All database records linked to this order will be removed. Stock will not be reinjected.'),
+                'deletePrompt' => $this->l('Type the order ID to confirm:'),
+                'deleteConfirm' => $this->l('Delete permanently'),
+                'deleteInvoiceBlocked' => $this->l('This order has an invoice and cannot be deleted.'),
+                'deleteError' => $this->l('The order could not be deleted.'),
+                'deleteSuccess' => $this->l('The order and all of its database relations were deleted.'),
+                'deleteActionLabel' => $this->l('Delete permanently'),
             ),
         ));
     }

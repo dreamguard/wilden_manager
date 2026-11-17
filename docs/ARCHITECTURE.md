@@ -17,6 +17,8 @@ Orders page; diagnostics and future settings live in the module control centre.
 - `WmStockIntegrityService`: read-only quantity, refund, cancellation and stock-cache checks scoped by shop.
 - `WmIntegrityReview`: module-owned human review states and notes; it never changes shop records.
 - `WmStockRepairService`: exact-snapshot, transactional repair of one eligible physical stock cache row.
+- `WmOrderDeletionService`: SuperAdmin-only transactional removal of one
+  non-invoiced order and its supported direct and indirect database relations.
 - `AdminWildenManagerOrdersController`: authorization, validation, exports and
   AJAX actions.
 - `configuration.tpl` and `configuration.js`: diagnostics and future module
@@ -30,3 +32,5 @@ Orders page; diagnostics and future settings live in the module control centre.
 - Stock diagnostics classify uncertain cancellation, refund and pack evidence as informational rather than errors.
 - Notes are rendered escaped and limited to 5,000 characters.
 - The module contains no third-party integrations or inherited source.
+- Permanent deletion rechecks invoice eligibility under lock, refuses affected
+  non-transactional tables, verifies cleanup before commit and never reinjects stock.

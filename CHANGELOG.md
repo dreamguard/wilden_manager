@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.14.0
+
+- Added SuperAdmin-only permanent deletion for individual non-invoiced orders.
+- Added a delete button to the order page and an icon to the native row-actions column.
+- Disabled the operation visually and server-side whenever an invoice number or invoice row exists.
+- Required the exact order ID as explicit confirmation and rechecked eligibility under a database lock.
+- Removed direct and supported indirect order, detail, cart, payment, return, message and module relations inside one transaction.
+- Added schema discovery for third-party tables carrying supported order identifiers.
+- Refused deletion when an affected table is non-transactional and verified that no supported relation remains before commit.
+- Kept stock unchanged and recorded only an anonymous audit event without an order identifier.
+
 ## 1.13.3
 
 - Removed saved order views from the native Orders interface and module administration.

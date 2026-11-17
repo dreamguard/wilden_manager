@@ -85,3 +85,19 @@
 - Verify the repaired incident disappears after refresh and the before/after values are recorded in audit.
 - Verify packs, virtual products, custom clones, inactive products and orphan combinations are rejected server-side.
 - Verify the four configuration areas are independent tabs and a direct URL hash reopens the selected tab.
+
+## Permanent deletion of non-invoiced orders
+
+- Use only a disposable staging order and take a database backup first.
+- Confirm only SuperAdmin sees the delete control on the order page and in the native actions column.
+- Confirm an order with either `invoice_number > 0` or an `order_invoice` row shows a disabled control.
+- Attempt the delete endpoint manually for an invoiced order and confirm the server rejects it.
+- Confirm the modal requires the exact order ID and clearly states that stock is not reinjected.
+- Delete one disposable non-invoiced order and confirm it disappears from the list and direct URL.
+- Search every table containing `id_order` and confirm no row remains for the deleted ID.
+- For an exclusive cart and payment reference, confirm cart relations, customizations and payment rows are gone.
+- Confirm shared carts or payment references belonging to another order are preserved.
+- Confirm related order-detail tax, return, slip, message, module-note, diagnostic-review and historical audit rows are gone.
+- Confirm the new audit row contains employee, store and action but no order ID, reference, customer or order content.
+- Add a related row to a non-transactional test table and confirm deletion is refused without changing any row.
+- Confirm product sellable stock is unchanged after deletion.
