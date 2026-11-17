@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.14.1
+
+- Replaced the direct deletion of the main `orders` row with PrestaShop's native `Order->delete()` method.
+- Preserved the surrounding transaction, invoice lock, complete relation cleanup and final verification.
+- Restored native object deletion hooks and ObjectModel cache clearing for compatibility with other modules.
+
 ## 1.14.0
 
 - Added SuperAdmin-only permanent deletion for individual non-invoiced orders.

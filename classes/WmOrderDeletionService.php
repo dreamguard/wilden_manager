@@ -180,6 +180,14 @@ class WmOrderDeletionService
                 throw new RuntimeException('The order acquired an invoice and cannot be deleted.');
             }
 
+            $orderModel = new Order($idOrder);
+            if (!Validate::isLoadedObject($orderModel)
+                || (int) $orderModel->id_shop !== $idShop
+                || !$orderModel->delete()
+            ) {
+                throw new RuntimeException('PrestaShop could not delete the order entity.');
+            }
+
             foreach ($targets as $table => $conditions) {
                 foreach ($conditions as $column => $values) {
                     if (!$this->deleteValues($table, $column, $values)) {
@@ -190,11 +198,6 @@ class WmOrderDeletionService
 
             if ($referenceIsExclusive && !$this->deletePaymentReference($reference)) {
                 throw new RuntimeException('The order payment could not be deleted.');
-            }
-            if (!$this->db->execute(
-                'DELETE FROM `' . $this->prefix . 'orders` WHERE id_order = ' . $idOrder
-            )) {
-                throw new RuntimeException('The order could not be deleted.');
             }
 
             $this->verifyDeletion(

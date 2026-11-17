@@ -26,7 +26,7 @@ require_once __DIR__ . '/classes/WmOrderDeletionService.php';
 
 class Wilden_manager extends Module
 {
-    const VERSION = '1.14.0';
+    const VERSION = '1.14.1';
     const TAB_CLASS = 'AdminWildenManagerOrders';
     const MAX_EXPORT_ORDERS = 1000;
     const MAX_DOCUMENT_ORDERS = 100;

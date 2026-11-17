@@ -3,7 +3,7 @@
 Private order-management module developed from scratch for PrestaShop 8.2 and
 Wilden Militaria S.L.
 
-## Version 1.14.0
+## Version 1.14.1
 
 The initial version provides:
 
@@ -75,6 +75,8 @@ stock and refuses to run when an affected table cannot participate in the
 transaction. Prior order-linked audit rows are removed with the order. A new
 anonymous audit event retains only the employee, store, time and the fact that a
 deletion occurred; it stores no order ID, reference, customer or order content.
+The main entity is removed through PrestaShop's native `Order->delete()` method
+so object deletion hooks and cache clearing remain compatible with the core.
 
 Run `bash tools/validate.sh` in an environment with PHP and Node.js before
 packaging a release. The repository workflow validates PHP 8.1, 8.2 and 8.3.

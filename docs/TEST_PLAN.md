@@ -98,6 +98,7 @@
 - For an exclusive cart and payment reference, confirm cart relations, customizations and payment rows are gone.
 - Confirm shared carts or payment references belonging to another order are preserved.
 - Confirm related order-detail tax, return, slip, message, module-note, diagnostic-review and historical audit rows are gone.
+- Attach temporary listeners to the native Order delete-before and delete-after hooks and confirm both execute once.
 - Confirm the new audit row contains employee, store and action but no order ID, reference, customer or order content.
 - Add a related row to a non-transactional test table and confirm deletion is refused without changing any row.
 - Confirm product sellable stock is unchanged after deletion.
