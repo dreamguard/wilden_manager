@@ -44,7 +44,7 @@ class WmDocumentService
         if (!$ids) {
             throw new PrestaShopException('Select at least one order.');
         }
-        if (count($ids) > Wilden_manager::MAX_DOCUMENT_ORDERS) {
+        if (count($ids) > Wildenmanager::MAX_DOCUMENT_ORDERS) {
             throw new PrestaShopException('Too many orders selected for one document operation.');
         }
 

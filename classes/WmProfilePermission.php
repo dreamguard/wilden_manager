@@ -6,6 +6,11 @@ if (!defined('_PS_VERSION_')) {
 
 class WmProfilePermission
 {
+    /**
+     * Module permissions stored per employee profile. SuperAdmin always has all of them.
+     */
+    const FIELDS = array('can_export', 'can_view_diagnostics', 'can_edit_history');
+
     public static function isSuperAdmin($idProfile)
     {
         $superAdminProfile = self::getSuperAdminProfileId();
@@ -32,12 +37,17 @@ class WmProfilePermission
         return self::hasPermission((int) $idProfile, 'can_view_diagnostics');
     }
 
+    public static function canEditHistory($idProfile)
+    {
+        return self::hasPermission((int) $idProfile, 'can_edit_history');
+    }
+
     public static function getProfiles($idLang)
     {
         $stored = array();
         $rows = Db::getInstance()->executeS(
-            'SELECT `id_profile`, `can_export`, `can_view_diagnostics`
-             FROM `' . _DB_PREFIX_ . 'wilden_manager_profile_permission`'
+            'SELECT `id_profile`, `' . implode('`, `', self::FIELDS) . '`
+             FROM `' . _DB_PREFIX_ . 'wildenmanager_profile_permission`'
         );
         foreach ((array) $rows as $row) {
             $stored[(int) $row['id_profile']] = $row;
@@ -47,57 +57,38 @@ class WmProfilePermission
         foreach ((array) Profile::getProfiles((int) $idLang) as $profile) {
             $idProfile = (int) $profile['id_profile'];
             $isSuperAdmin = self::isSuperAdmin($idProfile);
-            $profiles[] = array(
+            $entry = array(
                 'id_profile' => $idProfile,
                 'name' => (string) $profile['name'],
-                'can_export' => $isSuperAdmin || (!empty($stored[$idProfile]['can_export'])),
-                'can_view_diagnostics' => $isSuperAdmin || (!empty($stored[$idProfile]['can_view_diagnostics'])),
                 'is_super_admin' => $isSuperAdmin,
             );
+            foreach (self::FIELDS as $field) {
+                $entry[$field] = $isSuperAdmin || !empty($stored[$idProfile][$field]);
+            }
+            $profiles[] = $entry;
         }
 
         return $profiles;
     }
 
-    public static function save(array $exportProfiles, array $diagnosticProfiles, $idLang)
+    /**
+     * @param array $profilesByField field => list of profile IDs that receive the permission
+     */
+    public static function save(array $profilesByField, $idLang)
     {
-        $exportProfiles = array_map('intval', $exportProfiles);
-        $diagnosticProfiles = array_map('intval', $diagnosticProfiles);
         $now = date('Y-m-d H:i:s');
 
         foreach ((array) Profile::getProfiles((int) $idLang) as $profile) {
             $idProfile = (int) $profile['id_profile'];
             $isSuperAdmin = self::isSuperAdmin($idProfile);
-            $data = array(
-                'can_export' => (int) ($isSuperAdmin || in_array($idProfile, $exportProfiles, true)),
-                'can_view_diagnostics' => (int) ($isSuperAdmin || in_array($idProfile, $diagnosticProfiles, true)),
-                'date_upd' => $now,
-            );
-            $exists = Db::getInstance()->getValue(
-                'SELECT `id_profile` FROM `' . _DB_PREFIX_ . 'wilden_manager_profile_permission`
-                 WHERE `id_profile` = ' . $idProfile,
-                false
-            );
-            if ($exists) {
-                $saved = Db::getInstance()->update(
-                    'wilden_manager_profile_permission',
-                    $data,
-                    '`id_profile` = ' . $idProfile,
-                    0,
-                    false,
-                    false
-                );
-            } else {
-                $data['id_profile'] = $idProfile;
-                $data['date_add'] = $now;
-                $saved = Db::getInstance()->insert(
-                    'wilden_manager_profile_permission',
-                    $data,
-                    false,
-                    false
-                );
+            $data = array('date_upd' => $now);
+            foreach (self::FIELDS as $field) {
+                $granted = isset($profilesByField[$field])
+                    ? array_map('intval', (array) $profilesByField[$field])
+                    : array();
+                $data[$field] = (int) ($isSuperAdmin || in_array($idProfile, $granted, true));
             }
-            if (!$saved) {
+            if (!self::write($idProfile, $data, $now)) {
                 return false;
             }
         }
@@ -107,7 +98,7 @@ class WmProfilePermission
 
     public static function installDefaults($idLang)
     {
-        return self::save(array(), array(), (int) $idLang);
+        return self::save(array(), (int) $idLang);
     }
 
     public static function ensureSuperAdmin()
@@ -116,39 +107,35 @@ class WmProfilePermission
         if ($idProfile <= 0) {
             return false;
         }
-
         $now = date('Y-m-d H:i:s');
-        $data = array(
-            'can_export' => 1,
-            'can_view_diagnostics' => 1,
-            'date_upd' => $now,
-        );
-        $exists = Db::getInstance()->getValue(
-            'SELECT `id_profile` FROM `' . _DB_PREFIX_ . 'wilden_manager_profile_permission`
-             WHERE `id_profile` = ' . $idProfile,
-            false
-        );
+        $data = array('date_upd' => $now);
+        foreach (self::FIELDS as $field) {
+            $data[$field] = 1;
+        }
 
+        return self::write($idProfile, $data, $now);
+    }
+
+    private static function write($idProfile, array $data, $now)
+    {
+        $exists = WmDb::exists(
+            'SELECT 1 FROM `' . _DB_PREFIX_ . 'wildenmanager_profile_permission`
+             WHERE `id_profile` = ' . (int) $idProfile
+        );
         if ($exists) {
             return Db::getInstance()->update(
-                'wilden_manager_profile_permission',
+                'wildenmanager_profile_permission',
                 $data,
-                '`id_profile` = ' . $idProfile,
+                '`id_profile` = ' . (int) $idProfile,
                 0,
                 false,
                 false
             );
         }
-
-        $data['id_profile'] = $idProfile;
+        $data['id_profile'] = (int) $idProfile;
         $data['date_add'] = $now;
 
-        return Db::getInstance()->insert(
-            'wilden_manager_profile_permission',
-            $data,
-            false,
-            false
-        );
+        return Db::getInstance()->insert('wildenmanager_profile_permission', $data, false, false);
     }
 
     private static function hasPermission($idProfile, $field)
@@ -156,15 +143,14 @@ class WmProfilePermission
         if (self::isSuperAdmin($idProfile)) {
             return true;
         }
-        if ($idProfile <= 0 || !in_array($field, array('can_export', 'can_view_diagnostics'), true)) {
+        if ($idProfile <= 0 || !in_array($field, self::FIELDS, true)) {
             return false;
         }
 
-        return (bool) Db::getInstance()->getValue(
+        return (bool) WmDb::fetchValue(
             'SELECT `' . bqSQL($field) . '`
-             FROM `' . _DB_PREFIX_ . 'wilden_manager_profile_permission`
-             WHERE `id_profile` = ' . (int) $idProfile,
-            false
+             FROM `' . _DB_PREFIX_ . 'wildenmanager_profile_permission`
+             WHERE `id_profile` = ' . (int) $idProfile
         );
     }
 }

@@ -256,8 +256,8 @@ class WmOrderDeletionService
             'order_return',
             'message',
             'customer_thread',
-            'wilden_manager_order_note',
-            'wilden_manager_audit',
+            'wildenmanager_order_note',
+            'wildenmanager_audit',
         ) as $table) {
             $this->addStep($plan, $table, 'id_order', array($idOrder));
         }
@@ -274,13 +274,13 @@ class WmOrderDeletionService
         }
 
         // Diagnostic reviews owned by this module.
-        if ($this->tableExists('wilden_manager_integrity_review')) {
+        if ($this->tableExists('wildenmanager_integrity_review')) {
             $patterns = array('%:o:' . $idOrder, '%:o:' . $idOrder . ':%');
             foreach ($detailIds as $idDetail) {
                 $patterns[] = '%:od:' . (int) $idDetail;
             }
             $plan[] = array(
-                'table' => 'wilden_manager_integrity_review',
+                'table' => 'wildenmanager_integrity_review',
                 'column' => 'issue_key',
                 'like' => $patterns,
             );
@@ -568,9 +568,9 @@ class WmOrderDeletionService
             'specific_price',
             'stock_available',
             'stock_mvt',
-            'wilden_manager_order_note',
-            'wilden_manager_audit',
-            'wilden_manager_integrity_review',
+            'wildenmanager_order_note',
+            'wildenmanager_audit',
+            'wildenmanager_integrity_review',
         );
     }
 }

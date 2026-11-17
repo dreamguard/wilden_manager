@@ -48,7 +48,7 @@ class WmOrderRepository
                AND osl.id_lang = ' . (int) $this->context->language->id . '
              LEFT JOIN `' . _DB_PREFIX_ . 'carrier` ca ON ca.id_carrier = o.id_carrier
              LEFT JOIN `' . _DB_PREFIX_ . 'shop` s ON s.id_shop = o.id_shop
-             LEFT JOIN `' . _DB_PREFIX_ . 'wilden_manager_order_note` wn ON wn.id_order = o.id_order' .
+             LEFT JOIN `' . _DB_PREFIX_ . 'wildenmanager_order_note` wn ON wn.id_order = o.id_order' .
             $this->buildWhere($filters)
         );
     }
@@ -138,7 +138,7 @@ class WmOrderRepository
                 LEFT JOIN `' . _DB_PREFIX_ . 'carrier` ca ON ca.id_carrier = o.id_carrier
                 LEFT JOIN `' . _DB_PREFIX_ . 'currency` cur ON cur.id_currency = o.id_currency
                 LEFT JOIN `' . _DB_PREFIX_ . 'shop` s ON s.id_shop = o.id_shop
-                LEFT JOIN `' . _DB_PREFIX_ . 'wilden_manager_order_note` wn ON wn.id_order = o.id_order';
+                LEFT JOIN `' . _DB_PREFIX_ . 'wildenmanager_order_note` wn ON wn.id_order = o.id_order';
     }
 
     private function buildWhere(array $filters)

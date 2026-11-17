@@ -12,7 +12,7 @@ class WmAuditLogger
         $employeeId = isset($context->employee) ? (int) $context->employee->id : 0;
         $shopId = isset($context->shop) ? (int) $context->shop->id : 0;
 
-        return Db::getInstance()->insert('wilden_manager_audit', array(
+        return Db::getInstance()->insert('wildenmanager_audit', array(
             'id_employee' => $employeeId,
             'id_shop' => $shopId,
             'id_order' => $idOrder ? (int) $idOrder : null,
@@ -28,10 +28,10 @@ class WmAuditLogger
 
         return Db::getInstance()->executeS(
             'SELECT a.*, CONCAT(e.firstname, CHAR(32), e.lastname) AS employee_name
-             FROM `' . _DB_PREFIX_ . 'wilden_manager_audit` a
+             FROM `' . _DB_PREFIX_ . 'wildenmanager_audit` a
              LEFT JOIN `' . _DB_PREFIX_ . 'employee` e ON e.id_employee = a.id_employee' .
              $where . '
-             ORDER BY a.date_add DESC, a.id_wilden_manager_audit DESC
+             ORDER BY a.date_add DESC, a.id_wildenmanager_audit DESC
              LIMIT ' . (int) $limit
         );
     }
@@ -45,11 +45,11 @@ class WmAuditLogger
         return Db::getInstance()->executeS(
             'SELECT a.*, CONCAT(e.firstname, CHAR(32), e.lastname) AS employee_name,
                     s.name AS shop_name
-             FROM `' . _DB_PREFIX_ . 'wilden_manager_audit` a
+             FROM `' . _DB_PREFIX_ . 'wildenmanager_audit` a
              LEFT JOIN `' . _DB_PREFIX_ . 'employee` e ON e.id_employee = a.id_employee
              LEFT JOIN `' . _DB_PREFIX_ . 'shop` s ON s.id_shop = a.id_shop' .
             self::buildWhere($filters, $idShop) . '
-             ORDER BY a.date_add DESC, a.id_wilden_manager_audit DESC
+             ORDER BY a.date_add DESC, a.id_wildenmanager_audit DESC
              LIMIT ' . $offset . ', ' . $limit,
             true,
             false
@@ -60,7 +60,7 @@ class WmAuditLogger
     {
         return (int) Db::getInstance()->getValue(
             'SELECT COUNT(*)
-             FROM `' . _DB_PREFIX_ . 'wilden_manager_audit` a' .
+             FROM `' . _DB_PREFIX_ . 'wildenmanager_audit` a' .
             self::buildWhere($filters, $idShop),
             false
         );
@@ -71,7 +71,7 @@ class WmAuditLogger
         $where = (int) $idShop > 0 ? ' WHERE a.id_shop = ' . (int) $idShop : '';
         $rows = Db::getInstance()->executeS(
             'SELECT DISTINCT a.action
-             FROM `' . _DB_PREFIX_ . 'wilden_manager_audit` a' . $where . '
+             FROM `' . _DB_PREFIX_ . 'wildenmanager_audit` a' . $where . '
              ORDER BY a.action ASC',
             true,
             false
@@ -89,7 +89,7 @@ class WmAuditLogger
         return Db::getInstance()->executeS(
             'SELECT DISTINCT a.id_employee,
                     CONCAT(e.firstname, CHAR(32), e.lastname) AS employee_name
-             FROM `' . _DB_PREFIX_ . 'wilden_manager_audit` a
+             FROM `' . _DB_PREFIX_ . 'wildenmanager_audit` a
              LEFT JOIN `' . _DB_PREFIX_ . 'employee` e ON e.id_employee = a.id_employee' .
             $where . '
              ORDER BY employee_name ASC, a.id_employee ASC',

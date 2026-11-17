@@ -3,12 +3,14 @@
 ## Installation
 
 1. Back up the staging database and files.
-2. Install the current `wilden_manager` ZIP.
+2. Uninstall the old `wilden_manager` module if present, delete its folder and
+   install `dist/wildenmanager-<version>.zip` (or upload `build/wildenmanager/`).
+   Confirm the module shows its logo and the interface is in Spanish.
 3. Confirm the native **Orders** page shows the module controls.
    **Columns** must be inside the settings gear; **Export selection** and
    **Documents** must be inside **Bulk actions**.
    There must be no saved-view selector or save/edit controls.
-4. Confirm the `wilden_manager_*` tables were created.
+4. Confirm the `wildenmanager_*` tables were created.
 5. Test with an administrator and a restricted employee profile.
 
 ## Read-only behavior
@@ -114,3 +116,12 @@
 - With a partial refund that reinjected units, confirm only the remaining units are returned.
 - Confirm packs follow the shop's pack stock type when reinjected.
 - Confirm changing the option is SuperAdmin-only and recorded in the audit log.
+
+## Status history corrections
+
+- Confirm a profile without **Edit status history** sees no Edit/Delete buttons and the endpoints answer "Access denied".
+- With the permission, confirm every history row has **Edit** and every row except the most recent has **Delete**.
+- Edit the date and employee of an older entry and confirm the row, the order's current status and the stock are unchanged otherwise.
+- Try to move an older entry after the most recent one, the most recent before an older one, a date before the order and a future date; all must be refused.
+- Delete an older entry and confirm the current status, emails, stock, invoices and payments are unchanged.
+- Confirm each change appears in the module audit with the previous and new values.

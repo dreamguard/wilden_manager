@@ -50,8 +50,43 @@ class FakeDb {
     }
     private function filter($sql) {
         if (preg_match('/LIMIT 1\s+LIMIT|FOR UPDATE\s+LIMIT/i', $sql)) throw new Exception('SQL syntax error near LIMIT 1: ' . $sql);
+        $order = null;
+        if (preg_match('/\s+ORDER BY\s+(.*?)(\s+FOR UPDATE)?$/s', $sql, $o)) {
+            $order = $o[1];
+            $sql = substr($sql, 0, strpos($sql, $o[0])) . (isset($o[2]) ? $o[2] : '');
+        }
         if (!preg_match('/FROM `ps_(\w+)`(?: \w+)?\s+WHERE (.*?)(?: LIMIT 1)?(?: FOR UPDATE)?$/s', $sql, $m)) throw new Exception('Unparsed: ' . $sql);
         $table = $m[1]; $where = trim($m[2]);
+        $rows = $this->where($table, $where);
+        if ($order) {
+            $keys = array_map(function ($part) { return preg_split('/\s+/', trim($part)); }, explode(',', $order));
+            usort($rows, function ($a, $b) use ($keys) {
+                foreach ($keys as $k) {
+                    $cmp = strcmp((string) $a[$k[0]], (string) $b[$k[0]]);
+                    if (is_numeric($a[$k[0]]) && is_numeric($b[$k[0]])) { $cmp = $a[$k[0]] <=> $b[$k[0]]; }
+                    if ($cmp !== 0) { return (isset($k[1]) && strtoupper($k[1]) === 'DESC') ? -$cmp : $cmp; }
+                }
+                return 0;
+            });
+        }
+        return $rows;
+    }
+    public function update($table, $data, $where, $limit = 0) {
+        self::$log[] = 'UPDATE ' . $table;
+        $match = $this->where($table, $where);
+        foreach (self::$t[$table] as &$row) {
+            if (in_array($row, $match, true)) { foreach ($data as $k => $v) { $row[$k] = $v; } }
+        }
+        unset($row);
+        return true;
+    }
+    public function delete($table, $where, $limit = 0) {
+        self::$log[] = 'DELETE ' . $table;
+        $match = $this->where($table, $where);
+        self::$t[$table] = array_values(array_filter(self::$t[$table], function ($r) use ($match) { return !in_array($r, $match, true); }));
+        return true;
+    }
+    private function where($table, $where) {
         $rows = isset(self::$t[$table]) ? self::$t[$table] : array();
         foreach (preg_split('/\s+AND\s+/', $where) as $cond) {
             $cond = trim(preg_replace('/^\w+\./', '', trim($cond)));
@@ -90,6 +125,7 @@ $moduleDir = dirname(__DIR__);
 require $moduleDir . '/classes/WmDb.php';
 require $moduleDir . '/classes/WmSpreadsheet.php';
 require $moduleDir . '/classes/WmOrderDeletionService.php';
+require $moduleDir . '/classes/WmOrderHistoryService.php';
 
 function seed() {
     FakeDb::$log = array(); StockAvailable::$calls = array(); FakeDb::$engines = array();
@@ -203,6 +239,49 @@ check('formula after CR is neutralized', WmSpreadsheet::neutralize("\r@cmd") ===
 check('plus and at are neutralized', WmSpreadsheet::neutralize('+34 600') === "'+34 600" && WmSpreadsheet::neutralize('@x') === "'@x");
 check('negative numbers stay numeric', WmSpreadsheet::neutralize('-2') === '-2' && WmSpreadsheet::neutralize('-12.50') === '-12.50');
 check('plain text untouched', WmSpreadsheet::neutralize('Mapa Militar') === 'Mapa Militar' && WmSpreadsheet::neutralize('') === '');
+
+// 12. Order status history: edit date/employee, delete older entries, latest stays latest.
+function seedHistory() {
+    FakeDb::$log = array();
+    FakeDb::$t = array(
+        'orders' => array(array('id_order' => 20, 'id_shop' => 1, 'date_add' => '2026-11-10 10:00:00')),
+        'employee' => array(array('id_employee' => 3), array('id_employee' => 4)),
+        'order_history' => array(
+            array('id_order_history' => 1, 'id_order' => 20, 'id_order_state' => 2, 'id_employee' => 0, 'date_add' => '2026-11-10 16:49:10'),
+            array('id_order_history' => 2, 'id_order' => 20, 'id_order_state' => 3, 'id_employee' => 3, 'date_add' => '2026-11-11 11:50:18'),
+            array('id_order_history' => 3, 'id_order' => 20, 'id_order_state' => 4, 'id_employee' => 4, 'date_add' => '2026-11-11 12:13:40'),
+            array('id_order_history' => 9, 'id_order' => 21, 'id_order_state' => 4, 'id_employee' => 4, 'date_add' => '2026-11-11 12:13:40'),
+        ),
+    );
+}
+function historyRow($id) { return FakeDb::row('order_history', 'id_order_history', $id); }
+function historyFails($fn) { try { $fn(); return false; } catch (RuntimeException $e) { return $e->getMessage(); } }
+$hs = new WmOrderHistoryService();
+
+seedHistory();
+$r = $hs->update(20, 2, '2026-11-11T11:30', 4, array(1));
+check('history: edit date and employee of an older entry', historyRow(2)['date_add'] === '2026-11-11 11:30:00' && historyRow(2)['id_employee'] === 4 && historyRow(2)['id_order_state'] === 3);
+check('history: edit returns before/after for the audit', $r['before']['date_add'] === '2026-11-11 11:50:18' && $r['after']['id_employee'] === 4);
+
+seedHistory();
+$hs->update(20, 3, '2026-11-11 12:20:00', 0, array(1));
+check('history: latest entry editable, employee cleared', historyRow(3)['date_add'] === '2026-11-11 12:20:00' && historyRow(3)['id_employee'] === 0);
+
+seedHistory();
+check('history: older entry cannot move after the latest', historyFails(function () use ($hs) { $hs->update(20, 1, '2026-11-11 13:00:00', 0, array(1)); }) !== false && historyRow(1)['date_add'] === '2026-11-10 16:49:10');
+check('history: latest entry cannot move before an older one', historyFails(function () use ($hs) { $hs->update(20, 3, '2026-11-11 11:00:00', 0, array(1)); }) !== false);
+check('history: no date before the order', historyFails(function () use ($hs) { $hs->update(20, 1, '2026-11-09 10:00:00', 0, array(1)); }) !== false);
+check('history: no future date', historyFails(function () use ($hs) { $hs->update(20, 1, date('Y-m-d H:i:s', time() + 86400), 0, array(1)); }) !== false);
+check('history: invalid date rejected', historyFails(function () use ($hs) { $hs->update(20, 1, '2026-02-30 10:00', 0, array(1)); }) !== false);
+check('history: unknown employee rejected', historyFails(function () use ($hs) { $hs->update(20, 1, '2026-11-10 17:00:00', 99, array(1)); }) !== false);
+check('history: entry of another order rejected', historyFails(function () use ($hs) { $hs->update(20, 9, '2026-11-11 12:00:00', 0, array(1)); }) !== false && historyRow(9)['date_add'] === '2026-11-11 12:13:40');
+check('history: other shop rejected', historyFails(function () use ($hs) { $hs->update(20, 1, '2026-11-10 17:00:00', 0, array(2)); }) !== false);
+
+seedHistory();
+$hs->delete(20, 2, array(1));
+check('history: older entry deleted', historyRow(2) === null && historyRow(1) !== null && historyRow(3) !== null && end(FakeDb::$log) === 'COMMIT');
+check('history: latest entry cannot be deleted', historyFails(function () use ($hs) { $hs->delete(20, 3, array(1)); }) !== false && historyRow(3) !== null);
+check('history: queries are valid for Db::getRow()', !array_filter(FakeDb::$log, function ($s) { return stripos($s, 'LIMIT 1 LIMIT') !== false; }));
 
 echo $fail ? "$fail FAILED\n" : "All regression scenarios passed.\n";
 exit($fail ? 1 : 0);

@@ -9,7 +9,7 @@ class WmGridPreference
     public static function get($idEmployee, $idShop)
     {
         $json = Db::getInstance()->getValue(
-            'SELECT columns_json FROM `' . _DB_PREFIX_ . 'wilden_manager_grid_preference`
+            'SELECT columns_json FROM `' . _DB_PREFIX_ . 'wildenmanager_grid_preference`
              WHERE id_employee = ' . (int) $idEmployee . '
                AND id_shop = ' . (int) $idShop,
             false
@@ -33,18 +33,18 @@ class WmGridPreference
         $where = 'id_employee = ' . (int) $idEmployee . ' AND id_shop = ' . (int) $idShop;
 
         if (Db::getInstance()->getValue(
-            'SELECT id_wilden_manager_grid_preference
-             FROM `' . _DB_PREFIX_ . 'wilden_manager_grid_preference`
+            'SELECT id_wildenmanager_grid_preference
+             FROM `' . _DB_PREFIX_ . 'wildenmanager_grid_preference`
              WHERE ' . $where,
             false
         )) {
-            return Db::getInstance()->update('wilden_manager_grid_preference', $data, $where, 0, false, false);
+            return Db::getInstance()->update('wildenmanager_grid_preference', $data, $where, 0, false, false);
         }
 
         $data['id_employee'] = (int) $idEmployee;
         $data['id_shop'] = (int) $idShop;
         $data['date_add'] = $data['date_upd'];
 
-        return Db::getInstance()->insert('wilden_manager_grid_preference', $data, false, false);
+        return Db::getInstance()->insert('wildenmanager_grid_preference', $data, false, false);
     }
 }

@@ -35,7 +35,7 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         );
         foreach ($mutatingActions as $action) {
             if (Tools::isSubmit($action) && (!isset($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] !== 'POST')) {
-                $this->errors[] = $this->module->l('This action requires a POST request.', 'AdminWildenManagerOrdersController');
+                $this->errors[] = $this->trans('This action requires a POST request.', array(), 'Modules.Wildenmanager.Admin');
                 return;
             }
         }
@@ -87,7 +87,7 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         }
         unset($order);
 
-        $baseUrl = $this->context->link->getAdminLink(Wilden_manager::TAB_CLASS);
+        $baseUrl = $this->context->link->getAdminLink(Wildenmanager::TAB_CLASS);
         $this->context->smarty->assign(array(
             'wm_base_url' => $baseUrl,
             'wm_ajax_url' => $baseUrl . '&ajax=1',
@@ -158,7 +158,7 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         if (!$columns) {
             $this->ajaxDie(json_encode(array(
                 'success' => false,
-                'error' => $this->module->l('Select at least one order column.', 'AdminWildenManagerOrdersController'),
+                'error' => $this->trans('Select at least one order column.', array(), 'Modules.Wildenmanager.Admin'),
             )));
         }
 
@@ -169,7 +169,7 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         )) {
             $this->ajaxDie(json_encode(array(
                 'success' => false,
-                'error' => $this->module->l('The column preference could not be saved.', 'AdminWildenManagerOrdersController'),
+                'error' => $this->trans('The column preference could not be saved.', array(), 'Modules.Wildenmanager.Admin'),
             )));
         }
 
@@ -180,7 +180,7 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         if ($storedColumns !== $columns) {
             $this->ajaxDie(json_encode(array(
                 'success' => false,
-                'error' => $this->module->l('The saved column preference could not be verified.', 'AdminWildenManagerOrdersController'),
+                'error' => $this->trans('The saved column preference could not be verified.', array(), 'Modules.Wildenmanager.Admin'),
             )));
         }
 
@@ -247,10 +247,86 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
                 'stock_units_reinjected' => (int) $result['stock_units_reinjected'],
             ), JSON_UNESCAPED_UNICODE));
         } catch (Exception $exception) {
-            $this->ajaxDie(json_encode(array('success' => false, 'error' => $exception->getMessage())));
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => $this->translateServiceError($exception))));
         } catch (Throwable $throwable) {
-            $this->ajaxDie(json_encode(array('success' => false, 'error' => $throwable->getMessage())));
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => $this->translateServiceError($throwable))));
         }
+    }
+
+    public function ajaxProcessOrderHistoryList()
+    {
+        if (!$this->module->canCurrentEmployeeEditHistory()) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => $this->trans('Access denied.', array(), 'Modules.Wildenmanager.Admin'))));
+        }
+        try {
+            $history = (new WmOrderHistoryService())->getHistory(
+                (int) Tools::getValue('id_order'),
+                Shop::getContextListShopID(),
+                (int) $this->context->language->id
+            );
+            $this->ajaxDie(json_encode(array('success' => true, 'history' => $history), JSON_UNESCAPED_UNICODE));
+        } catch (Exception $exception) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => $this->translateServiceError($exception))));
+        }
+    }
+
+    public function ajaxProcessOrderHistoryUpdate()
+    {
+        $this->assertHistoryWriteRequest();
+        $idOrder = (int) Tools::getValue('id_order');
+        try {
+            $result = (new WmOrderHistoryService())->update(
+                $idOrder,
+                (int) Tools::getValue('id_order_history'),
+                (string) Tools::getValue('date_add'),
+                (int) Tools::getValue('id_employee'),
+                Shop::getContextListShopID()
+            );
+            WmAuditLogger::log('order_history_updated', $result, $idOrder);
+            $this->ajaxDie(json_encode(array('success' => true), JSON_UNESCAPED_UNICODE));
+        } catch (Exception $exception) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => $this->translateServiceError($exception))));
+        } catch (Throwable $throwable) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => $this->translateServiceError($throwable))));
+        }
+    }
+
+    public function ajaxProcessOrderHistoryDelete()
+    {
+        $this->assertHistoryWriteRequest();
+        $idOrder = (int) Tools::getValue('id_order');
+        try {
+            $result = (new WmOrderHistoryService())->delete(
+                $idOrder,
+                (int) Tools::getValue('id_order_history'),
+                Shop::getContextListShopID()
+            );
+            WmAuditLogger::log('order_history_deleted', $result, $idOrder);
+            $this->ajaxDie(json_encode(array('success' => true), JSON_UNESCAPED_UNICODE));
+        } catch (Exception $exception) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => $this->translateServiceError($exception))));
+        } catch (Throwable $throwable) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => $this->translateServiceError($throwable))));
+        }
+    }
+
+    private function assertHistoryWriteRequest()
+    {
+        if (!isset($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => $this->trans('This action requires a POST request.', array(), 'Modules.Wildenmanager.Admin'))));
+        }
+        if (!$this->module->canCurrentEmployeeEditHistory()) {
+            $this->ajaxDie(json_encode(array('success' => false, 'error' => $this->trans('Access denied.', array(), 'Modules.Wildenmanager.Admin'))));
+        }
+    }
+
+    /**
+     * Service exceptions carry English messages; they are listed in the module's
+     * translation catalogue, so the translator returns the localized text when available.
+     */
+    private function translateServiceError($throwable)
+    {
+        return $this->trans((string) $throwable->getMessage(), array(), 'Modules.Wildenmanager.Admin');
     }
 
     public function ajaxProcessExportSelectedOrders()
@@ -258,7 +334,7 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         if (!$this->access('view') || !$this->module->canCurrentEmployeeExport()) {
             $this->ajaxDie(json_encode(array(
                 'success' => false,
-                'error' => $this->module->l('You do not have permission to export orders.', 'AdminWildenManagerOrdersController'),
+                'error' => $this->trans('You do not have permission to export orders.', array(), 'Modules.Wildenmanager.Admin'),
             )));
         }
 
@@ -273,7 +349,7 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         )));
         $format = strtolower((string) Tools::getValue('export_format', 'csv'));
 
-        if (!$ids || count($ids) > Wilden_manager::MAX_EXPORT_ORDERS || !$columns) {
+        if (!$ids || count($ids) > Wildenmanager::MAX_EXPORT_ORDERS || !$columns) {
             $this->ajaxDie(json_encode(array('success' => false, 'error' => 'Invalid export selection.')));
         }
         if (!in_array($format, array('csv', 'xlsx'), true)) {
@@ -286,7 +362,7 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
             )));
         }
 
-        $orders = $this->repository->getOrdersByIds($ids, Wilden_manager::MAX_EXPORT_ORDERS);
+        $orders = $this->repository->getOrdersByIds($ids, Wildenmanager::MAX_EXPORT_ORDERS);
         if (count($orders) !== count($ids)) {
             $this->ajaxDie(json_encode(array(
                 'success' => false,
@@ -531,7 +607,7 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
             $issues = $this->prepareIntegrityIssues($service->getForExport(
                 (string) Tools::getValue('issue_type'),
                 (string) Tools::getValue('severity'),
-                Wilden_manager::MAX_INTEGRITY_EXPORT
+                Wildenmanager::MAX_INTEGRITY_EXPORT
             ));
             WmAuditLogger::log('integrity_report_exported', array(
                 'issue_type' => (string) Tools::getValue('issue_type'),
@@ -556,7 +632,7 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
                 (string) Tools::getValue('issue_type'),
                 (string) Tools::getValue('severity'),
                 (string) Tools::getValue('product_kind'),
-                Wilden_manager::MAX_STOCK_INTEGRITY_EXPORT
+                Wildenmanager::MAX_STOCK_INTEGRITY_EXPORT
             ));
             WmAuditLogger::log('stock_integrity_report_exported', array(
                 'issue_type' => (string) Tools::getValue('issue_type'),
@@ -612,51 +688,51 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
     {
         switch ($issue['issue_type']) {
             case 'missing_history':
-                return $this->module->l('The order has no status history.', 'AdminWildenManagerOrdersController');
+                return $this->trans('The order has no status history.', array(), 'Modules.Wildenmanager.Admin');
             case 'state_history_mismatch':
                 return sprintf(
-                    $this->module->l('Current status #%d; last history status #%d.', 'AdminWildenManagerOrdersController'),
+                    $this->trans('Current status #%d; last history status #%d.', array(), 'Modules.Wildenmanager.Admin'),
                     (int) $issue['value_a'],
                     (int) $issue['value_b']
                 );
             case 'delivery_address_missing':
             case 'invoice_address_missing':
                 return sprintf(
-                    $this->module->l('Referenced address #%d does not exist.', 'AdminWildenManagerOrdersController'),
+                    $this->trans('Referenced address #%d does not exist.', array(), 'Modules.Wildenmanager.Admin'),
                     (int) $issue['value_a']
                 );
             case 'customer_missing':
                 return sprintf(
-                    $this->module->l('Referenced customer #%d does not exist.', 'AdminWildenManagerOrdersController'),
+                    $this->trans('Referenced customer #%d does not exist.', array(), 'Modules.Wildenmanager.Admin'),
                     (int) $issue['value_a']
                 );
             case 'customer_incomplete':
                 return sprintf(
-                    $this->module->l('Customer #%d has empty fields: %s.', 'AdminWildenManagerOrdersController'),
+                    $this->trans('Customer #%d has empty fields: %s.', array(), 'Modules.Wildenmanager.Admin'),
                     (int) $issue['value_a'],
                     (string) $issue['value_b']
                 );
             case 'invoice_number_without_date':
                 return sprintf(
-                    $this->module->l('Invoice #%d (record #%d) has no valid date.', 'AdminWildenManagerOrdersController'),
+                    $this->trans('Invoice #%d (record #%d) has no valid date.', array(), 'Modules.Wildenmanager.Admin'),
                     (int) $issue['value_b'],
                     (int) $issue['value_a']
                 );
             case 'delivery_number_without_date':
                 return sprintf(
-                    $this->module->l('Delivery slip #%d (invoice record #%d) has no valid date.', 'AdminWildenManagerOrdersController'),
+                    $this->trans('Delivery slip #%d (invoice record #%d) has no valid date.', array(), 'Modules.Wildenmanager.Admin'),
                     (int) $issue['value_b'],
                     (int) $issue['value_a']
                 );
             case 'delivery_address_deleted':
             case 'invoice_address_deleted':
                 return sprintf(
-                    $this->module->l('Address #%d is retained for order history and marked deleted.', 'AdminWildenManagerOrdersController'),
+                    $this->trans('Address #%d is retained for order history and marked deleted.', array(), 'Modules.Wildenmanager.Admin'),
                     (int) $issue['value_a']
                 );
             case 'customer_deleted':
                 return sprintf(
-                    $this->module->l('Customer #%d is retained for order history and marked deleted.', 'AdminWildenManagerOrdersController'),
+                    $this->trans('Customer #%d is retained for order history and marked deleted.', array(), 'Modules.Wildenmanager.Admin'),
                     (int) $issue['value_a']
                 );
         }
@@ -723,58 +799,58 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         switch ($issue['issue_type']) {
             case 'refunded_exceeds_ordered':
                 return sprintf(
-                    $this->module->l('Ordered: %d; refunded counter: %d.', 'AdminWildenManagerOrdersController'),
+                    $this->trans('Ordered: %d; refunded counter: %d.', array(), 'Modules.Wildenmanager.Admin'),
                     (int) $issue['value_a'],
                     (int) $issue['value_b']
                 );
             case 'returned_exceeds_ordered':
                 return sprintf(
-                    $this->module->l('Ordered: %d; returned counter: %d.', 'AdminWildenManagerOrdersController'),
+                    $this->trans('Ordered: %d; returned counter: %d.', array(), 'Modules.Wildenmanager.Admin'),
                     (int) $issue['value_a'],
                     (int) $issue['value_b']
                 );
             case 'reinjected_exceeds_ordered':
                 return sprintf(
-                    $this->module->l('Ordered: %d; reinjected into stock: %d.', 'AdminWildenManagerOrdersController'),
+                    $this->trans('Ordered: %d; reinjected into stock: %d.', array(), 'Modules.Wildenmanager.Admin'),
                     (int) $issue['value_a'],
                     (int) $issue['value_b']
                 );
             case 'credit_slip_exceeds_ordered':
                 return sprintf(
-                    $this->module->l('Ordered: %d; cumulative credit-slip quantity: %d.', 'AdminWildenManagerOrdersController'),
+                    $this->trans('Ordered: %d; cumulative credit-slip quantity: %d.', array(), 'Modules.Wildenmanager.Admin'),
                     (int) $issue['value_a'],
                     (int) $issue['value_b']
                 );
             case 'return_request_exceeds_ordered':
                 return sprintf(
-                    $this->module->l('Ordered: %d; cumulative return-request quantity: %d.', 'AdminWildenManagerOrdersController'),
+                    $this->trans('Ordered: %d; cumulative return-request quantity: %d.', array(), 'Modules.Wildenmanager.Admin'),
                     (int) $issue['value_a'],
                     (int) $issue['value_b']
                 );
             case 'refund_without_credit_slip':
                 return sprintf(
-                    $this->module->l('Refunded counter: %d; quantity covered by credit slips: %d; ordered: %d.', 'AdminWildenManagerOrdersController'),
+                    $this->trans('Refunded counter: %d; quantity covered by credit slips: %d; ordered: %d.', array(), 'Modules.Wildenmanager.Admin'),
                     (int) $issue['value_a'],
                     (int) $issue['value_b'],
                     (int) $issue['value_c']
                 );
             case 'refund_not_reinjected':
                 return sprintf(
-                    $this->module->l('Refunded/returned evidence: %d; stock reinjection marker: %d; ordered: %d. The absence of reinjection may be intentional.', 'AdminWildenManagerOrdersController'),
+                    $this->trans('Refunded/returned evidence: %d; stock reinjection marker: %d; ordered: %d. The absence of reinjection may be intentional.', array(), 'Modules.Wildenmanager.Admin'),
                     (int) $issue['value_a'],
                     (int) $issue['value_b'],
                     (int) $issue['value_c']
                 );
             case 'cancelled_restock_evidence_missing':
                 return sprintf(
-                    $this->module->l('The cancelled order previously had a stock-affecting status. Ordered: %d; line reinjection markers: %d. No persistent positive movement evidence is available; manual verification may be required.', 'AdminWildenManagerOrdersController'),
+                    $this->trans('The cancelled order previously had a stock-affecting status. Ordered: %d; line reinjection markers: %d. No persistent positive movement evidence is available; manual verification may be required.', array(), 'Modules.Wildenmanager.Admin'),
                     (int) $issue['value_a'],
                     (int) $issue['value_b']
                 );
             case 'stock_cache_mismatch':
             case 'pack_stock_cache_mismatch':
                 return sprintf(
-                    $this->module->l('Available: %d; reserved: %d; physical: %d. Expected physical quantity: %d.', 'AdminWildenManagerOrdersController'),
+                    $this->trans('Available: %d; reserved: %d; physical: %d. Expected physical quantity: %d.', array(), 'Modules.Wildenmanager.Admin'),
                     (int) $issue['value_a'],
                     (int) $issue['value_b'],
                     (int) $issue['value_c'],
@@ -861,7 +937,7 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
     private function saveNote()
     {
         if (!$this->canEdit()) {
-            $this->errors[] = $this->module->l('You do not have permission to edit orders.', 'AdminWildenManagerOrdersController');
+            $this->errors[] = $this->trans('You do not have permission to edit orders.', array(), 'Modules.Wildenmanager.Admin');
             return;
         }
 
@@ -869,11 +945,11 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         $note = trim((string) Tools::getValue('wm_note'));
 
         if (!$idOrder || !$this->repository->isOrderAccessible($idOrder)) {
-            $this->errors[] = $this->module->l('Order not found.', 'AdminWildenManagerOrdersController');
+            $this->errors[] = $this->trans('Order not found.', array(), 'Modules.Wildenmanager.Admin');
             return;
         }
         if (Tools::strlen($note) > 5000 || strpos($note, "\0") !== false) {
-            $this->errors[] = $this->module->l('The note is invalid or exceeds 5,000 characters.', 'AdminWildenManagerOrdersController');
+            $this->errors[] = $this->trans('The note is invalid or exceeds 5,000 characters.', array(), 'Modules.Wildenmanager.Admin');
             return;
         }
 
@@ -883,19 +959,16 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
                 'old_length' => Tools::strlen($oldNote),
                 'new_length' => Tools::strlen($note),
             ), $idOrder);
-            $this->confirmations[] = $this->module->l('The internal note was saved.', 'AdminWildenManagerOrdersController');
+            $this->confirmations[] = $this->trans('The internal note was saved.', array(), 'Modules.Wildenmanager.Admin');
         } else {
-            $this->errors[] = $this->module->l('The internal note could not be saved.', 'AdminWildenManagerOrdersController');
+            $this->errors[] = $this->trans('The internal note could not be saved.', array(), 'Modules.Wildenmanager.Admin');
         }
     }
 
     private function exportOrders()
     {
         if (!$this->access('view') || !$this->module->canCurrentEmployeeExport()) {
-            $this->errors[] = $this->module->l(
-                'You do not have permission to export orders.',
-                'AdminWildenManagerOrdersController'
-            );
+            $this->errors[] = $this->trans('You do not have permission to export orders.', array(), 'Modules.Wildenmanager.Admin');
 
             return;
         }
@@ -959,19 +1032,19 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
     {
         return array(
             'id_order' => 'ID',
-            'reference' => $this->module->l('Reference', 'AdminWildenManagerOrdersController'),
-            'new' => $this->module->l('New client', 'AdminWildenManagerOrdersController'),
-            'country' => $this->module->l('Delivery', 'AdminWildenManagerOrdersController'),
-            'customer' => $this->module->l('Customer', 'AdminWildenManagerOrdersController'),
-            'email' => $this->module->l('Email', 'AdminWildenManagerOrdersController'),
-            'total' => $this->module->l('Total', 'AdminWildenManagerOrdersController'),
-            'state' => $this->module->l('State', 'AdminWildenManagerOrdersController'),
-            'payment' => $this->module->l('Payment', 'AdminWildenManagerOrdersController'),
-            'carrier' => $this->module->l('Carrier', 'AdminWildenManagerOrdersController'),
-            'company' => $this->module->l('Company', 'AdminWildenManagerOrdersController'),
-            'shop' => $this->module->l('Store', 'AdminWildenManagerOrdersController'),
-            'note' => $this->module->l('Internal note', 'AdminWildenManagerOrdersController'),
-            'date_add' => $this->module->l('Date', 'AdminWildenManagerOrdersController'),
+            'reference' => $this->trans('Reference', array(), 'Modules.Wildenmanager.Admin'),
+            'new' => $this->trans('New client', array(), 'Modules.Wildenmanager.Admin'),
+            'country' => $this->trans('Delivery', array(), 'Modules.Wildenmanager.Admin'),
+            'customer' => $this->trans('Customer', array(), 'Modules.Wildenmanager.Admin'),
+            'email' => $this->trans('Email', array(), 'Modules.Wildenmanager.Admin'),
+            'total' => $this->trans('Total', array(), 'Modules.Wildenmanager.Admin'),
+            'state' => $this->trans('State', array(), 'Modules.Wildenmanager.Admin'),
+            'payment' => $this->trans('Payment', array(), 'Modules.Wildenmanager.Admin'),
+            'carrier' => $this->trans('Carrier', array(), 'Modules.Wildenmanager.Admin'),
+            'company' => $this->trans('Company', array(), 'Modules.Wildenmanager.Admin'),
+            'shop' => $this->trans('Store', array(), 'Modules.Wildenmanager.Admin'),
+            'note' => $this->trans('Internal note', array(), 'Modules.Wildenmanager.Admin'),
+            'date_add' => $this->trans('Date', array(), 'Modules.Wildenmanager.Admin'),
         );
     }
 

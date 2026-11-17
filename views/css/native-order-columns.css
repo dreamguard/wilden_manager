@@ -74,6 +74,15 @@
   pointer-events: auto;
 }
 
+.wm-history-actions .btn {
+  margin-left: 6px;
+}
+
+.wm-history-actions .material-icons {
+  font-size: 16px;
+  vertical-align: text-bottom;
+}
+
 .wm-delete-order-trigger .material-icons {
   font-size: 19px;
   vertical-align: middle;

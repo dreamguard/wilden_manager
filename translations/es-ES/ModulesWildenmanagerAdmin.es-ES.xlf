@@ -1,0 +1,1163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+  <file original="modules/wildenmanager" source-language="en-US" target-language="es-ES" datatype="plaintext">
+    <body>
+      <trans-unit id="03d3dd7c9506a957a230a4084f58b478">
+        <source>Order without status history</source>
+        <target>Pedido sin historial de estados</target>
+      </trans-unit>
+      <trans-unit id="9e8deb3bb94ae4af30a36fc714202b46">
+        <source>Current status differs from history</source>
+        <target>El estado actual no coincide con el historial</target>
+      </trans-unit>
+      <trans-unit id="08e7ab0a1665a5dbcc919a2e6e7b2d8a">
+        <source>Delivery address missing</source>
+        <target>Falta la dirección de entrega</target>
+      </trans-unit>
+      <trans-unit id="23fec57ccf479ef13d65b057142105b7">
+        <source>Invoice address missing</source>
+        <target>Falta la dirección de facturación</target>
+      </trans-unit>
+      <trans-unit id="fcb1f2a27b5d7e134786a035a57854a4">
+        <source>Customer missing</source>
+        <target>Falta el cliente</target>
+      </trans-unit>
+      <trans-unit id="b86dcde2f7695e46b125cb90b8a2e15d">
+        <source>Customer data incomplete</source>
+        <target>Datos del cliente incompletos</target>
+      </trans-unit>
+      <trans-unit id="a52988bcd814046d7ab26724ed3b60e7">
+        <source>Invoice number without date</source>
+        <target>Número de factura sin fecha</target>
+      </trans-unit>
+      <trans-unit id="f6f90d19a27f5464fdcb69073d2b9b69">
+        <source>Delivery number without date</source>
+        <target>Número de albarán sin fecha</target>
+      </trans-unit>
+      <trans-unit id="43a0d77d5ef2be3fafeec6c0de61db63">
+        <source>Historical delivery address marked deleted</source>
+        <target>Dirección de entrega histórica marcada como eliminada</target>
+      </trans-unit>
+      <trans-unit id="1a499a2cd9ee1882ee4131fba79aa47d">
+        <source>Historical invoice address marked deleted</source>
+        <target>Dirección de facturación histórica marcada como eliminada</target>
+      </trans-unit>
+      <trans-unit id="3a42d84f57827bdd49647a2a305d260f">
+        <source>Historical customer marked deleted</source>
+        <target>Cliente histórico marcado como eliminado</target>
+      </trans-unit>
+      <trans-unit id="762f1eb8569b8e80b0b38bcd122a13ad">
+        <source>Order columns updated</source>
+        <target>Columnas de pedidos actualizadas</target>
+      </trans-unit>
+      <trans-unit id="52adc39e20e85526ae419585b44d01d3">
+        <source>Orders exported</source>
+        <target>Pedidos exportados</target>
+      </trans-unit>
+      <trans-unit id="cdb3ccac9ad59fa4b324670d5bd1530a">
+        <source>Order documents downloaded</source>
+        <target>Documentos de pedidos descargados</target>
+      </trans-unit>
+      <trans-unit id="1b4d3f9555663b368c59295d130afebb">
+        <source>Integrity report exported</source>
+        <target>Informe de integridad exportado</target>
+      </trans-unit>
+      <trans-unit id="920873fa238afc063380cc800647c6fe">
+        <source>Stock diagnostic report exported</source>
+        <target>Informe de diagnóstico de stock exportado</target>
+      </trans-unit>
+      <trans-unit id="43fa7f2a0cb36c4e4e7876f418084069">
+        <source>Diagnostic review updated</source>
+        <target>Revisión de diagnóstico actualizada</target>
+      </trans-unit>
+      <trans-unit id="e7b8be98f414b4b2227bac3d56e8000c">
+        <source>Physical stock cache repaired</source>
+        <target>Caché de stock físico reparada</target>
+      </trans-unit>
+      <trans-unit id="47cff0b621f8c7efd8472ab26a3c4767">
+        <source>Profile permissions updated</source>
+        <target>Permisos de perfil actualizados</target>
+      </trans-unit>
+      <trans-unit id="7d062e702d07742ad4640ed32d7b5580">
+        <source>Order permanently deleted</source>
+        <target>Pedido eliminado definitivamente</target>
+      </trans-unit>
+      <trans-unit id="f95652c54ef5299b3b15169aca06437b">
+        <source>Order deletion settings updated</source>
+        <target>Ajustes de eliminación de pedidos actualizados</target>
+      </trans-unit>
+      <trans-unit id="416e780ef8827f74cc90554738dac65d">
+        <source>Internal note updated</source>
+        <target>Nota interna actualizada</target>
+      </trans-unit>
+      <trans-unit id="8a2d7829dcc9654288b7f3f823fb06a1">
+        <source>Refunded quantity exceeds ordered quantity</source>
+        <target>La cantidad reembolsada supera la cantidad pedida</target>
+      </trans-unit>
+      <trans-unit id="c650b0118a7b3aeb4d52b5bbc7a1dec1">
+        <source>Returned quantity exceeds ordered quantity</source>
+        <target>La cantidad devuelta supera la cantidad pedida</target>
+      </trans-unit>
+      <trans-unit id="8074c920af1d01c4d3049b1f55526b69">
+        <source>Reinjected quantity exceeds ordered quantity</source>
+        <target>La cantidad repuesta supera la cantidad pedida</target>
+      </trans-unit>
+      <trans-unit id="d2711b146b37bff968aa05dcfc1e5ea4">
+        <source>Credit-slip quantity exceeds ordered quantity</source>
+        <target>La cantidad en facturas por abono supera la cantidad pedida</target>
+      </trans-unit>
+      <trans-unit id="a8dda573c6d88365d8fbc3fb39431cc9">
+        <source>Return-request quantity exceeds ordered quantity</source>
+        <target>La cantidad en solicitudes de devolución supera la cantidad pedida</target>
+      </trans-unit>
+      <trans-unit id="16dac200b6b5607bf9155d0610599ebf">
+        <source>Refund counter is not covered by credit slips</source>
+        <target>El contador de reembolsos no está cubierto por facturas por abono</target>
+      </trans-unit>
+      <trans-unit id="efea58aeac3b4863e8f991e0c065d6fc">
+        <source>Refund or return without equal stock reinjection</source>
+        <target>Reembolso o devolución sin reposición de stock equivalente</target>
+      </trans-unit>
+      <trans-unit id="29e28e4d62af860fee72660dfece0994">
+        <source>Cancellation has no persistent restock evidence</source>
+        <target>La cancelación no tiene evidencia persistente de reposición</target>
+      </trans-unit>
+      <trans-unit id="597adf0b2e7c8606aded7a6f26f48b19">
+        <source>Available, reserved and physical stock do not reconcile</source>
+        <target>El stock disponible, reservado y físico no cuadran</target>
+      </trans-unit>
+      <trans-unit id="665cebd3b94ffe94fa236e983c7c1928">
+        <source>Pack stock cache does not reconcile</source>
+        <target>La caché de stock del pack no cuadra</target>
+      </trans-unit>
+      <trans-unit id="b6cc50ccdb86128552d929333ee46d98">
+        <source>Wilden Manager</source>
+        <target>Wilden Manager</target>
+      </trans-unit>
+      <trans-unit id="81f4da3c5f957ea59a881845b40b68ed">
+        <source>Advanced and auditable order management for PrestaShop.</source>
+        <target>Gestión avanzada y auditable de pedidos para PrestaShop.</target>
+      </trans-unit>
+      <trans-unit id="f6548ed9717b1f60e8aa5c3e7bcb5b30">
+        <source>Remove Wilden Manager and all of its module data and audit records?</source>
+        <target>¿Eliminar Wilden Manager y todos sus datos y registros de auditoría?</target>
+      </trans-unit>
+      <trans-unit id="6439d74173e1efdc1f6fadded5d3ccd4">
+        <source>Only SuperAdmin can change profile permissions.</source>
+        <target>Solo el SuperAdmin puede cambiar los permisos de perfil.</target>
+      </trans-unit>
+      <trans-unit id="845609ed8b7d1256fa0e9e17da8108ec">
+        <source>This action requires a POST request.</source>
+        <target>Esta acción requiere una petición POST.</target>
+      </trans-unit>
+      <trans-unit id="b1479bef2e757ed3bbcf3f58eb629243">
+        <source>Profile permissions have been saved.</source>
+        <target>Los permisos de perfil se han guardado.</target>
+      </trans-unit>
+      <trans-unit id="4850e9d2a9f2e49b26e96b1718da1de7">
+        <source>Profile permissions could not be saved.</source>
+        <target>No se han podido guardar los permisos de perfil.</target>
+      </trans-unit>
+      <trans-unit id="4b4d2dbf866057173ecdf5dd4ae4d45a">
+        <source>Only SuperAdmin can change order deletion settings.</source>
+        <target>Solo el SuperAdmin puede cambiar los ajustes de eliminación de pedidos.</target>
+      </trans-unit>
+      <trans-unit id="12d8b350c64f37bd5211986551c95020">
+        <source>Order deletion settings have been saved.</source>
+        <target>Los ajustes de eliminación de pedidos se han guardado.</target>
+      </trans-unit>
+      <trans-unit id="e9f03e52c0262b344768e06c71d22b4e">
+        <source>Order deletion settings could not be saved.</source>
+        <target>No se han podido guardar los ajustes de eliminación de pedidos.</target>
+      </trans-unit>
+      <trans-unit id="b718adec73e04ce3ec720dd11a06a308">
+        <source>ID</source>
+        <target>ID</target>
+      </trans-unit>
+      <trans-unit id="63d5049791d9d79d86e9a108b0a999ca">
+        <source>Reference</source>
+        <target>Referencia</target>
+      </trans-unit>
+      <trans-unit id="94003250a2187a9f51b227b490e5ab6b">
+        <source>New client</source>
+        <target>Nuevo cliente</target>
+      </trans-unit>
+      <trans-unit id="065ab3a28ca4f16f55f103adc7d0226f">
+        <source>Delivery</source>
+        <target>Entrega</target>
+      </trans-unit>
+      <trans-unit id="ce26601dac0dea138b7295f02b7620a7">
+        <source>Customer</source>
+        <target>Cliente</target>
+      </trans-unit>
+      <trans-unit id="03361eda68f746619c2ae3341eaa2f07">
+        <source>Customer email</source>
+        <target>Email del cliente</target>
+      </trans-unit>
+      <trans-unit id="1c76cbfe21c6f44c1d1e59d54f3e4420">
+        <source>Company</source>
+        <target>Empresa</target>
+      </trans-unit>
+      <trans-unit id="96b0141273eabab320119c467cdcaf17">
+        <source>Total</source>
+        <target>Total</target>
+      </trans-unit>
+      <trans-unit id="c453a4b8e8d98e82f35b67f433e3b4da">
+        <source>Payment</source>
+        <target>Pago</target>
+      </trans-unit>
+      <trans-unit id="83d893ae1e34a74ab9a068e1d190c764">
+        <source>Shipping method</source>
+        <target>Método de envío</target>
+      </trans-unit>
+      <trans-unit id="ec53a8c4f07baed5d8825072c89799be">
+        <source>Status</source>
+        <target>Estado</target>
+      </trans-unit>
+      <trans-unit id="44749712dbec183e983dcd78a7736c41">
+        <source>Date</source>
+        <target>Fecha</target>
+      </trans-unit>
+      <trans-unit id="fdb0c388de01d545017cdf9ccf00eb72">
+        <source>Store</source>
+        <target>Tienda</target>
+      </trans-unit>
+      <trans-unit id="f7af258bbc94a2c4c02a7ba1f0696f19">
+        <source>Delivery country</source>
+        <target>País de entrega</target>
+      </trans-unit>
+      <trans-unit id="2ac47f509d47a6694db1b5e56dcc0193">
+        <source>Delivery postcode</source>
+        <target>Código postal de entrega</target>
+      </trans-unit>
+      <trans-unit id="e50225421ec21ac413751829708fe4a5">
+        <source>Delivery city</source>
+        <target>Ciudad de entrega</target>
+      </trans-unit>
+      <trans-unit id="bc8da753d36fd8fe306efcfe83bec18d">
+        <source>Total paid tax included</source>
+        <target>Total pagado con impuestos</target>
+      </trans-unit>
+      <trans-unit id="386c339d37e737a436499d423a77df0c">
+        <source>Currency</source>
+        <target>Moneda</target>
+      </trans-unit>
+      <trans-unit id="168b82d33f8073018c50a4f658a02559">
+        <source>Columns</source>
+        <target>Columnas</target>
+      </trans-unit>
+      <trans-unit id="634b6a649f6a48dca128f8a2541b6378">
+        <source>Export selection</source>
+        <target>Exportar selección</target>
+      </trans-unit>
+      <trans-unit id="f28128b38efbc6134dc40751ee21fd29">
+        <source>Documents</source>
+        <target>Documentos</target>
+      </trans-unit>
+      <trans-unit id="2459a02ecb2c655956ecb3e39068dc55">
+        <source>Search email</source>
+        <target>Buscar email</target>
+      </trans-unit>
+      <trans-unit id="3ffd1167aacd9e8f0d3f61b19fb68510">
+        <source>Search shipping method</source>
+        <target>Buscar método de envío</target>
+      </trans-unit>
+      <trans-unit id="776d89375e5d39a7a3724503609c2984">
+        <source>Orders with a credit slip cannot be deleted.</source>
+        <target>Los pedidos con factura por abono no se pueden eliminar.</target>
+      </trans-unit>
+      <trans-unit id="38d767e75448be6643c947165da495de">
+        <source>Orders with an issued invoice cannot be deleted.</source>
+        <target>Los pedidos con factura emitida no se pueden eliminar.</target>
+      </trans-unit>
+      <trans-unit id="76bf2e10dceea16fa22e34f6b08182d7">
+        <source>Delete order permanently</source>
+        <target>Eliminar pedido definitivamente</target>
+      </trans-unit>
+      <trans-unit id="5a5b1113b384a8dfeae098ddd298646a">
+        <source>Configure order columns</source>
+        <target>Configurar columnas de pedidos</target>
+      </trans-unit>
+      <trans-unit id="c178659620ea3e61c5f0f1406573c34f">
+        <source>Save and reload</source>
+        <target>Guardar y recargar</target>
+      </trans-unit>
+      <trans-unit id="9fa0d187c8f26d348e17d4b5b58e67e5">
+        <source>Restore defaults</source>
+        <target>Restaurar valores por defecto</target>
+      </trans-unit>
+      <trans-unit id="ea4788705e6873b424c65e91c2846b19">
+        <source>Cancel</source>
+        <target>Cancelar</target>
+      </trans-unit>
+      <trans-unit id="5f1490702e6c6cee4c19512037948953">
+        <source>The column preference could not be saved.</source>
+        <target>No se ha podido guardar la preferencia de columnas.</target>
+      </trans-unit>
+      <trans-unit id="c5040188c5caa9dc92a400933c057560">
+        <source>Export selected orders</source>
+        <target>Exportar pedidos seleccionados</target>
+      </trans-unit>
+      <trans-unit id="1bd7f72decec9fb5b51a58447b152d38">
+        <source>File format</source>
+        <target>Formato de archivo</target>
+      </trans-unit>
+      <trans-unit id="3a14cd0a496872b79033909abb392d94">
+        <source>Columns to export</source>
+        <target>Columnas a exportar</target>
+      </trans-unit>
+      <trans-unit id="2e79b95466a9b6844c3aac9d00ae6c11">
+        <source>Download export</source>
+        <target>Descargar exportación</target>
+      </trans-unit>
+      <trans-unit id="7f6e2b1ea0de1857030c54f368aca417">
+        <source>Select at least one export column.</source>
+        <target>Selecciona al menos una columna para exportar.</target>
+      </trans-unit>
+      <trans-unit id="fa850d740997f0bcb51873a518ca2c92">
+        <source>CSV (UTF-8, semicolon separated)</source>
+        <target>CSV (UTF-8, separado por punto y coma)</target>
+      </trans-unit>
+      <trans-unit id="05cd009e7c7b07f88b0747e60857d201">
+        <source>Excel XLSX</source>
+        <target>Excel XLSX</target>
+      </trans-unit>
+      <trans-unit id="bf9be4cedab78256778927f01215a8a3">
+        <source>Combined order documents</source>
+        <target>Documentos de pedidos combinados</target>
+      </trans-unit>
+      <trans-unit id="208a23b4a66a2500d7f1e5868af58e3b">
+        <source>Document type</source>
+        <target>Tipo de documento</target>
+      </trans-unit>
+      <trans-unit id="ba63349d8e51d4d37aa4e68c46c530ae">
+        <source>Check documents</source>
+        <target>Comprobar documentos</target>
+      </trans-unit>
+      <trans-unit id="37779c31a0f8ed5f98661ada5dd79c33">
+        <source>Invoices PDF</source>
+        <target>Facturas en PDF</target>
+      </trans-unit>
+      <trans-unit id="f510b2ef0fe4af72c44a3e17ad735168">
+        <source>Delivery slips PDF</source>
+        <target>Albaranes en PDF</target>
+      </trans-unit>
+      <trans-unit id="1cfd8846f4ac1dca8c2f7751b8bf8d0c">
+        <source>Both in ZIP</source>
+        <target>Ambos en ZIP</target>
+      </trans-unit>
+      <trans-unit id="801ab24683a4a8c433c6eb40c48bcd9d">
+        <source>Download</source>
+        <target>Descargar</target>
+      </trans-unit>
+      <trans-unit id="78945de8de090e90045d299651a68a9b">
+        <source>Available</source>
+        <target>Disponible</target>
+      </trans-unit>
+      <trans-unit id="2aee0be2678ee90fd327cc186826438e">
+        <source>Missing</source>
+        <target>Falta</target>
+      </trans-unit>
+      <trans-unit id="ef83cdd08e97af7aab749b371db610be">
+        <source>Invoices available</source>
+        <target>Facturas disponibles</target>
+      </trans-unit>
+      <trans-unit id="b79a69492c131ebffb141ba3c4ee15a9">
+        <source>Delivery slips available</source>
+        <target>Albaranes disponibles</target>
+      </trans-unit>
+      <trans-unit id="52795b1d3c6715fe544a58230f30ad2f">
+        <source>The documents could not be checked or generated.</source>
+        <target>No se han podido comprobar o generar los documentos.</target>
+      </trans-unit>
+      <trans-unit id="02806b406bdb86e4323bb1f0f1158245">
+        <source>Select at least one order in the native list.</source>
+        <target>Selecciona al menos un pedido en la lista.</target>
+      </trans-unit>
+      <trans-unit id="bf0be09615c548873a350edc2c901229">
+        <source>selected orders</source>
+        <target>pedidos seleccionados</target>
+      </trans-unit>
+      <trans-unit id="3d7a07232b5a853c1f7ba916b6ebe5c9">
+        <source>The maximum number of orders per document operation is</source>
+        <target>El número máximo de pedidos por operación de documentos es</target>
+      </trans-unit>
+      <trans-unit id="d7316f79c12a945b88c6b51e3da992ed">
+        <source>Permanently delete order</source>
+        <target>Eliminar pedido definitivamente</target>
+      </trans-unit>
+      <trans-unit id="f6a9027224e1f5fd100c612c519236ee">
+        <source>This operation is irreversible. The order and its PrestaShop records will be removed. The ordered quantities will be returned to stock unless the order is cancelled or in error.</source>
+        <target>Esta operación es irreversible. Se eliminarán el pedido y sus registros de PrestaShop. Las cantidades pedidas se devolverán al stock, salvo que el pedido esté cancelado o en error.</target>
+      </trans-unit>
+      <trans-unit id="80a6cd2cd53d94276cbd144bcbf61a41">
+        <source>This operation is irreversible. The order and its PrestaShop records will be removed. Stock will not be reinjected.</source>
+        <target>Esta operación es irreversible. Se eliminarán el pedido y sus registros de PrestaShop. No se repondrá el stock.</target>
+      </trans-unit>
+      <trans-unit id="eb9066f1c7e960aa2e21758f6e76fc40">
+        <source>Type the order ID to confirm:</source>
+        <target>Escribe el ID del pedido para confirmar:</target>
+      </trans-unit>
+      <trans-unit id="8fb41b3911b7f22a4e1d2dbfd77bc403">
+        <source>Delete permanently</source>
+        <target>Eliminar definitivamente</target>
+      </trans-unit>
+      <trans-unit id="1116cc6cefdb99cafd74d838e1436f90">
+        <source>This order has an issued invoice or a credit slip and cannot be deleted.</source>
+        <target>Este pedido tiene una factura emitida o una factura por abono y no se puede eliminar.</target>
+      </trans-unit>
+      <trans-unit id="34bb19d2d42b99754f9b5e1ea0fbeb81">
+        <source>The order could not be deleted.</source>
+        <target>No se ha podido eliminar el pedido.</target>
+      </trans-unit>
+      <trans-unit id="07a5f05e21c3b6ac48d858bd7e357af8">
+        <source>The order and its PrestaShop records were deleted.</source>
+        <target>Se han eliminado el pedido y sus registros de PrestaShop.</target>
+      </trans-unit>
+      <trans-unit id="01968d09252b63c5920feb29dbb12794">
+        <source>Units returned to stock:</source>
+        <target>Unidades devueltas al stock:</target>
+      </trans-unit>
+      <trans-unit id="f2698312a9471c878b4bd1c62dfa5a05">
+        <source>Stock was not changed because the order was already cancelled or in error.</source>
+        <target>El stock no ha cambiado porque el pedido ya estaba cancelado o en error.</target>
+      </trans-unit>
+      <trans-unit id="43195026b31e002ebfcecb6a1a142617">
+        <source>Stock was not changed because stock management is disabled in the shop.</source>
+        <target>El stock no ha cambiado porque la gestión de stock está desactivada en la tienda.</target>
+      </trans-unit>
+      <trans-unit id="bbb63f7c872069685793027208295a04">
+        <source>All issue types</source>
+        <target>Todos los tipos de incidencia</target>
+      </trans-unit>
+      <trans-unit id="db041cb3d97a459f6752879a814cc65a">
+        <source>All severities</source>
+        <target>Todas las gravedades</target>
+      </trans-unit>
+      <trans-unit id="642facf67e0ad311eee88b3ab8381590">
+        <source>Issue</source>
+        <target>Incidencia</target>
+      </trans-unit>
+      <trans-unit id="007cc9547ae8884ad597cd92ba505422">
+        <source>Severity</source>
+        <target>Gravedad</target>
+      </trans-unit>
+      <trans-unit id="655d20c1ca69519ca647684edbb2db35">
+        <source>High</source>
+        <target>Alta</target>
+      </trans-unit>
+      <trans-unit id="87f8a6ab85c9ced3702b4ea641ad4bb5">
+        <source>Medium</source>
+        <target>Media</target>
+      </trans-unit>
+      <trans-unit id="a82be0f551b8708bc08eb33cd9ded0cf">
+        <source>Information</source>
+        <target>Información</target>
+      </trans-unit>
+      <trans-unit id="a240fa27925a635b08dc28c9e4f9216d">
+        <source>Order</source>
+        <target>Pedido</target>
+      </trans-unit>
+      <trans-unit id="a254c25adc7d10d7e9c4889484f875a5">
+        <source>Detail</source>
+        <target>Detalle</target>
+      </trans-unit>
+      <trans-unit id="7cfb61ca11835f06150d29ff79142120">
+        <source>No issues match the selected filters.</source>
+        <target>Ninguna incidencia coincide con los filtros seleccionados.</target>
+      </trans-unit>
+      <trans-unit id="5cea69b98f763443195680d9475edf7a">
+        <source>Analysing orders...</source>
+        <target>Analizando pedidos...</target>
+      </trans-unit>
+      <trans-unit id="ded30d0e0dd99dc149bffaf0af562ccc">
+        <source>The integrity analysis could not be completed.</source>
+        <target>No se ha podido completar el análisis de integridad.</target>
+      </trans-unit>
+      <trans-unit id="dd1f775e443ff3b9a89270713580a51b">
+        <source>Previous</source>
+        <target>Anterior</target>
+      </trans-unit>
+      <trans-unit id="10ac3d04253ef7e1ddc73e6091c0cd55">
+        <source>Next</source>
+        <target>Siguiente</target>
+      </trans-unit>
+      <trans-unit id="193cfc9be3b995831c6af2fea6650e60">
+        <source>Page</source>
+        <target>Página</target>
+      </trans-unit>
+      <trans-unit id="8bf8854bebe108183caeb845c7676ae4">
+        <source>of</source>
+        <target>de</target>
+      </trans-unit>
+      <trans-unit id="d74ca2a5a972895d93d8695c73506bfc">
+        <source>Pending review</source>
+        <target>Pendiente de revisión</target>
+      </trans-unit>
+      <trans-unit id="621761610b7c6fa2dc5ea0d93d0f2394">
+        <source>Reviewed</source>
+        <target>Revisada</target>
+      </trans-unit>
+      <trans-unit id="058cc077563d4b47b43ae642a6478159">
+        <source>Justified</source>
+        <target>Justificada</target>
+      </trans-unit>
+      <trans-unit id="205bc73c4ab4286a1fb9d4c18322777c">
+        <source>Confirmed</source>
+        <target>Confirmada</target>
+      </trans-unit>
+      <trans-unit id="457dd55184faedb7885afd4009d70163">
+        <source>Review</source>
+        <target>Revisión</target>
+      </trans-unit>
+      <trans-unit id="1ceddf3789b65c722c464b2158819953">
+        <source>Justification or review note</source>
+        <target>Justificación o nota de revisión</target>
+      </trans-unit>
+      <trans-unit id="88831d97bbeccc679c7c1707a97ad053">
+        <source>Save review</source>
+        <target>Guardar revisión</target>
+      </trans-unit>
+      <trans-unit id="ecd322d201204819c86a23c71f125093">
+        <source>The incident review has been saved.</source>
+        <target>La revisión de la incidencia se ha guardado.</target>
+      </trans-unit>
+      <trans-unit id="219077fa107f25ddc363619daf8b4e5f">
+        <source>A note is required for justified or confirmed incidents.</source>
+        <target>Las incidencias justificadas o confirmadas requieren una nota.</target>
+      </trans-unit>
+      <trans-unit id="f8c8b903cb2e4f297e4b96d4b9c1e98a">
+        <source>Employee</source>
+        <target>Empleado</target>
+      </trans-unit>
+      <trans-unit id="a45da96d0bf6575970f2d27af22be28a">
+        <source>System</source>
+        <target>Sistema</target>
+      </trans-unit>
+      <trans-unit id="2701bbdc7ebed3bba6e85534149c85b1">
+        <source>All actions</source>
+        <target>Todas las acciones</target>
+      </trans-unit>
+      <trans-unit id="90e5ce9f48467a6a382c8e667540db55">
+        <source>All employees</source>
+        <target>Todos los empleados</target>
+      </trans-unit>
+      <trans-unit id="3572393136988f7e6ececbad4cacaf4c">
+        <source>Loading audit history...</source>
+        <target>Cargando historial de auditoría...</target>
+      </trans-unit>
+      <trans-unit id="fc7a643368925af4ed9711eb5137ae85">
+        <source>No audit records match the selected filters.</source>
+        <target>Ningún registro de auditoría coincide con los filtros seleccionados.</target>
+      </trans-unit>
+      <trans-unit id="9708b6f248102519ec5c36009b539e3e">
+        <source>The audit history could not be loaded.</source>
+        <target>No se ha podido cargar el historial de auditoría.</target>
+      </trans-unit>
+      <trans-unit id="3ec365dd533ddb7ef3d1c111186ce872">
+        <source>Details</source>
+        <target>Detalles</target>
+      </trans-unit>
+      <trans-unit id="36ba1df338ba6cc4b83c988e68a4fecb">
+        <source>All stock issue types</source>
+        <target>Todos los tipos de incidencia de stock</target>
+      </trans-unit>
+      <trans-unit id="8015298a40b7dfaf7c781a2ff153cdbe">
+        <source>All product types</source>
+        <target>Todos los tipos de producto</target>
+      </trans-unit>
+      <trans-unit id="eb6d8ae6f20283755b339c0dc273988b">
+        <source>Standard</source>
+        <target>Estándar</target>
+      </trans-unit>
+      <trans-unit id="4492081ca02b059f9e8af4ddaf0f7292">
+        <source>Pack</source>
+        <target>Pack</target>
+      </trans-unit>
+      <trans-unit id="f8f918ac541f912b7b8e2fb00100d403">
+        <source>Custom product</source>
+        <target>Producto personalizado</target>
+      </trans-unit>
+      <trans-unit id="08c347efd69bf76eb1ccf5c0ebd434f5">
+        <source>Order-level</source>
+        <target>Nivel de pedido</target>
+      </trans-unit>
+      <trans-unit id="a27654bde3ed2fb9789b50cff27f0662">
+        <source>No stock issues match the selected filters.</source>
+        <target>Ninguna incidencia de stock coincide con los filtros seleccionados.</target>
+      </trans-unit>
+      <trans-unit id="9f4ec9f3b6cf89bbeba7a89365d3feed">
+        <source>Analysing stock, cancellations and refunds...</source>
+        <target>Analizando stock, cancelaciones y reembolsos...</target>
+      </trans-unit>
+      <trans-unit id="1535820108b1fcd40fa5d22304238b38">
+        <source>The stock analysis could not be completed.</source>
+        <target>No se ha podido completar el análisis de stock.</target>
+      </trans-unit>
+      <trans-unit id="17b5e26dacdb8f45072732b1b85cce05">
+        <source>Repair physical cache</source>
+        <target>Reparar caché física</target>
+      </trans-unit>
+      <trans-unit id="fdec25565d19581d4f212cd2a1af167a">
+        <source>Repair only this physical stock cache value? Sellable and reserved quantities will remain unchanged.</source>
+        <target>¿Reparar solo este valor de caché de stock físico? Las cantidades disponibles y reservadas no cambiarán.</target>
+      </trans-unit>
+      <trans-unit id="4dcbc24155df2da3728534fbad8fff4b">
+        <source>The physical stock cache was repaired and verified.</source>
+        <target>La caché de stock físico se ha reparado y verificado.</target>
+      </trans-unit>
+      <trans-unit id="70dea1ad99f117a3f876f477d8c7bb49">
+        <source>Safely repairable</source>
+        <target>Reparable con seguridad</target>
+      </trans-unit>
+      <trans-unit id="49a585a7242bf917f39343ad60693b6a">
+        <source>Requires review</source>
+        <target>Requiere revisión</target>
+      </trans-unit>
+      <trans-unit id="9814d2f1a14ddfe62f96f8a0925f354c">
+        <source>Do not repair</source>
+        <target>No reparar</target>
+      </trans-unit>
+      <trans-unit id="0826d2962e0d0f6f178e36e06d0b2689">
+        <source>Select at least one order column.</source>
+        <target>Selecciona al menos una columna de pedidos.</target>
+      </trans-unit>
+      <trans-unit id="8c46b8c4e5ccba4abd50b98cb1af8281">
+        <source>The saved column preference could not be verified.</source>
+        <target>No se ha podido verificar la preferencia de columnas guardada.</target>
+      </trans-unit>
+      <trans-unit id="ac914b54c539a91744cf26cf4e8a01c0">
+        <source>You do not have permission to export orders.</source>
+        <target>No tienes permiso para exportar pedidos.</target>
+      </trans-unit>
+      <trans-unit id="2d24a4c3b22c4dbcbd4a58384fd1babf">
+        <source>The order has no status history.</source>
+        <target>El pedido no tiene historial de estados.</target>
+      </trans-unit>
+      <trans-unit id="4c1af49d4702291a1fa323db3f202ceb">
+        <source>Current status #%d; last history status #%d.</source>
+        <target>Estado actual #%d; último estado del historial #%d.</target>
+      </trans-unit>
+      <trans-unit id="f3cb59d160f3240f19be50c365498efd">
+        <source>Referenced address #%d does not exist.</source>
+        <target>La dirección referenciada #%d no existe.</target>
+      </trans-unit>
+      <trans-unit id="2c0fcfe62f5b3bc72adee17e4820ff23">
+        <source>Referenced customer #%d does not exist.</source>
+        <target>El cliente referenciado #%d no existe.</target>
+      </trans-unit>
+      <trans-unit id="99af15c4741cc889cf7b1f58d323a020">
+        <source>Customer #%d has empty fields: %s.</source>
+        <target>El cliente #%d tiene campos vacíos: %s.</target>
+      </trans-unit>
+      <trans-unit id="00559b4fd7304c09b476de01172a8414">
+        <source>Invoice #%d (record #%d) has no valid date.</source>
+        <target>La factura #%d (registro #%d) no tiene una fecha válida.</target>
+      </trans-unit>
+      <trans-unit id="64587d0a2b88bfe156f8c4a48cd4e059">
+        <source>Delivery slip #%d (invoice record #%d) has no valid date.</source>
+        <target>El albarán #%d (registro de factura #%d) no tiene una fecha válida.</target>
+      </trans-unit>
+      <trans-unit id="81397ac3ed01e631918f529d1627c161">
+        <source>Address #%d is retained for order history and marked deleted.</source>
+        <target>La dirección #%d se conserva para el historial del pedido y está marcada como eliminada.</target>
+      </trans-unit>
+      <trans-unit id="c37f04104903711d2f7038e199a50e53">
+        <source>Customer #%d is retained for order history and marked deleted.</source>
+        <target>El cliente #%d se conserva para el historial del pedido y está marcado como eliminado.</target>
+      </trans-unit>
+      <trans-unit id="a844c90ede43e6cca137d7af386ea750">
+        <source>Ordered: %d; refunded counter: %d.</source>
+        <target>Pedido: %d; contador de reembolsos: %d.</target>
+      </trans-unit>
+      <trans-unit id="7af8ed28fea75f637b2562e2e0de2349">
+        <source>Ordered: %d; returned counter: %d.</source>
+        <target>Pedido: %d; contador de devoluciones: %d.</target>
+      </trans-unit>
+      <trans-unit id="85a7441ce2d5f38e9e98ec0722c15461">
+        <source>Ordered: %d; reinjected into stock: %d.</source>
+        <target>Pedido: %d; repuesto en stock: %d.</target>
+      </trans-unit>
+      <trans-unit id="2a90ecbca19ef1bca2e3688b117d0aa9">
+        <source>Ordered: %d; cumulative credit-slip quantity: %d.</source>
+        <target>Pedido: %d; cantidad acumulada en facturas por abono: %d.</target>
+      </trans-unit>
+      <trans-unit id="272a318175647d1b49404eeb2d7243d4">
+        <source>Ordered: %d; cumulative return-request quantity: %d.</source>
+        <target>Pedido: %d; cantidad acumulada en solicitudes de devolución: %d.</target>
+      </trans-unit>
+      <trans-unit id="fb9ef720247a1dbecfbfae93cde1d576">
+        <source>Refunded counter: %d; quantity covered by credit slips: %d; ordered: %d.</source>
+        <target>Contador de reembolsos: %d; cantidad cubierta por facturas por abono: %d; pedido: %d.</target>
+      </trans-unit>
+      <trans-unit id="503b91d951b6826ae91be1ac188dd511">
+        <source>Refunded/returned evidence: %d; stock reinjection marker: %d; ordered: %d. The absence of reinjection may be intentional.</source>
+        <target>Evidencia de reembolso/devolución: %d; marcador de reposición de stock: %d; pedido: %d. La falta de reposición puede ser intencionada.</target>
+      </trans-unit>
+      <trans-unit id="133755c3ec710f421a38bae21e8f0465">
+        <source>The cancelled order previously had a stock-affecting status. Ordered: %d; line reinjection markers: %d. No persistent positive movement evidence is available; manual verification may be required.</source>
+        <target>El pedido cancelado tuvo antes un estado que afecta al stock. Pedido: %d; marcadores de reposición en las líneas: %d. No hay evidencia persistente de movimiento positivo; puede requerir verificación manual.</target>
+      </trans-unit>
+      <trans-unit id="965e8c916a043226aefe176e67975fac">
+        <source>Available: %d; reserved: %d; physical: %d. Expected physical quantity: %d.</source>
+        <target>Disponible: %d; reservado: %d; físico: %d. Cantidad física esperada: %d.</target>
+      </trans-unit>
+      <trans-unit id="54fad56e0f6bba79b896658cc471a702">
+        <source>You do not have permission to edit orders.</source>
+        <target>No tienes permiso para editar pedidos.</target>
+      </trans-unit>
+      <trans-unit id="149ad34562bd32ca88aac01cd023fce5">
+        <source>Order not found.</source>
+        <target>Pedido no encontrado.</target>
+      </trans-unit>
+      <trans-unit id="d7d07b978b03cb74453554161585a78c">
+        <source>The note is invalid or exceeds 5,000 characters.</source>
+        <target>La nota no es válida o supera los 5.000 caracteres.</target>
+      </trans-unit>
+      <trans-unit id="431119b1a68ae65003e6169793fab7ee">
+        <source>The internal note was saved.</source>
+        <target>La nota interna se ha guardado.</target>
+      </trans-unit>
+      <trans-unit id="50b0503da149abdb52964163bffad26b">
+        <source>The internal note could not be saved.</source>
+        <target>No se ha podido guardar la nota interna.</target>
+      </trans-unit>
+      <trans-unit id="ce8ae9da5b7cd6c3df2929543a9af92d">
+        <source>Email</source>
+        <target>Email</target>
+      </trans-unit>
+      <trans-unit id="46a2a41cc6e552044816a2d04634545d">
+        <source>State</source>
+        <target>Estado</target>
+      </trans-unit>
+      <trans-unit id="914419aa32f04011357d3b604a86d7eb">
+        <source>Carrier</source>
+        <target>Transportista</target>
+      </trans-unit>
+      <trans-unit id="08643daceac5930a01274e8e41de11b3">
+        <source>Internal note</source>
+        <target>Nota interna</target>
+      </trans-unit>
+      <trans-unit id="7a6fddc97dec8bfbb4e9ac0173aae73a">
+        <source>Wilden Manager control centre</source>
+        <target>Centro de control de Wilden Manager</target>
+      </trans-unit>
+      <trans-unit id="fff159d275ebcec9e842b1c6ee11a27a">
+        <source>Diagnostics and future module settings are managed here, away from the daily Orders workspace.</source>
+        <target>Los diagnósticos y los ajustes del módulo se gestionan aquí, fuera del trabajo diario con los pedidos.</target>
+      </trans-unit>
+      <trans-unit id="0b73ade91fe62c4e387c1bc6c9ecbae1">
+        <source>Module configuration areas</source>
+        <target>Áreas de configuración del módulo</target>
+      </trans-unit>
+      <trans-unit id="24398f434be20e4f2f3db80a43ed7b5d">
+        <source>Order integrity</source>
+        <target>Integridad de pedidos</target>
+      </trans-unit>
+      <trans-unit id="24ccd8f02ebe2b5f0fea0b782d7a261f">
+        <source>Stock and refunds</source>
+        <target>Stock y reembolsos</target>
+      </trans-unit>
+      <trans-unit id="eda63b570db82e05c2fd7b5f0c3bb20f">
+        <source>Audit</source>
+        <target>Auditoría</target>
+      </trans-unit>
+      <trans-unit id="7258e7251413465e0a3eb58094430bde">
+        <source>Administration</source>
+        <target>Administración</target>
+      </trans-unit>
+      <trans-unit id="da74f703551f6b62dcae7f29929429ae">
+        <source>Open Orders</source>
+        <target>Abrir pedidos</target>
+      </trans-unit>
+      <trans-unit id="c296f3ff64a9993cb1d7daa1613e319c">
+        <source>Permissions by profile</source>
+        <target>Permisos por perfil</target>
+      </trans-unit>
+      <trans-unit id="44f29de85ae8a126dbc68968c8c8f20e">
+        <source>Permissions are enforced both in the interface and on the server. SuperAdmin always retains full access.</source>
+        <target>Los permisos se aplican tanto en la interfaz como en el servidor. El SuperAdmin siempre conserva el acceso completo.</target>
+      </trans-unit>
+      <trans-unit id="cce99c598cfdb9773ab041d54c3d973a">
+        <source>Profile</source>
+        <target>Perfil</target>
+      </trans-unit>
+      <trans-unit id="dc57e6d95470a3e7554c21984c20cf94">
+        <source>CSV/XLSX exports</source>
+        <target>Exportaciones CSV/XLSX</target>
+      </trans-unit>
+      <trans-unit id="dab58294f8a159edc1a82301c7c3a177">
+        <source>Diagnostics and audit</source>
+        <target>Diagnósticos y auditoría</target>
+      </trans-unit>
+      <trans-unit id="8f61851201bc1f1eef66be297ed72565">
+        <source>Save permissions</source>
+        <target>Guardar permisos</target>
+      </trans-unit>
+      <trans-unit id="e6651d2fbed4c51f603803679a6e542c">
+        <source>Permanent order deletion</source>
+        <target>Eliminación definitiva de pedidos</target>
+      </trans-unit>
+      <trans-unit id="a31419cf55d1d2b3357ca0e1f3e94bfa">
+        <source>Only SuperAdmin can delete orders. Orders with an issued invoice or a credit slip are always protected. Orders with payments but no numbered invoice can be deleted; their payment records are removed with the order.</source>
+        <target>Solo el SuperAdmin puede eliminar pedidos. Los pedidos con factura emitida o factura por abono están siempre protegidos. Los pedidos con pagos pero sin factura numerada se pueden eliminar; sus registros de pago se eliminan con el pedido.</target>
+      </trans-unit>
+      <trans-unit id="7c4670516845e61a06eee2d8c2b1fc9e">
+        <source>Stock management is disabled in this shop, so stock will not be changed even if this option is enabled.</source>
+        <target>La gestión de stock está desactivada en esta tienda, así que el stock no cambiará aunque actives esta opción.</target>
+      </trans-unit>
+      <trans-unit id="f7b6f384b4c96368f48250753fc118d2">
+        <source>Return ordered quantities to stock when an order is deleted</source>
+        <target>Devolver al stock las cantidades pedidas al eliminar un pedido</target>
+      </trans-unit>
+      <trans-unit id="60039d02f46aadffe80f0423ec7fdd4f">
+        <source>Quantities already reinjected by a refund are not added again. Cancelled orders and orders in error are skipped because PrestaShop already returned their stock. Reserved and physical quantities are always recalculated.</source>
+        <target>Las cantidades ya repuestas por un reembolso no se vuelven a sumar. Los pedidos cancelados o en error se omiten porque PrestaShop ya devolvió su stock. Las cantidades reservadas y físicas se recalculan siempre.</target>
+      </trans-unit>
+      <trans-unit id="fbb34bc29edd787942aebdbf4cc30407">
+        <source>Save deletion settings</source>
+        <target>Guardar ajustes de eliminación</target>
+      </trans-unit>
+      <trans-unit id="6238a8fd0ec17ce634e4e96e39a2abc4">
+        <source>Order integrity diagnostics</source>
+        <target>Diagnóstico de integridad de pedidos</target>
+      </trans-unit>
+      <trans-unit id="37f9b41a5bcb7fada2e24d9bba16da01">
+        <source>This analysis is read-only. It never repairs or modifies orders, customers, addresses, histories or documents.</source>
+        <target>Este análisis es de solo lectura. Nunca repara ni modifica pedidos, clientes, direcciones, historiales ni documentos.</target>
+      </trans-unit>
+      <trans-unit id="f70bfbff9803bc7723fc6e02a44a9b39">
+        <source>Issue type</source>
+        <target>Tipo de incidencia</target>
+      </trans-unit>
+      <trans-unit id="28c5cb46fb9230dfb1d4a1e335304405">
+        <source>Refresh analysis</source>
+        <target>Actualizar análisis</target>
+      </trans-unit>
+      <trans-unit id="e63d91c694ead321aad79cf34e5b5460">
+        <source>Export filtered CSV</source>
+        <target>Exportar CSV filtrado</target>
+      </trans-unit>
+      <trans-unit id="b70616f3866e848b9c06b3908e83a5dd">
+        <source>Stock, cancellation and refund diagnostics</source>
+        <target>Diagnóstico de stock, cancelaciones y reembolsos</target>
+      </trans-unit>
+      <trans-unit id="e5de686266edab3051d271d1586aa54e">
+        <source>Analysis and review states do not modify shop data. Only SuperAdmin can repair an individually confirmed physical-cache mismatch; sellable and reserved quantities remain unchanged.</source>
+        <target>El análisis y los estados de revisión no modifican los datos de la tienda. Solo el SuperAdmin puede reparar una discrepancia de caché física confirmada individualmente; las cantidades disponibles y reservadas no cambian.</target>
+      </trans-unit>
+      <trans-unit id="3d19aea4e2d382e85165bbf71cef1e05">
+        <source>Product type</source>
+        <target>Tipo de producto</target>
+      </trans-unit>
+      <trans-unit id="a1fa27779242b4902f7ae3bdd5c6d508">
+        <source>Type</source>
+        <target>Tipo</target>
+      </trans-unit>
+      <trans-unit id="deb10517653c255364175796ace3553f">
+        <source>Product</source>
+        <target>Producto</target>
+      </trans-unit>
+      <trans-unit id="8e1c4a2b8b5c9f32e244bbc47e159d7b">
+        <source>Review and action</source>
+        <target>Revisión y acción</target>
+      </trans-unit>
+      <trans-unit id="4174b43fcb77c71147154d70e243a3b4">
+        <source>Audit history</source>
+        <target>Historial de auditoría</target>
+      </trans-unit>
+      <trans-unit id="f678830f09ee4354fee77e49035940bc">
+        <source>This append-only history records actions performed through Wilden Manager. Viewing it never modifies shop data.</source>
+        <target>Este historial registra las acciones realizadas con Wilden Manager y no se puede modificar. Consultarlo nunca cambia los datos de la tienda.</target>
+      </trans-unit>
+      <trans-unit id="004bf6c9a40003140292e97330236c53">
+        <source>Action</source>
+        <target>Acción</target>
+      </trans-unit>
+      <trans-unit id="d79cf3f429596f77db95c65074663a54">
+        <source>Order ID</source>
+        <target>ID de pedido</target>
+      </trans-unit>
+      <trans-unit id="5da618e8e4b89c66fe86e32cdafde142">
+        <source>From</source>
+        <target>Desde</target>
+      </trans-unit>
+      <trans-unit id="e12167aa0a7698e6ebc92b4ce3909b53">
+        <source>To</source>
+        <target>Hasta</target>
+      </trans-unit>
+      <trans-unit id="79ee641715155ec7d121815215f2b70c">
+        <source>Apply filters</source>
+        <target>Aplicar filtros</target>
+      </trans-unit>
+      <trans-unit id="dc30bc0c7914db5918da4263fce93ad2">
+        <source>Clear</source>
+        <target>Limpiar</target>
+      </trans-unit>
+      <trans-unit id="08ccab3a5bc519514c3b9d574a3fc2eb">
+        <source>Your employee profile does not have permission to access diagnostics or audit history.</source>
+        <target>Tu perfil de empleado no tiene permiso para acceder a los diagnósticos ni al historial de auditoría.</target>
+      </trans-unit>
+      <trans-unit id="7442e29d7d53e549b78d93c46b8cdcfc">
+        <source>Orders</source>
+        <target>Pedidos</target>
+      </trans-unit>
+      <trans-unit id="3eab5d12656f2f4462f6594019e77355">
+        <source>Visible columns</source>
+        <target>Columnas visibles</target>
+      </trans-unit>
+      <trans-unit id="fd3d778e9d0b9ee55a125c9d8e656f83">
+        <source>Apply columns</source>
+        <target>Aplicar columnas</target>
+      </trans-unit>
+      <trans-unit id="0095a9fa74d1713e43e370a7d7846224">
+        <source>Export</source>
+        <target>Exportar</target>
+      </trans-unit>
+      <trans-unit id="e129ae480280e47ef82fc7702f8321ba">
+        <source>Refresh list</source>
+        <target>Actualizar lista</target>
+      </trans-unit>
+      <trans-unit id="06df33001c1d7187fdd81ea1f5b277aa">
+        <source>Actions</source>
+        <target>Acciones</target>
+      </trans-unit>
+      <trans-unit id="d56b081f1e66fdf5130276c68d528780">
+        <source>Search reference</source>
+        <target>Buscar referencia</target>
+      </trans-unit>
+      <trans-unit id="93cba07454f06a4a960172bbd6e2a435">
+        <source>Yes</source>
+        <target>Sí</target>
+      </trans-unit>
+      <trans-unit id="bafd7322c6e97d25b6299b5d6fe8920b">
+        <source>No</source>
+        <target>No</target>
+      </trans-unit>
+      <trans-unit id="6861d21ea3a14378d5fab68eb542c76f">
+        <source>Search customer</source>
+        <target>Buscar cliente</target>
+      </trans-unit>
+      <trans-unit id="159b53bd16ff77184a5603620e54f761">
+        <source>Search company</source>
+        <target>Buscar empresa</target>
+      </trans-unit>
+      <trans-unit id="015762a0ffcfd7d3ad995dffb5c67e42">
+        <source>Search payment</source>
+        <target>Buscar pago</target>
+      </trans-unit>
+      <trans-unit id="2c8c3f73f62d881ddc48a72472527dec">
+        <source>Search carrier</source>
+        <target>Buscar transportista</target>
+      </trans-unit>
+      <trans-unit id="7081a7bab016441875f07beea4f3e5f4">
+        <source>Search store</source>
+        <target>Buscar tienda</target>
+      </trans-unit>
+      <trans-unit id="7a1cd4c51472facc50ddf5c4ce6d06d2">
+        <source>Search note</source>
+        <target>Buscar nota</target>
+      </trans-unit>
+      <trans-unit id="13348442cc6a27032d2b4aa28b75a5d3">
+        <source>Search</source>
+        <target>Buscar</target>
+      </trans-unit>
+      <trans-unit id="526d688f37a86d3c3f27d0c5016eb71d">
+        <source>Reset</source>
+        <target>Restablecer</target>
+      </trans-unit>
+      <trans-unit id="4351cfebe4b61d8aa5efa1d020710005">
+        <source>View</source>
+        <target>Ver</target>
+      </trans-unit>
+      <trans-unit id="c91e4ee170226d66e90f99ba917e4c20">
+        <source>Quick view</source>
+        <target>Vista rápida</target>
+      </trans-unit>
+      <trans-unit id="a6ecff447ea8327b43f5d16a924fb6be">
+        <source>View invoice</source>
+        <target>Ver factura</target>
+      </trans-unit>
+      <trans-unit id="ddd167afc1441dcab03a9546c8ef8b51">
+        <source>View delivery slip</source>
+        <target>Ver albarán</target>
+      </trans-unit>
+      <trans-unit id="a2ed6302e78d769d538d0e5b26e8c867">
+        <source>No orders match these filters.</source>
+        <target>Ningún pedido coincide con estos filtros.</target>
+      </trans-unit>
+      <trans-unit id="aaaa3c0a0086a0eedaf3350d3cfe92c1">
+        <source>Items per page</source>
+        <target>Elementos por página</target>
+      </trans-unit>
+      <trans-unit id="4ab4a5d18e352c08bc6064f12430983a">
+        <source>Order quick view</source>
+        <target>Vista rápida del pedido</target>
+      </trans-unit>
+      <trans-unit id="5f02f05c744a0f875aebb8625ae1486f">
+        <source>Loading…</source>
+        <target>Cargando…</target>
+      </trans-unit>
+      <trans-unit id="d1c5fb064782ccf94ac3299a5af4ee87">
+        <source>The order could not be loaded.</source>
+        <target>No se ha podido cargar el pedido.</target>
+      </trans-unit>
+      <trans-unit id="af0f5bdc5be121b9307687aeeae38c17">
+        <source>Delivery address</source>
+        <target>Dirección de entrega</target>
+      </trans-unit>
+      <trans-unit id="601d8c4b9f72fc1862013c19b677a499">
+        <source>Invoice address</source>
+        <target>Dirección de facturación</target>
+      </trans-unit>
+      <trans-unit id="068f80c7519d0528fb08e82137a72131">
+        <source>Products</source>
+        <target>Productos</target>
+      </trans-unit>
+      <trans-unit id="694e8d1f2ee056f98ee488bdc4982d73">
+        <source>Quantity</source>
+        <target>Cantidad</target>
+      </trans-unit>
+      <trans-unit id="6c957f72dc8cdacc75762f2cbdcdfaf2">
+        <source>Unit price</source>
+        <target>Precio unitario</target>
+      </trans-unit>
+      <trans-unit id="fb927d453c9bdc516ce6fe388d0c28db">
+        <source>Status history</source>
+        <target>Historial de estados</target>
+      </trans-unit>
+      <trans-unit id="55ee21e0c394999abb2d59cb946bc4b5">
+        <source>Save note</source>
+        <target>Guardar nota</target>
+      </trans-unit>
+      <trans-unit id="be07fc1f6c7160c5e8559dc136c054ec">
+        <source>Open full order</source>
+        <target>Abrir pedido completo</target>
+      </trans-unit>
+      <trans-unit id="91b54f23bf0a2fe943063000c1da2656">
+        <source>Order status entry edited</source>
+        <target>Entrada de estado del pedido editada</target>
+      </trans-unit>
+      <trans-unit id="3e3cb3d133c1c8cdd68325c5d4609052">
+        <source>Order status entry deleted</source>
+        <target>Entrada de estado del pedido eliminada</target>
+      </trans-unit>
+      <trans-unit id="7dce122004969d56ae2e0245cb754d35">
+        <source>Edit</source>
+        <target>Editar</target>
+      </trans-unit>
+      <trans-unit id="f2a6c498fb90ee345d997f888fce3b18">
+        <source>Delete</source>
+        <target>Eliminar</target>
+      </trans-unit>
+      <trans-unit id="afb0b7a160df7e314e1c96e5cee79067">
+        <source>Edit status entry</source>
+        <target>Editar entrada de estado</target>
+      </trans-unit>
+      <trans-unit id="9b5e0a47efca1c516947b52478188156">
+        <source>Only the record is corrected: no emails are sent and stock, invoices and payments are not changed.</source>
+        <target>Solo se corrige el registro: no se envían emails y no cambian el stock, las facturas ni los pagos.</target>
+      </trans-unit>
+      <trans-unit id="2b0b7c9cbd6d6e9fa6b99aa06e828673">
+        <source>Date and time</source>
+        <target>Fecha y hora</target>
+      </trans-unit>
+      <trans-unit id="8436db71e28e0bbe0a6b1a504842b733">
+        <source>No employee (customer or automatic)</source>
+        <target>Sin empleado (cliente o automático)</target>
+      </trans-unit>
+      <trans-unit id="19d3894f53ce79c3f836f26cf8a3be3b">
+        <source>inactive</source>
+        <target>inactivo</target>
+      </trans-unit>
+      <trans-unit id="c9cc8cce247e49bae79f15173ce97354">
+        <source>Save</source>
+        <target>Guardar</target>
+      </trans-unit>
+      <trans-unit id="c23bc675013ac2b361b946153f8be196">
+        <source>Delete this status entry from the order history? The current order status will not change.</source>
+        <target>¿Eliminar esta entrada del historial de estados del pedido? El estado actual del pedido no cambiará.</target>
+      </trans-unit>
+      <trans-unit id="6ff592274587e726e1fd12a8188ffc84">
+        <source>The most recent status cannot be deleted.</source>
+        <target>El estado más reciente no se puede eliminar.</target>
+      </trans-unit>
+      <trans-unit id="5a4a64dda8552f1f7b801f0da4195f1a">
+        <source>The status history could not be updated.</source>
+        <target>No se ha podido actualizar el historial de estados.</target>
+      </trans-unit>
+      <trans-unit id="652122103181aa2752efaecab300edf0">
+        <source>Access denied.</source>
+        <target>Acceso denegado.</target>
+      </trans-unit>
+      <trans-unit id="8a9f8c3b2454d456dd58f4407b4ec64a">
+        <source>Edit status history</source>
+        <target>Editar historial de estados</target>
+      </trans-unit>
+      <trans-unit id="ffa413dddd5ce9228a9dd16df74211d3">
+        <source>The selected employee does not exist.</source>
+        <target>El empleado seleccionado no existe.</target>
+      </trans-unit>
+      <trans-unit id="4c4cf881d963d6eefa3ce8ce5ed0e473">
+        <source>The date cannot be in the future.</source>
+        <target>La fecha no puede ser futura.</target>
+      </trans-unit>
+      <trans-unit id="4900352de7ee59d9b47733879ed89572">
+        <source>The date cannot be earlier than the order date.</source>
+        <target>La fecha no puede ser anterior a la fecha del pedido.</target>
+      </trans-unit>
+      <trans-unit id="1b5255ab3882764e9954bf233b9e09ad">
+        <source>The most recent status must keep a date later than the previous statuses.</source>
+        <target>El estado más reciente debe mantener una fecha posterior a la de los estados anteriores.</target>
+      </trans-unit>
+      <trans-unit id="e7d7e44d6b4fc23f3a936ba89fe628c5">
+        <source>A previous status cannot have a date later than the most recent status.</source>
+        <target>Un estado anterior no puede tener una fecha posterior a la del estado más reciente.</target>
+      </trans-unit>
+      <trans-unit id="f0de299db0d38df6603797b4a3d31acf">
+        <source>The status entry could not be saved.</source>
+        <target>No se ha podido guardar la entrada de estado.</target>
+      </trans-unit>
+      <trans-unit id="52ff55e67623dd8fc901b24c302804b5">
+        <source>The status entry could not be deleted.</source>
+        <target>No se ha podido eliminar la entrada de estado.</target>
+      </trans-unit>
+      <trans-unit id="63136a8206ad3a044daf32f4f2963333">
+        <source>Order not found in the active store context.</source>
+        <target>Pedido no encontrado en el contexto de tienda activo.</target>
+      </trans-unit>
+      <trans-unit id="49850cd8b8636e33abec088b125a09cb">
+        <source>The most recent status would change; the operation was cancelled.</source>
+        <target>Cambiaría el estado más reciente; se ha cancelado la operación.</target>
+      </trans-unit>
+      <trans-unit id="b8916ecee45563c46dbf704ded49ca66">
+        <source>The status entry does not belong to this order.</source>
+        <target>La entrada de estado no pertenece a este pedido.</target>
+      </trans-unit>
+      <trans-unit id="dc36044e126f57c2fc13bc292275e2dd">
+        <source>Enter a valid date and time.</source>
+        <target>Introduce una fecha y hora válidas.</target>
+      </trans-unit>
+      <trans-unit id="0726d17f059ac4bd508c0160a982912f">
+        <source>The order changed and can no longer be deleted.</source>
+        <target>El pedido ha cambiado y ya no se puede eliminar.</target>
+      </trans-unit>
+      <trans-unit id="c0c5d0d6bf0356cf575695b55a010362">
+        <source>PrestaShop could not delete the order entity.</source>
+        <target>PrestaShop no ha podido eliminar el pedido.</target>
+      </trans-unit>
+      <trans-unit id="a5ce82d4960aea97e78ea6f3cc7c507e">
+        <source>Stock could not be reinjected for one of the products.</source>
+        <target>No se ha podido reponer el stock de uno de los productos.</target>
+      </trans-unit>
+      <trans-unit id="2f4a3be74039bdc8b1c0e6f4f545899f">
+        <source>The order record remains.</source>
+        <target>El registro del pedido sigue existiendo.</target>
+      </trans-unit>
+      <trans-unit id="782386e806a03f3537e73f53e6cf0116">
+        <source>The database schema could not be inspected.</source>
+        <target>No se ha podido inspeccionar el esquema de la base de datos.</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

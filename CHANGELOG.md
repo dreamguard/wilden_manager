@@ -1,5 +1,22 @@
 # Changelog
 
+## 2.1.0
+
+- Added **Edit** and **Delete** buttons to the status history on the order page. Edit changes the date/time and the employee of an entry; Delete removes any entry except the most recent one.
+- Only the record is corrected: the status of an entry never changes, the most recent entry always stays the most recent (so the order's current status is unchanged), and no emails, stock movements, invoices, payments or object hooks are triggered.
+- Dates must be valid, not in the future and not earlier than the order; every change runs in a transaction with the order locked and is recorded in the audit log with the previous and new values.
+- New per-profile permission **Edit status history** (SuperAdmin always); the 2.1.0 upgrade adds it and grants it only to SuperAdmin.
+- Service error messages are now shown in Spanish; `tools/translations.py` checks that every text used in the code has a Spanish translation and runs in `tools/validate.sh`.
+
+## 2.0.0
+
+- Renamed the module from `wilden_manager` to `wildenmanager` (folder, main file `wildenmanager.php`, class `Wildenmanager`, tables `wildenmanager_*`). It installs as a new module: uninstall the old one first; data is not migrated.
+- Removed the `upgrade/` scripts of the old module.
+- Moved to PrestaShop's translation system (`Modules.Wildenmanager.Admin`) and added the Spanish catalogue `translations/es-ES/ModulesWildenmanagerAdmin.es-ES.xlf` (258 texts).
+- Added a 140×140 `logo.png`.
+- Added `tools/package.py`, which builds `build/wildenmanager/` and `dist/wildenmanager-<version>.zip` with runtime files only.
+- Added the missing `index.php` files and removed audit labels of discontinued features.
+
 ## 1.15.0
 
 - Rewrote permanent order deletion around an explicit list of PrestaShop core tables and tables owned by this module.

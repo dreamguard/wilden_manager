@@ -99,6 +99,185 @@
       });
     });
 
+    initHistoryEditor();
+
+    /**
+     * Status history editor on the order page: Edit (date/time and employee) on every
+     * entry, Delete on every entry except the most recent one.
+     */
+    function initHistoryEditor() {
+      var match = window.location.pathname.match(/\/sell\/orders\/(\d+)\/view/);
+      if (!config.canEditHistory || !config.historyListUrl || !match) {
+        return;
+      }
+      var idOrder = parseInt(match[1], 10);
+      var history = null;
+      var $historyModal = null;
+
+      $.ajax({
+        url: config.historyListUrl,
+        method: 'GET',
+        dataType: 'json',
+        data: { id_order: idOrder }
+      }).done(function (response) {
+        if (!response || !response.success || !response.history || !response.history.entries.length) {
+          return;
+        }
+        history = response.history;
+        var $rows = findHistoryRows(history.entries);
+        if (!$rows) {
+          return;
+        }
+        $rows.each(function (index) {
+          addHistoryButtons($(this), history.entries[index]);
+        });
+      });
+
+      // The history table is identified by its content: same number of rows and each row
+      // showing the expected status, in PrestaShop's order. Without an exact match nothing
+      // is added, so a button can never point at the wrong entry.
+      function findHistoryRows(entries) {
+        var found = null;
+        var $tables = $('#historyTabContent table');
+        if (!$tables.length) {
+          $tables = $('table');
+        }
+        $tables.each(function () {
+          var $rows = $(this).children('tbody').children('tr');
+          if ($rows.length !== entries.length) {
+            return;
+          }
+          var matches = true;
+          $rows.each(function (index) {
+            if ($(this).text().indexOf(entries[index].state_name) === -1) {
+              matches = false;
+              return false;
+            }
+          });
+          if (matches) {
+            found = $rows;
+            return false;
+          }
+        });
+        return found;
+      }
+
+      function addHistoryButtons($row, entry) {
+        var $cell = $('<td class="text-right text-nowrap wm-history-actions"></td>');
+        $('<button type="button" class="btn btn-sm btn-outline-secondary wm-history-edit"><i class="material-icons">edit</i> </button>')
+          .append(document.createTextNode(config.historyEdit))
+          .on('click', function () { openEditModal(entry); })
+          .appendTo($cell);
+        if (entry.can_delete) {
+          $('<button type="button" class="btn btn-sm btn-outline-secondary wm-history-delete"><i class="material-icons">delete</i> </button>')
+            .append(document.createTextNode(config.historyDelete))
+            .on('click', function () { deleteEntry(entry); })
+            .appendTo($cell);
+        }
+        $row.append($cell);
+      }
+
+      function buildEditModal() {
+        if ($historyModal) {
+          return $historyModal;
+        }
+        $historyModal = $(
+          '<div class="modal fade" id="wm-history-modal" tabindex="-1" role="dialog" aria-hidden="true">' +
+            '<div class="modal-dialog" role="document"><div class="modal-content">' +
+              '<div class="modal-header"><h4 class="modal-title"></h4><button type="button" class="close" data-dismiss="modal">&times;</button></div>' +
+              '<div class="modal-body">' +
+                '<p class="wm-history-state font-weight-bold"></p>' +
+                '<div class="alert alert-info wm-history-help"></div>' +
+                '<div class="form-group"><label class="wm-history-date-label" for="wm-history-date"></label>' +
+                  '<input type="datetime-local" step="1" class="form-control" id="wm-history-date"></div>' +
+                '<div class="form-group"><label class="wm-history-employee-label" for="wm-history-employee"></label>' +
+                  '<select class="form-control" id="wm-history-employee"></select></div>' +
+                '<div class="alert alert-danger wm-history-error" hidden></div>' +
+              '</div>' +
+              '<div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-dismiss="modal"></button>' +
+                '<button type="button" class="btn btn-primary wm-history-save"></button></div>' +
+            '</div></div>' +
+          '</div>'
+        ).appendTo('body');
+        $historyModal.find('.modal-title').text(config.historyEditTitle);
+        $historyModal.find('.wm-history-help').text(config.historyEditHelp);
+        $historyModal.find('.wm-history-date-label').text(config.historyDate);
+        $historyModal.find('.wm-history-employee-label').text(config.historyEmployee);
+        $historyModal.find('[data-dismiss="modal"]').last().text(config.cancel);
+        $historyModal.find('.wm-history-save').text(config.historySave);
+
+        var $select = $historyModal.find('#wm-history-employee');
+        $('<option value="0"></option>').text(config.historyNoEmployee).appendTo($select);
+        history.employees.forEach(function (employee) {
+          $('<option></option>')
+            .attr('value', employee.id_employee)
+            .text(employee.name + (employee.active ? '' : ' (' + config.historyInactive + ')'))
+            .appendTo($select);
+        });
+
+        $historyModal.on('click', '.wm-history-save', function () {
+          var $button = $(this).prop('disabled', true);
+          $.ajax({
+            url: config.historyUpdateUrl,
+            method: 'POST',
+            dataType: 'json',
+            data: {
+              id_order: idOrder,
+              id_order_history: $historyModal.data('entry-id'),
+              date_add: $historyModal.find('#wm-history-date').val(),
+              id_employee: $historyModal.find('#wm-history-employee').val()
+            }
+          }).done(function (response) {
+            if (response && response.success) {
+              window.location.reload();
+              return;
+            }
+            showModalError((response && response.error) || config.historyError);
+          }).fail(function (xhr) {
+            showModalError((xhr.responseJSON && xhr.responseJSON.error) || config.historyError);
+          }).always(function () {
+            $button.prop('disabled', false);
+          });
+        });
+
+        return $historyModal;
+      }
+
+      function showModalError(message) {
+        $historyModal.find('.wm-history-error').prop('hidden', false).text(message);
+      }
+
+      function openEditModal(entry) {
+        var $modal = buildEditModal();
+        $modal.data('entry-id', entry.id_order_history);
+        $modal.find('.wm-history-state').text(entry.state_name);
+        $modal.find('#wm-history-date').val(String(entry.date_add).replace(' ', 'T'));
+        $modal.find('#wm-history-employee').val(String(entry.id_employee));
+        $modal.find('.wm-history-error').prop('hidden', true).text('');
+        $modal.modal('show');
+      }
+
+      function deleteEntry(entry) {
+        if (!window.confirm(config.historyDeleteConfirm + '\n\n' + entry.state_name + ' — ' + entry.date_add)) {
+          return;
+        }
+        $.ajax({
+          url: config.historyDeleteUrl,
+          method: 'POST',
+          dataType: 'json',
+          data: { id_order: idOrder, id_order_history: entry.id_order_history }
+        }).done(function (response) {
+          if (response && response.success) {
+            window.location.reload();
+            return;
+          }
+          window.alert((response && response.error) || config.historyError);
+        }).fail(function (xhr) {
+          window.alert((xhr.responseJSON && xhr.responseJSON.error) || config.historyError);
+        });
+      }
+    }
+
     var $panel = $('#order_grid_panel');
     if (!$panel.length) {
       $panel = $('[id*="order_grid"]').first();

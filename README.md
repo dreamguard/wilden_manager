@@ -3,9 +3,13 @@
 Private order-management module developed from scratch for PrestaShop 8.2 and
 Wilden Militaria S.L.
 
-## Version 1.15.0
+Technical name: `wildenmanager` (folder `modules/wildenmanager/`, main file
+`wildenmanager.php`, class `Wildenmanager`). Up to version 1.15.0 the module was
+called `wilden_manager`; see **Migrating from wilden_manager** below.
 
-The initial version provides:
+## Version 2.1.0
+
+Features:
 
 - Advanced order filters with multishop scoping.
 - Employee-selectable columns.
@@ -39,9 +43,25 @@ The initial version provides:
 - Transactional cleanup and verification limited to an explicit list of
   PrestaShop core tables and tables owned by this module.
 - Optional stock reinjection on deletion, configurable in the Administration tab.
+- Status history corrections on the order page, for profiles with the
+  **Edit status history** permission: edit the date/time and employee of any
+  entry, delete any entry except the most recent one. Only the record changes;
+  the current status, emails, stock, invoices and payments are never affected.
+- Interface translated to Spanish (`translations/es-ES/`) with PrestaShop's
+  translation system, domain `Modules.Wildenmanager.Admin`.
 
-Internal notes are not exposed in the native order list as of version 1.5.0.
-Existing stored notes are preserved during upgrades to avoid destructive data loss.
+Internal notes are not exposed in the native order list.
+
+## Migrating from wilden_manager
+
+Version 2.0.0 is a new module for PrestaShop, so it does not upgrade the old one
+and does not migrate its data (audit, reviews, notes, column preferences).
+
+1. In the module manager, uninstall the old **Wilden Manager** (`wilden_manager`).
+   This drops its `wilden_manager_*` tables.
+2. Delete the `modules/wilden_manager/` folder from the server.
+3. Upload and install `wildenmanager` as described in **Installation**.
+4. Review the profile permissions and the order deletion setting again.
 
 ## Explicit exclusions
 
@@ -51,8 +71,11 @@ or any other third-party module. Stock diagnostics may read the optional
 
 ## Installation
 
-1. Upload `wilden_manager.zip` from the PrestaShop module manager.
-2. Install **Wilden Manager**.
+1. Run `python tools/package.py`. It creates `build/wildenmanager/` (to upload
+   by FTP to `modules/wildenmanager/`) and `dist/wildenmanager-<version>.zip`
+   (to upload from the module manager), with runtime files only.
+2. Install **Wilden Manager**, then clear the cache in **Advanced parameters →
+   Performance** so the Spanish translations are loaded.
 3. Open the native **Orders** page for selection-based order actions.
 4. Choose and order the visible columns; the preference is saved per employee and shop.
 5. Open **Configure** from the module manager for integrity diagnostics and module settings.

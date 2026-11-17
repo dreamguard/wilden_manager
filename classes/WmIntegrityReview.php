@@ -40,7 +40,7 @@ class WmIntegrityReview
         $rows = Db::getInstance()->executeS(
             'SELECT r.issue_key, r.status, r.note, r.date_upd,
                     CONCAT(e.firstname, CHAR(32), e.lastname) AS employee_name
-             FROM `' . _DB_PREFIX_ . 'wilden_manager_integrity_review` r
+             FROM `' . _DB_PREFIX_ . 'wildenmanager_integrity_review` r
              LEFT JOIN `' . _DB_PREFIX_ . 'employee` e ON e.id_employee = r.id_employee
              WHERE r.scope = \'' . pSQL($scope) . '\'
                AND r.issue_key IN (' . implode(',', $quoted) . ')',
@@ -93,7 +93,7 @@ class WmIntegrityReview
         $context = Context::getContext();
         $employeeId = isset($context->employee) ? (int) $context->employee->id : 0;
         $now = date('Y-m-d H:i:s');
-        $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'wilden_manager_integrity_review`
+        $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'wildenmanager_integrity_review`
                 (`id_shop`, `scope`, `issue_key`, `issue_type`, `status`, `note`, `snapshot_hash`,
                  `id_employee`, `date_add`, `date_upd`)
                 VALUES (' . $idShop . ', \'' . pSQL($scope) . '\', \'' . pSQL($issueKey) . '\',
@@ -114,7 +114,7 @@ class WmIntegrityReview
     public static function isConfirmed($scope, $issueKey, $snapshotHash, $idShop)
     {
         return (bool) Db::getInstance()->getValue(
-            'SELECT 1 FROM `' . _DB_PREFIX_ . 'wilden_manager_integrity_review`
+            'SELECT 1 FROM `' . _DB_PREFIX_ . 'wildenmanager_integrity_review`
              WHERE id_shop = ' . (int) $idShop . '
                AND scope = \'' . pSQL((string) $scope) . '\'
                AND issue_key = \'' . pSQL((string) $issueKey) . '\'
