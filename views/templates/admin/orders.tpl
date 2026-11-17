@@ -72,6 +72,6 @@
   </form>
 </div>
 
-<div class="modal fade" id="wm-quick-view-modal" tabindex="-1" role="dialog" aria-hidden="true"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><h4 class="modal-title">{l s='Order quick view' d='Modules.Wildenmanager.Admin'}</h4><button type="button" class="close" data-dismiss="modal">&times;</button></div><div class="modal-body"><div class="wm-loading"><i class="icon-refresh icon-spin"></i> {l s='Loading…' d='Modules.Wildenmanager.Admin'}</div></div></div></div></div>
+<div class="modal fade" id="wm-quick-view-modal" tabindex="-1" role="dialog" aria-hidden="true"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><h4 class="modal-title">{l s='Order quick view' d='Modules.Wildenmanager.Admin'}</h4><button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal">&times;</button></div><div class="modal-body"><div class="wm-loading"><i class="icon-refresh icon-spin"></i> {l s='Loading…' d='Modules.Wildenmanager.Admin'}</div></div></div></div></div>
 
 <script>window.wildenManagerConfig={ajaxUrl:'{$wm_ajax_url|escape:'javascript':'UTF-8'}',loadingText:'{l s='Loading…' d='Modules.Wildenmanager.Admin' js=1}',errorText:'{l s='The order could not be loaded.' d='Modules.Wildenmanager.Admin' js=1}'};</script>

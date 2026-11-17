@@ -7,7 +7,7 @@ Technical name: `wildenmanager` (folder `modules/wildenmanager/`, main file
 `wildenmanager.php`, class `Wildenmanager`). Up to version 1.15.0 the module was
 called `wilden_manager`; see **Migrating from wilden_manager** below.
 
-## Version 2.1.0
+## Version 2.1.1
 
 Features:
 

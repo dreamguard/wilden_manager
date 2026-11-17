@@ -29,7 +29,7 @@ require_once __DIR__ . '/classes/WmOrderHistoryService.php';
 
 class Wildenmanager extends Module
 {
-    const VERSION = '2.1.0';
+    const VERSION = '2.1.1';
     const TAB_CLASS = 'AdminWildenManagerOrders';
     const MAX_EXPORT_ORDERS = 1000;
     const MAX_DOCUMENT_ORDERS = 100;

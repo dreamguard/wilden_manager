@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.1
+
+- Fixed the Cancel and close (X) buttons of the module's modals (status history, order deletion, columns, export and documents) when another module loads Bootstrap 5 in the back office. Correos Oficial does so, which made jQuery's `.modal()` ignore Bootstrap 4's `data-dismiss`. Close buttons now carry both `data-dismiss` and `data-bs-dismiss` and are also closed explicitly by the module.
+
 ## 2.1.0
 
 - Added **Edit** and **Delete** buttons to the status history on the order page. Edit changes the date/time and the employee of an entry; Delete removes any entry except the most recent one.

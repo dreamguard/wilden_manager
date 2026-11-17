@@ -10,6 +10,15 @@
       return;
     }
 
+    // Close buttons of this module's modals work with Bootstrap 4 (data-dismiss, used by the
+    // PrestaShop 8 back office) and Bootstrap 5 (data-bs-dismiss). Some modules, such as
+    // Correos Oficial, load Bootstrap 5 in the back office and replace jQuery's .modal(),
+    // which then ignores data-dismiss. Closing explicitly avoids depending on either.
+    $(document).on('click', '.modal[id^="wm-"] [data-dismiss="modal"], .modal[id^="wm-"] [data-bs-dismiss="modal"]', function (event) {
+      event.preventDefault();
+      $(this).closest('.modal').modal('hide');
+    });
+
     var deleteModalId = 'wm-delete-order-modal';
     var $deleteModal = $('#' + deleteModalId);
 
@@ -20,13 +29,13 @@
       $deleteModal = $(
         '<div class="modal fade" id="' + deleteModalId + '" tabindex="-1" role="dialog" aria-hidden="true">' +
           '<div class="modal-dialog" role="document"><div class="modal-content">' +
-            '<div class="modal-header"><h4 class="modal-title"></h4><button type="button" class="close" data-dismiss="modal">&times;</button></div>' +
+            '<div class="modal-header"><h4 class="modal-title"></h4><button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal">&times;</button></div>' +
             '<div class="modal-body"><div class="alert alert-danger wm-delete-warning"></div>' +
               '<p class="wm-delete-order-summary"></p>' +
               '<div class="form-group"><label class="wm-delete-confirm-label"></label><input type="text" inputmode="numeric" autocomplete="off" class="form-control wm-delete-confirm-input"></div>' +
               '<div class="alert alert-danger wm-delete-error" hidden></div>' +
             '</div>' +
-            '<div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-dismiss="modal"></button><button type="button" class="btn btn-danger wm-delete-confirm-button" disabled></button></div>' +
+            '<div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-dismiss="modal" data-bs-dismiss="modal"></button><button type="button" class="btn btn-danger wm-delete-confirm-button" disabled></button></div>' +
           '</div></div>' +
         '</div>'
       ).appendTo('body');
@@ -184,7 +193,7 @@
         $historyModal = $(
           '<div class="modal fade" id="wm-history-modal" tabindex="-1" role="dialog" aria-hidden="true">' +
             '<div class="modal-dialog" role="document"><div class="modal-content">' +
-              '<div class="modal-header"><h4 class="modal-title"></h4><button type="button" class="close" data-dismiss="modal">&times;</button></div>' +
+              '<div class="modal-header"><h4 class="modal-title"></h4><button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal">&times;</button></div>' +
               '<div class="modal-body">' +
                 '<p class="wm-history-state font-weight-bold"></p>' +
                 '<div class="alert alert-info wm-history-help"></div>' +
@@ -194,7 +203,7 @@
                   '<select class="form-control" id="wm-history-employee"></select></div>' +
                 '<div class="alert alert-danger wm-history-error" hidden></div>' +
               '</div>' +
-              '<div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-dismiss="modal"></button>' +
+              '<div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-dismiss="modal" data-bs-dismiss="modal"></button>' +
                 '<button type="button" class="btn btn-primary wm-history-save"></button></div>' +
             '</div></div>' +
           '</div>'
@@ -416,9 +425,9 @@
       $modal = $(
         '<div class="modal fade" id="' + modalId + '" tabindex="-1" role="dialog" aria-hidden="true">' +
           '<div class="modal-dialog" role="document"><div class="modal-content">' +
-            '<div class="modal-header"><h4 class="modal-title"></h4><button type="button" class="close" data-dismiss="modal">&times;</button></div>' +
+            '<div class="modal-header"><h4 class="modal-title"></h4><button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal">&times;</button></div>' +
             '<div class="modal-body"><div class="wm-native-columns-list"></div><div class="alert alert-danger wm-native-columns-error" hidden></div></div>' +
-            '<div class="modal-footer"><button type="button" class="btn btn-outline-secondary wm-native-columns-reset"></button><button type="button" class="btn btn-outline-secondary" data-dismiss="modal"></button><button type="button" class="btn btn-primary wm-native-columns-save"></button></div>' +
+            '<div class="modal-footer"><button type="button" class="btn btn-outline-secondary wm-native-columns-reset"></button><button type="button" class="btn btn-outline-secondary" data-dismiss="modal" data-bs-dismiss="modal"></button><button type="button" class="btn btn-primary wm-native-columns-save"></button></div>' +
           '</div></div>' +
         '</div>'
       ).appendTo('body');
@@ -464,14 +473,14 @@
       $exportModal = $(
         '<div class="modal fade" id="' + exportModalId + '" tabindex="-1" role="dialog" aria-hidden="true">' +
           '<div class="modal-dialog" role="document"><div class="modal-content">' +
-            '<div class="modal-header"><h4 class="modal-title"></h4><button type="button" class="close" data-dismiss="modal">&times;</button></div>' +
+            '<div class="modal-header"><h4 class="modal-title"></h4><button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal">&times;</button></div>' +
             '<div class="modal-body">' +
               '<p class="wm-export-selection"></p>' +
               '<div class="form-group"><label class="wm-export-format-label"></label><select class="form-control wm-export-format"><option value="csv"></option></select></div>' +
               '<div class="form-group"><label class="wm-export-fields-label"></label><div class="wm-export-columns"></div></div>' +
               '<div class="alert alert-danger wm-export-error" hidden></div>' +
             '</div>' +
-            '<div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-dismiss="modal"></button><button type="button" class="btn btn-primary wm-export-download"></button></div>' +
+            '<div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-dismiss="modal" data-bs-dismiss="modal"></button><button type="button" class="btn btn-primary wm-export-download"></button></div>' +
           '</div></div>' +
         '</div>'
       ).appendTo('body');
@@ -560,11 +569,11 @@
       $documentModal = $(
         '<div class="modal fade" id="' + documentModalId + '" tabindex="-1" role="dialog" aria-hidden="true">' +
           '<div class="modal-dialog modal-lg" role="document"><div class="modal-content">' +
-            '<div class="modal-header"><h4 class="modal-title"></h4><button type="button" class="close" data-dismiss="modal">&times;</button></div>' +
+            '<div class="modal-header"><h4 class="modal-title"></h4><button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal">&times;</button></div>' +
             '<div class="modal-body"><p class="wm-document-selection"></p><div class="alert wm-document-message" hidden></div><div class="wm-document-table"></div>' +
               '<div class="form-group wm-document-type-group" hidden><label></label><select class="form-control wm-document-type"><option value="invoice"></option><option value="delivery"></option><option value="both"></option></select></div>' +
             '</div>' +
-            '<div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-dismiss="modal"></button><button type="button" class="btn btn-primary wm-document-download" disabled></button></div>' +
+            '<div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-dismiss="modal" data-bs-dismiss="modal"></button><button type="button" class="btn btn-primary wm-document-download" disabled></button></div>' +
           '</div></div>' +
         '</div>'
       ).appendTo('body');
