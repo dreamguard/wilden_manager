@@ -39,11 +39,13 @@
 
     initializeDeleteModal();
 
-    $(document).on('click', '.wm-delete-order-trigger', function (event) {
+    // The order-page button is matched by its data attributes too, so it keeps working even if
+    // the core template drops CSS classes passed by the module.
+    $(document).on('click', '.wm-delete-order-trigger, [data-wm-delete-order], a[data-order-id][data-order-reference]', function (event) {
       event.preventDefault();
       var $trigger = $(this);
       if ($trigger.hasClass('disabled') || $trigger.attr('aria-disabled') === 'true') {
-        window.alert(config.deleteInvoiceBlocked);
+        window.alert($trigger.attr('title') || config.deleteInvoiceBlocked);
         return;
       }
       initializeDeleteModal();
@@ -76,7 +78,15 @@
         data: { id_order: id, confirmation: $.trim($deleteModal.find('.wm-delete-confirm-input').val()) }
       }).done(function (response) {
         if (response && response.success) {
-          window.alert(config.deleteSuccess);
+          var message = config.deleteSuccess;
+          if (response.stock_action === 'reinject') {
+            message += '\n' + config.deleteStockReinjected + ' ' + (parseInt(response.stock_units_reinjected, 10) || 0);
+          } else if (response.stock_action === 'already') {
+            message += '\n' + config.deleteStockAlready;
+          } else if (response.stock_action === 'disabled') {
+            message += '\n' + config.deleteStockDisabled;
+          }
+          window.alert(message);
           window.location.href = config.ordersUrl;
           return;
         }
@@ -133,7 +143,7 @@
             .attr('data-order-id', id)
             .attr('data-order-reference', info.reference || '')
             .attr('aria-label', config.deleteActionLabel)
-            .attr('title', disabled ? config.deleteInvoiceBlocked : config.deleteActionLabel)
+            .attr('title', disabled ? (info.reason || config.deleteInvoiceBlocked) : config.deleteActionLabel)
             .toggleClass('disabled', disabled)
             .attr('aria-disabled', disabled ? 'true' : 'false');
           $cell.append($action);

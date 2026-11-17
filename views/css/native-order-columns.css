@@ -62,11 +62,12 @@
   cursor: pointer;
 }
 
-.wm-delete-order-trigger {
+.btn-link.wm-delete-order-trigger {
   color: #c92a2a !important;
 }
 
-.wm-delete-order-trigger.disabled {
+.wm-delete-order-trigger.disabled,
+.wm-delete-order-trigger[aria-disabled="true"] {
   color: #9aa1a9 !important;
   cursor: not-allowed;
   opacity: .55;

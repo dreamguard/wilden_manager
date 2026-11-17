@@ -126,12 +126,7 @@ class WmExportService
 
     private function safeSpreadsheetText($value)
     {
-        $value = (string) $value;
-        if ($value !== '' && preg_match('/^[\x00-\x20]*[=+\-@]/', $value)) {
-            return "'" . $value;
-        }
-
-        return $value;
+        return WmSpreadsheet::neutralize($value);
     }
 
     private function xml($value)

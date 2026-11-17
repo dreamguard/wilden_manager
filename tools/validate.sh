@@ -21,4 +21,6 @@ if grep -RniE 'ets_ordermanager|prestahero|ETS_ODE|ets_odm' \
   exit 1
 fi
 
+php "$module_dir/tests/run.php" >/dev/null
+
 echo 'Wilden Manager validation passed.'

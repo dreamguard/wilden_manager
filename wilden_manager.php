@@ -11,6 +11,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once __DIR__ . '/classes/WmDb.php';
+require_once __DIR__ . '/classes/WmSpreadsheet.php';
 require_once __DIR__ . '/classes/WmAuditLogger.php';
 require_once __DIR__ . '/classes/WmOrderNote.php';
 require_once __DIR__ . '/classes/WmGridPreference.php';
@@ -26,7 +28,7 @@ require_once __DIR__ . '/classes/WmOrderDeletionService.php';
 
 class Wilden_manager extends Module
 {
-    const VERSION = '1.14.2';
+    const VERSION = '1.15.0';
     const TAB_CLASS = 'AdminWildenManagerOrders';
     const MAX_EXPORT_ORDERS = 1000;
     const MAX_DOCUMENT_ORDERS = 100;
@@ -64,6 +66,7 @@ class Wilden_manager extends Module
             'stock_integrity_cache_repaired' => $this->l('Physical stock cache repaired'),
             'profile_permissions_updated' => $this->l('Profile permissions updated'),
             'order_deleted_anonymously' => $this->l('Order permanently deleted'),
+            'order_deletion_settings_updated' => $this->l('Order deletion settings updated'),
             'note_updated' => $this->l('Internal note updated (historical)'),
             'saved_view_created' => $this->l('Saved view created'),
             'saved_view_updated' => $this->l('Saved view updated'),
@@ -112,14 +115,16 @@ class Wilden_manager extends Module
             && $this->registerHook('actionOrderGridDefinitionModifier')
             && $this->registerHook('actionOrderGridQueryBuilderModifier')
             && $this->registerHook('actionGetAdminOrderButtons')
-            && $this->registerHook('displayBackOfficeHeader');
+            && $this->registerHook('displayBackOfficeHeader')
+            && Configuration::updateGlobalValue(WmOrderDeletionService::CONFIG_REINJECT_STOCK, 0);
     }
 
     public function uninstall()
     {
         return parent::uninstall()
             && $this->uninstallTab()
-            && $this->uninstallDatabase();
+            && $this->uninstallDatabase()
+            && Configuration::deleteByName(WmOrderDeletionService::CONFIG_REINJECT_STOCK);
     }
 
     public function getContent()
@@ -144,6 +149,27 @@ class Wilden_manager extends Module
                 $messages .= $this->displayError($this->l('Profile permissions could not be saved.'));
             }
         }
+        if (Tools::isSubmit('submitWmDeletionSettings')) {
+            if (!$isSuperAdmin) {
+                $messages .= $this->displayError($this->l('Only SuperAdmin can change order deletion settings.'));
+            } elseif (!isset($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
+                $messages .= $this->displayError($this->l('This action requires a POST request.'));
+            } else {
+                $previous = WmOrderDeletionService::isStockReinjectionEnabled();
+                $enabled = (bool) Tools::getValue('wm_delete_reinject_stock');
+                if (Configuration::updateGlobalValue(WmOrderDeletionService::CONFIG_REINJECT_STOCK, $enabled ? 1 : 0)) {
+                    if ($previous !== $enabled) {
+                        WmAuditLogger::log('order_deletion_settings_updated', array(
+                            'reinject_stock_before' => $previous,
+                            'reinject_stock_after' => $enabled,
+                        ));
+                    }
+                    $messages .= $this->displayConfirmation($this->l('Order deletion settings have been saved.'));
+                } else {
+                    $messages .= $this->displayError($this->l('Order deletion settings could not be saved.'));
+                }
+            }
+        }
         $this->context->controller->addCSS($this->getVersionedAssetUrl('views/css/configuration.css'));
         if ($canViewDiagnostics) {
             $this->context->controller->addJS($this->getVersionedAssetUrl('views/js/configuration.js'));
@@ -158,6 +184,8 @@ class Wilden_manager extends Module
             'wm_orders_url' => $this->context->link->getAdminLink('AdminOrders'),
             'wm_can_view_diagnostics' => $canViewDiagnostics,
             'wm_is_super_admin' => $isSuperAdmin,
+            'wm_delete_reinject_stock' => WmOrderDeletionService::isStockReinjectionEnabled(),
+            'wm_stock_management_enabled' => (bool) Configuration::get('PS_STOCK_MANAGEMENT'),
             'wm_profile_permissions' => $isSuperAdmin
                 ? WmProfilePermission::getProfiles((int) $this->context->language->id)
                 : array(),
@@ -399,23 +427,28 @@ class Wilden_manager extends Module
         }
 
         $idOrder = (int) $params['id_order'];
-        $inspection = (new WmOrderDeletionService())->inspect($idOrder, (int) $this->context->shop->id);
+        $inspection = (new WmOrderDeletionService())->inspect($idOrder, Shop::getContextListShopID());
         if (empty($inspection['exists'])) {
             return;
         }
 
+        // The core template renders <a class="btn {class}" {attributes}>. A "class" key in the
+        // attributes would be a second class attribute that browsers ignore, so every CSS class
+        // goes in the first argument and the JS also binds to data-wm-delete-order.
         $attributes = array(
             'href' => '#',
-            'class' => 'wm-delete-order-trigger',
+            'data-wm-delete-order' => '1',
             'data-order-id' => $idOrder,
             'data-order-reference' => (string) $inspection['reference'],
         );
-        $class = 'btn-danger';
+        $class = 'btn-danger wm-delete-order-trigger';
         if (empty($inspection['eligible'])) {
-            $class = 'btn-outline-secondary disabled';
-            $attributes['class'] .= ' disabled';
+            // No "disabled" class: Bootstrap would block the click and the reason could not be shown.
+            $class = 'btn-outline-secondary wm-delete-order-trigger';
             $attributes['aria-disabled'] = 'true';
-            $attributes['title'] = $this->l('Orders with an invoice cannot be deleted.');
+            $attributes['title'] = !empty($inspection['has_credit_slip'])
+                ? $this->l('Orders with a credit slip cannot be deleted.')
+                : $this->l('Orders with an issued invoice cannot be deleted.');
         }
 
         $params['actions_bar_buttons_collection']->add(
@@ -439,7 +472,7 @@ class Wilden_manager extends Module
         }
 
         $parameter = 'wm_' . $filterName;
-        $value = '%' . trim((string) $filters[$filterName]) . '%';
+        $value = '%' . WmDb::escapeLike(trim((string) $filters[$filterName])) . '%';
         foreach (array($searchQueryBuilder, $countQueryBuilder) as $queryBuilder) {
             $queryBuilder
                 ->andWhere($field . ' LIKE :' . $parameter)
@@ -465,6 +498,11 @@ class Wilden_manager extends Module
 
     public function hookDisplayBackOfficeHeader()
     {
+        // Order grid and order view only: skip the DB query, assets and JS strings elsewhere.
+        if (!$this->isOrdersBackOfficePage()) {
+            return;
+        }
+
         $available = $this->getNativeOrderColumns();
         $selected = WmGridPreference::get(
             (int) $this->context->employee->id,
@@ -537,20 +575,48 @@ class Wilden_manager extends Module
                 'deleteUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=deleteOrderPermanently',
                 'ordersUrl' => $this->context->link->getAdminLink('AdminOrders'),
                 'deleteTitle' => $this->l('Permanently delete order'),
-                'deleteWarning' => $this->l('This operation is irreversible. All database records linked to this order will be removed. Stock will not be reinjected.'),
+                'deleteWarning' => WmOrderDeletionService::isStockReinjectionEnabled()
+                    ? $this->l('This operation is irreversible. The order and its PrestaShop records will be removed. The ordered quantities will be returned to stock unless the order is cancelled or in error.')
+                    : $this->l('This operation is irreversible. The order and its PrestaShop records will be removed. Stock will not be reinjected.'),
                 'deletePrompt' => $this->l('Type the order ID to confirm:'),
                 'deleteConfirm' => $this->l('Delete permanently'),
-                'deleteInvoiceBlocked' => $this->l('This order has an invoice and cannot be deleted.'),
+                'deleteInvoiceBlocked' => $this->l('This order has an issued invoice or a credit slip and cannot be deleted.'),
                 'deleteError' => $this->l('The order could not be deleted.'),
-                'deleteSuccess' => $this->l('The order and all of its database relations were deleted.'),
+                'deleteSuccess' => $this->l('The order and its PrestaShop records were deleted.'),
+                'deleteStockReinjected' => $this->l('Units returned to stock:'),
+                'deleteStockAlready' => $this->l('Stock was not changed because the order was already cancelled or in error.'),
+                'deleteStockDisabled' => $this->l('Stock was not changed because stock management is disabled in the shop.'),
                 'deleteActionLabel' => $this->l('Delete permanently'),
             ),
         ));
     }
 
+    /**
+     * True on the Symfony order pages (grid and view). Their legacy context controller
+     * carries the legacy name "AdminOrders" in controller_name.
+     */
+    private function isOrdersBackOfficePage()
+    {
+        $controller = isset($this->context->controller) ? $this->context->controller : null;
+        if (!$controller || empty($this->context->employee)) {
+            return false;
+        }
+        $name = isset($controller->controller_name) ? (string) $controller->controller_name : '';
+
+        return $name === 'AdminOrders';
+    }
+
+    /**
+     * Cache-busts with the file modification time, so an asset uploaded without a version
+     * change is still refreshed by browsers.
+     */
     private function getVersionedAssetUrl($relativePath)
     {
-        return $this->_path . ltrim((string) $relativePath, '/') . '?v=' . rawurlencode(self::VERSION);
+        $relativePath = ltrim((string) $relativePath, '/');
+        $file = $this->getLocalPath() . $relativePath;
+        $version = is_file($file) ? (string) filemtime($file) : self::VERSION;
+
+        return $this->_path . $relativePath . '?v=' . rawurlencode($version);
     }
 
     private function getIntegrityJsConfiguration()

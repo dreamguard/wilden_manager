@@ -165,13 +165,6 @@ class WmStockRepairService
 
     private function tableExists($table)
     {
-        $rows = Db::getInstance()->executeS("SHOW TABLES LIKE '" . pSQL($table) . "'");
-        foreach ((array) $rows as $row) {
-            if ((string) reset($row) === (string) $table) {
-                return true;
-            }
-        }
-
-        return false;
+        return WmDb::tableExists($table);
     }
 }

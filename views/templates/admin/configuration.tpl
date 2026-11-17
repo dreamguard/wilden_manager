@@ -64,6 +64,37 @@
           </form>
         </div>
       </section>
+
+      <section class="card wm-configuration-card" id="wm-order-deletion-settings">
+        <div class="card-header">
+          <h3><i class="material-icons">delete_forever</i> {l s='Permanent order deletion' mod='wilden_manager'}</h3>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-info">
+            {l s='Only SuperAdmin can delete orders. Orders with an issued invoice or a credit slip are always protected. Orders with payments but no numbered invoice can be deleted; their payment records are removed with the order.' mod='wilden_manager'}
+          </div>
+          {if !$wm_stock_management_enabled}
+          <div class="alert alert-warning">
+            {l s='Stock management is disabled in this shop, so stock will not be changed even if this option is enabled.' mod='wilden_manager'}
+          </div>
+          {/if}
+          <form method="post" action="{$wm_permissions_action|escape:'htmlall':'UTF-8'}">
+            <div class="form-check">
+              <input type="hidden" name="wm_delete_reinject_stock" value="0">
+              <input class="form-check-input" type="checkbox" id="wm_delete_reinject_stock" name="wm_delete_reinject_stock" value="1"{if $wm_delete_reinject_stock} checked{/if}>
+              <label class="form-check-label" for="wm_delete_reinject_stock">
+                {l s='Return ordered quantities to stock when an order is deleted' mod='wilden_manager'}
+              </label>
+            </div>
+            <p class="help-block text-muted">
+              {l s='Quantities already reinjected by a refund are not added again. Cancelled orders and orders in error are skipped because PrestaShop already returned their stock. Reserved and physical quantities are always recalculated.' mod='wilden_manager'}
+            </p>
+            <button type="submit" name="submitWmDeletionSettings" value="1" class="btn btn-primary">
+              <i class="material-icons">save</i> {l s='Save deletion settings' mod='wilden_manager'}
+            </button>
+          </form>
+        </div>
+      </section>
       {/if}
 
       </div>

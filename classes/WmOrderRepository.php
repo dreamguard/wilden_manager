@@ -233,6 +233,6 @@ class WmOrderRepository
 
     private function sqlLike($value)
     {
-        return "'%" . pSQL((string) $value) . "%'";
+        return WmDb::likeContains($value);
     }
 }

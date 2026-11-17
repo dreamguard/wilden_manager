@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.15.0
+
+- Rewrote permanent order deletion around an explicit list of PrestaShop core tables and tables owned by this module.
+- Fixed table discovery matching other installations in the same database: the `_` in the table prefix was treated as a `LIKE` wildcard (for example `ps_%` also matched `ps2_orders`). Tables are now resolved by exact name.
+- Third-party module tables and `stock_mvt` history are no longer modified by order deletion.
+- Orders with a credit slip are now protected, like orders with a numbered invoice.
+- Orders with recorded payments but no numbered invoice remain deletable; their payment records are removed when no other order shares the reference.
+- Added an Administration setting to return ordered quantities to stock on deletion (disabled by default). Refund reinjections are not counted twice and cancelled or error orders are skipped.
+- Reserved and physical stock quantities are recalculated for the affected products after deletion.
+- Deletion now works in an all-shops multistore context for orders of any shop in that context.
+- The blocking reason (invoice or credit slip) is shown on disabled delete controls.
+- Fixed the delete button on the order page doing nothing: its trigger class was passed as a second `class` attribute that browsers ignore. Disabled buttons now show their blocking reason when clicked.
+- Order-grid assets, column preferences and JS strings now load only on the Orders pages instead of every back-office page.
+- Module assets are cache-busted with the file modification time, so an FTP upload is picked up without a version change.
+- Added `WmDb`: refuses queries ending with `LIMIT`/`FOR UPDATE` in `getRow`/`getValue`, provides `lockRow()` and an exact-name `tableExists()` (replacing `SHOW TABLES LIKE`, where `_` was a wildcard).
+- Text filters now escape `%`, `_` and `\` so they match literally, in the module list and in the native grid's email and shipping-method filters.
+- Unified spreadsheet-formula protection in `WmSpreadsheet` for every CSV/XLSX export; the legacy CSV export now also covers values starting with spaces, tabs or line breaks, and plain negative numbers stay numeric.
+- Added `tests/run.php` (fake PrestaShop Db, 30 scenarios) to `tools/validate.sh`; CI now runs PHP 7.2, 7.4 and 8.1, the versions PrestaShop 8.2 supports.
+- Fixed SQL syntax errors caused by `Db::getRow()`/`Db::getValue()` appending their own `LIMIT 1` (duplicate `LIMIT` and `FOR UPDATE LIMIT 1`).
+
 ## 1.14.2
 
 - Distinguished issued invoices from unnumbered technical `order_invoice` rows.

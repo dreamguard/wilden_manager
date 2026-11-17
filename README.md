@@ -3,7 +3,7 @@
 Private order-management module developed from scratch for PrestaShop 8.2 and
 Wilden Militaria S.L.
 
-## Version 1.14.2
+## Version 1.15.0
 
 The initial version provides:
 
@@ -34,10 +34,11 @@ The initial version provides:
 - Append-only audit trail for actions performed through the module, with a
   read-only, shop-scoped viewer and action, employee, order and date filters.
 - Native links to the full PrestaShop order page and invoice PDF.
-- SuperAdmin-only permanent deletion of individual non-invoiced orders from the
-  order page or the native row-actions column.
-- Transactional cleanup and verification of direct and indirect database
-  relations, including third-party tables that expose supported order keys.
+- SuperAdmin-only permanent deletion of individual orders without a numbered
+  invoice or credit slip, from the order page or the native row-actions column.
+- Transactional cleanup and verification limited to an explicit list of
+  PrestaShop core tables and tables owned by this module.
+- Optional stock reinjection on deletion, configurable in the Administration tab.
 
 Internal notes are not exposed in the native order list as of version 1.5.0.
 Existing stored notes are preserved during upgrades to avoid destructive data loss.
@@ -70,10 +71,21 @@ reconstructed because PrestaShop does not preserve product-level stock movement
 evidence indefinitely.
 
 Permanent order deletion is intentionally conservative. It is disabled when an
-issued, numbered invoice exists; an unnumbered technical `order_invoice` row is
-not treated as an issued invoice and is removed with the other relations. The
-operation requires the exact order ID as confirmation, does not reinject stock
-and refuses to run when an affected table cannot participate in the transaction.
+issued, numbered invoice or a credit slip exists; an unnumbered technical
+`order_invoice` row is not treated as an issued invoice and is removed with the
+other relations. Orders with recorded payments but no numbered invoice can be
+deleted: their `order_payment` rows are removed when no other order shares the
+same reference. Only an explicit list of PrestaShop core tables and this
+module's own tables is modified, resolved by exact prefixed name; third-party
+module tables and `stock_mvt` history are left untouched. The operation requires
+the exact order ID as confirmation and refuses to run when an affected table
+cannot participate in the transaction.
+
+Stock is not reinjected by default. When **Return ordered quantities to stock**
+is enabled in the Administration tab, each line returns its ordered quantity
+minus any quantity already reinjected by a refund; cancelled orders and orders
+in error are skipped because PrestaShop already restored their stock. Reserved
+and physical quantities of the affected products are always recalculated.
 Prior order-linked audit rows are removed with the order. A new
 anonymous audit event retains only the employee, store, time and the fact that a
 deletion occurred; it stores no order ID, reference, customer or order content.
@@ -81,7 +93,10 @@ The main entity is removed through PrestaShop's native `Order->delete()` method
 so object deletion hooks and cache clearing remain compatible with the core.
 
 Run `bash tools/validate.sh` in an environment with PHP and Node.js before
-packaging a release. The repository workflow validates PHP 8.1, 8.2 and 8.3.
+packaging a release. It lints PHP and JavaScript and runs `tests/run.php`, a
+regression suite against an in-memory fake of PrestaShop's `Db`. The repository
+workflow validates PHP 7.2, 7.4 and 8.1, the versions supported by PrestaShop 8.2.
+Do not upload `tests/`, `tools/`, `docs/` or `.github/` to the shop.
 
 ## Ownership
 

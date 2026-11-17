@@ -5,177 +5,132 @@ if (!defined('_PS_VERSION_')) {
 }
 
 /**
- * Irreversibly removes one non-invoiced order and its database relations.
+ * Irreversibly removes one order without an issued fiscal document.
  *
- * Stock is deliberately not reinjected. The service refuses to touch affected
- * non-transactional tables so a failure can always roll the whole operation back.
+ * Safety model:
+ * - Only an explicit list of PrestaShop core tables and tables owned by this
+ *   module is touched. Tables are resolved by their exact prefixed name, so
+ *   other installations sharing the database and third-party modules are
+ *   never modified.
+ * - Orders with a numbered invoice or a credit slip are refused. Orders with
+ *   payments but without a numbered invoice are allowed; their payment rows are
+ *   removed when no other order shares the same reference.
+ * - Every affected table must be transactional. The operation runs in one
+ *   transaction and is verified before commit.
+ * - Stock is reinjected only when the module setting is enabled. The stock
+ *   cache (reserved and physical quantities) is always recalculated for the
+ *   affected products so it stays consistent after the order disappears.
  */
 class WmOrderDeletionService
 {
+    const CONFIG_REINJECT_STOCK = 'WM_DELETE_REINJECT_STOCK';
+
     private $db;
     private $prefix;
-    private $schema;
+    private $engines;
 
     public function __construct()
     {
         $this->db = Db::getInstance();
         $this->prefix = _DB_PREFIX_;
-        $this->schema = null;
+        $this->engines = null;
     }
 
-    public function inspect($idOrder, $idShop)
+    public static function isStockReinjectionEnabled()
+    {
+        return (bool) Configuration::getGlobalValue(self::CONFIG_REINJECT_STOCK);
+    }
+
+    /**
+     * @param int $idOrder
+     * @param int[] $allowedShopIds shops the current employee is working on
+     */
+    public function inspect($idOrder, array $allowedShopIds)
     {
         $idOrder = (int) $idOrder;
-        $idShop = (int) $idShop;
-        $row = $this->db->getRow(
-            'SELECT o.id_order, o.id_shop, o.reference, o.invoice_number,
-                    EXISTS(
-                        SELECT 1 FROM `' . $this->prefix . 'order_invoice` oi
-                        WHERE oi.id_order = o.id_order AND oi.number > 0
-                    ) AS has_invoice
+        $allowedShopIds = array_map('intval', $allowedShopIds);
+        $row = WmDb::fetchRow(
+            'SELECT o.id_order, o.id_shop, o.reference, o.invoice_number
              FROM `' . $this->prefix . 'orders` o
-             WHERE o.id_order = ' . $idOrder,
-            false
+             WHERE o.id_order = ' . $idOrder
         );
 
-        if (!$row || (int) $row['id_shop'] !== $idShop) {
+        if (!$row || !in_array((int) $row['id_shop'], $allowedShopIds, true)) {
             return array(
                 'exists' => false,
                 'eligible' => false,
-                'reason' => 'Order not found in the active store.',
+                'reason' => 'Order not found in the active store context.',
             );
         }
 
-        $hasInvoice = (int) $row['invoice_number'] > 0 || !empty($row['has_invoice']);
+        $blocker = $this->findBlocker($idOrder, (int) $row['invoice_number']);
 
         return array(
             'exists' => true,
-            'eligible' => !$hasInvoice,
-            'has_invoice' => $hasInvoice,
+            'eligible' => $blocker === '',
+            'has_invoice' => $blocker === 'invoice',
+            'has_credit_slip' => $blocker === 'credit_slip',
             'id_order' => $idOrder,
+            'id_shop' => (int) $row['id_shop'],
             'reference' => (string) $row['reference'],
-            'reason' => $hasInvoice ? 'Orders with an invoice cannot be deleted.' : '',
+            'reason' => $this->getBlockerMessage($blocker),
         );
     }
 
-    public function inspectMany(array $ids, $idShop)
+    public function inspectMany(array $ids, array $allowedShopIds)
     {
         $result = array();
         foreach (array_values(array_unique(array_filter(array_map('intval', $ids)))) as $idOrder) {
-            $result[$idOrder] = $this->inspect($idOrder, $idShop);
+            $result[$idOrder] = $this->inspect($idOrder, $allowedShopIds);
         }
 
         return $result;
     }
 
-    public function delete($idOrder, $idShop)
+    /**
+     * @return array summary without any order identifier
+     */
+    public function delete($idOrder, array $allowedShopIds, $reinjectStock)
     {
         $idOrder = (int) $idOrder;
-        $idShop = (int) $idShop;
-        $inspection = $this->inspect($idOrder, $idShop);
+        $reinjectStock = (bool) $reinjectStock;
+        $inspection = $this->inspect($idOrder, $allowedShopIds);
         if (empty($inspection['exists'])) {
-            throw new RuntimeException('Order not found in the active store.');
+            throw new RuntimeException('Order not found in the active store context.');
         }
         if (empty($inspection['eligible'])) {
             throw new RuntimeException((string) $inspection['reason']);
         }
+        $idShop = (int) $inspection['id_shop'];
 
-        $order = $this->db->getRow(
-            'SELECT id_order, id_shop, id_cart, reference, invoice_number
+        $order = WmDb::fetchRow(
+            'SELECT id_order, id_shop, id_cart, reference, current_state
              FROM `' . $this->prefix . 'orders`
-             WHERE id_order = ' . $idOrder,
-            false
+             WHERE id_order = ' . $idOrder
         );
         if (!$order) {
             throw new RuntimeException('Order not found.');
         }
 
-        $idCart = (int) $order['id_cart'];
-        $reference = (string) $order['reference'];
-        $cartIsExclusive = $idCart > 0 && !(bool) $this->db->getValue(
-            'SELECT 1 FROM `' . $this->prefix . 'orders`
-             WHERE id_cart = ' . $idCart . ' AND id_order <> ' . $idOrder,
-            false
-        );
-        $referenceIsExclusive = $reference !== '' && !(bool) $this->db->getValue(
-            'SELECT 1 FROM `' . $this->prefix . 'orders`
-             WHERE reference = \'' . pSQL($reference) . '\' AND id_order <> ' . $idOrder,
-            false
-        );
+        $plan = $this->buildPlan($idOrder, (int) $order['id_cart'], (string) $order['reference']);
+        $stockLines = $this->getStockLines($idOrder);
+        $stockAction = $this->resolveStockAction($reinjectStock, (int) $order['current_state']);
 
-        $relations = array(
-            'id_order_detail' => $this->getIds('order_detail', 'id_order_detail', 'id_order = ' . $idOrder),
-            'id_order_return' => $this->getIds('order_return', 'id_order_return', 'id_order = ' . $idOrder),
-            'id_order_slip' => $this->getIds('order_slip', 'id_order_slip', 'id_order = ' . $idOrder),
-            'id_order_invoice' => $this->getIds('order_invoice', 'id_order_invoice', 'id_order = ' . $idOrder),
-            'id_order_carrier' => $this->getIds('order_carrier', 'id_order_carrier', 'id_order = ' . $idOrder),
-            'id_order_cart_rule' => $this->getIds('order_cart_rule', 'id_order_cart_rule', 'id_order = ' . $idOrder),
-            'id_order_shipment' => $this->getIds('order_shipment', 'id_order_shipment', 'id_order = ' . $idOrder),
-            'id_customer_thread' => $this->getIds('customer_thread', 'id_customer_thread', 'id_order = ' . $idOrder),
-        );
-        $relations['id_order_slip_detail'] = $relations['id_order_detail']
-            ? $this->getIds(
-                'order_slip_detail',
-                'id_order_slip_detail',
-                'id_order_detail IN (' . implode(',', array_map('intval', $relations['id_order_detail'])) . ')'
-            )
-            : array();
-        if ($cartIsExclusive) {
-            $relations['id_cart'] = array($idCart);
-            $relations['id_customization'] = $this->getIds(
-                'customization',
-                'id_customization',
-                'id_cart = ' . $idCart
-            );
-        }
-        if ($referenceIsExclusive) {
-            $relations['id_order_payment'] = $this->getIds(
-                'order_payment',
-                'id_order_payment',
-                "order_reference = '" . pSQL($reference) . "'"
-            );
-        }
-
-        $directTables = $this->findTablesWithColumn('id_order');
-        $targets = array();
-        foreach ($relations as $column => $values) {
-            if (!$values) {
-                continue;
-            }
-            foreach ($this->findTablesWithColumn($column) as $table => $engine) {
-                if ($table === $this->prefix . 'orders') {
-                    continue;
-                }
-                $targets[$table][$column] = $values;
-            }
-        }
-        foreach ($directTables as $table => $engine) {
-            if ($table !== $this->prefix . 'orders') {
-                $targets[$table]['id_order'] = array($idOrder);
-            }
-        }
-
-        $this->addReviewTargets($targets, $idOrder, $relations['id_order_detail']);
-        $this->sortTargetsForDeletion($targets);
-        $this->assertAffectedTablesAreTransactional($targets, $idOrder);
+        $this->assertTransactional($plan, $stockLines ? true : false);
 
         $this->db->execute('START TRANSACTION');
         try {
-            $locked = $this->db->getRow(
+            $locked = WmDb::lockRow(
                 'SELECT id_order, id_shop, invoice_number
                  FROM `' . $this->prefix . 'orders`
-                 WHERE id_order = ' . $idOrder . ' FOR UPDATE',
-                false
+                 WHERE id_order = ' . $idOrder
             );
-            if (!$locked || (int) $locked['id_shop'] !== $idShop || (int) $locked['invoice_number'] > 0) {
+            if (!$locked || (int) $locked['id_shop'] !== $idShop) {
                 throw new RuntimeException('The order changed and can no longer be deleted.');
             }
-            if ((bool) $this->db->getValue(
-                'SELECT 1 FROM `' . $this->prefix . 'order_invoice`
-                 WHERE id_order = ' . $idOrder . ' AND number > 0',
-                false
-            )) {
-                throw new RuntimeException('The order acquired an invoice and cannot be deleted.');
+            $blocker = $this->findBlocker($idOrder, (int) $locked['invoice_number']);
+            if ($blocker !== '') {
+                throw new RuntimeException($this->getBlockerMessage($blocker));
             }
 
             $orderModel = new Order($idOrder);
@@ -186,27 +141,19 @@ class WmOrderDeletionService
                 throw new RuntimeException('PrestaShop could not delete the order entity.');
             }
 
-            foreach ($targets as $table => $conditions) {
-                foreach ($conditions as $column => $values) {
-                    if (!$this->deleteValues($table, $column, $values)) {
-                        throw new RuntimeException('A related record could not be deleted.');
-                    }
+            foreach ($plan as $step) {
+                if (!$this->executeStep($step)) {
+                    throw new RuntimeException('A related record could not be deleted in ' . $step['table'] . '.');
                 }
             }
 
-            if ($referenceIsExclusive && !$this->deletePaymentReference($reference)) {
-                throw new RuntimeException('The order payment could not be deleted.');
+            $reinjectedUnits = 0;
+            if ($stockAction === 'reinject') {
+                $reinjectedUnits = $this->reinjectStock($stockLines, $idShop);
             }
+            $this->recalculateStockCache($stockLines, $idShop);
 
-            $this->verifyDeletion(
-                $idOrder,
-                $directTables,
-                $targets,
-                $idCart,
-                $cartIsExclusive,
-                $reference,
-                $referenceIsExclusive
-            );
+            $this->verifyDeletion($idOrder, $plan);
             $this->db->execute('COMMIT');
         } catch (Exception $exception) {
             $this->db->execute('ROLLBACK');
@@ -218,177 +165,320 @@ class WmOrderDeletionService
 
         return array(
             'id_shop' => $idShop,
-            'stock_reinjected' => false,
+            'stock_action' => $stockAction,
+            'stock_reinjected' => $stockAction === 'reinject' && $reinjectedUnits > 0,
+            'stock_units_reinjected' => $reinjectedUnits,
+            'product_lines' => count($stockLines),
         );
     }
 
-    private function addReviewTargets(array &$targets, $idOrder, array $detailIds)
+    /**
+     * Returns '' when the order may be deleted, otherwise the blocker code.
+     */
+    private function findBlocker($idOrder, $orderInvoiceNumber)
     {
-        $table = $this->prefix . 'wilden_manager_integrity_review';
-        if (!isset($this->getSchema()[$table])) {
+        if ((int) $orderInvoiceNumber > 0) {
+            return 'invoice';
+        }
+        if ($this->tableExists('order_invoice') && WmDb::exists(
+            'SELECT 1 FROM `' . $this->prefix . 'order_invoice`
+             WHERE id_order = ' . (int) $idOrder . ' AND number > 0'
+        )) {
+            return 'invoice';
+        }
+        if ($this->tableExists('order_slip') && WmDb::exists(
+            'SELECT 1 FROM `' . $this->prefix . 'order_slip`
+             WHERE id_order = ' . (int) $idOrder
+        )) {
+            return 'credit_slip';
+        }
+
+        return '';
+    }
+
+    private function getBlockerMessage($blocker)
+    {
+        if ($blocker === 'invoice') {
+            return 'Orders with an issued invoice cannot be deleted.';
+        }
+        if ($blocker === 'credit_slip') {
+            return 'Orders with a credit slip cannot be deleted.';
+        }
+
+        return '';
+    }
+
+    /**
+     * Ordered list of deletions limited to known tables. Children go first.
+     */
+    private function buildPlan($idOrder, $idCart, $reference)
+    {
+        $idOrder = (int) $idOrder;
+        $detailIds = $this->getIds('order_detail', 'id_order_detail', 'id_order = ' . $idOrder);
+        $invoiceIds = $this->getIds('order_invoice', 'id_order_invoice', 'id_order = ' . $idOrder);
+        $returnIds = $this->getIds('order_return', 'id_order_return', 'id_order = ' . $idOrder);
+        $threadIds = $this->getIds('customer_thread', 'id_customer_thread', 'id_order = ' . $idOrder);
+
+        $referenceIsExclusive = $reference !== '' && !WmDb::exists(
+            'SELECT 1 FROM `' . $this->prefix . 'orders`
+             WHERE reference = \'' . pSQL($reference) . '\' AND id_order <> ' . $idOrder
+        );
+        $paymentIds = $referenceIsExclusive
+            ? $this->getIds('order_payment', 'id_order_payment', "order_reference = '" . pSQL($reference) . "'")
+            : array();
+
+        $cartIsExclusive = $idCart > 0 && !WmDb::exists(
+            'SELECT 1 FROM `' . $this->prefix . 'orders`
+             WHERE id_cart = ' . (int) $idCart . ' AND id_order <> ' . $idOrder
+        );
+        $customizationIds = $cartIsExclusive
+            ? $this->getIds('customization', 'id_customization', 'id_cart = ' . (int) $idCart)
+            : array();
+
+        $plan = array();
+        // Children of order lines, invoices, returns and threads.
+        $this->addStep($plan, 'order_detail_tax', 'id_order_detail', $detailIds);
+        $this->addStep($plan, 'order_return_detail', 'id_order_return', $returnIds);
+        $this->addStep($plan, 'order_return_detail', 'id_order_detail', $detailIds);
+        $this->addStep($plan, 'order_invoice_tax', 'id_order_invoice', $invoiceIds);
+        $this->addStep($plan, 'order_invoice_payment', 'id_order_invoice', $invoiceIds);
+        $this->addStep($plan, 'order_invoice_payment', 'id_order_payment', $paymentIds);
+        $this->addStep($plan, 'customer_message', 'id_customer_thread', $threadIds);
+
+        // Rows owned directly by the order.
+        foreach (array(
+            'order_invoice_payment',
+            'order_detail',
+            'order_history',
+            'order_carrier',
+            'order_cart_rule',
+            'order_invoice',
+            'order_return',
+            'message',
+            'customer_thread',
+            'wilden_manager_order_note',
+            'wilden_manager_audit',
+        ) as $table) {
+            $this->addStep($plan, $table, 'id_order', array($idOrder));
+        }
+
+        // Payments recorded only for this order reference.
+        $this->addStep($plan, 'order_payment', 'id_order_payment', $paymentIds);
+
+        // Cart data used exclusively by this order.
+        if ($cartIsExclusive) {
+            $this->addStep($plan, 'customized_data', 'id_customization', $customizationIds);
+            foreach (array('customization', 'cart_product', 'cart_cart_rule', 'specific_price', 'message', 'cart') as $table) {
+                $this->addStep($plan, $table, 'id_cart', array((int) $idCart));
+            }
+        }
+
+        // Diagnostic reviews owned by this module.
+        if ($this->tableExists('wilden_manager_integrity_review')) {
+            $patterns = array('%:o:' . $idOrder, '%:o:' . $idOrder . ':%');
+            foreach ($detailIds as $idDetail) {
+                $patterns[] = '%:od:' . (int) $idDetail;
+            }
+            $plan[] = array(
+                'table' => 'wilden_manager_integrity_review',
+                'column' => 'issue_key',
+                'like' => $patterns,
+            );
+        }
+
+        return $plan;
+    }
+
+    private function addStep(array &$plan, $table, $column, array $values)
+    {
+        $values = array_values(array_unique(array_filter(array_map('intval', $values))));
+        if (!$values || !$this->columnExists($table, $column)) {
             return;
         }
-        $patterns = array(
-            '%:o:' . (int) $idOrder,
-            '%:o:' . (int) $idOrder . ':%',
-        );
-        foreach ($detailIds as $idDetail) {
-            $patterns[] = '%:od:' . (int) $idDetail;
-        }
-        $targets[$table]['__issue_key_like'] = $patterns;
+        $plan[] = array('table' => $table, 'column' => $column, 'values' => $values);
     }
 
-    private function sortTargetsForDeletion(array &$targets)
+    private function stepWhere(array $step)
     {
-        $owners = array(
-            $this->prefix . 'order_detail' => 10,
-            $this->prefix . 'order_return' => 20,
-            $this->prefix . 'order_slip' => 20,
-            $this->prefix . 'order_invoice' => 20,
-            $this->prefix . 'customer_thread' => 30,
-            $this->prefix . 'customization' => 30,
-            $this->prefix . 'order_payment' => 40,
-            $this->prefix . 'cart' => 50,
-        );
-        uksort($targets, function ($left, $right) use ($owners) {
-            $leftPriority = isset($owners[$left]) ? $owners[$left] : 0;
-            $rightPriority = isset($owners[$right]) ? $owners[$right] : 0;
-            if ($leftPriority === $rightPriority) {
-                return strcmp($left, $right);
+        if (isset($step['like'])) {
+            $parts = array();
+            foreach ($step['like'] as $pattern) {
+                $parts[] = '`issue_key` LIKE \'' . pSQL($pattern) . '\'';
             }
 
-            return $leftPriority < $rightPriority ? -1 : 1;
-        });
+            return '(' . implode(' OR ', $parts) . ')';
+        }
+
+        return '`' . bqSQL($step['column']) . '` IN (' . implode(',', array_map('intval', $step['values'])) . ')';
     }
 
-    private function assertAffectedTablesAreTransactional(array $targets, $idOrder)
+    private function executeStep(array $step)
     {
-        $schema = $this->getSchema();
-        $targets[$this->prefix . 'orders'] = array('id_order' => array((int) $idOrder));
-        foreach ($targets as $table => $conditions) {
-            if (!isset($schema[$table])) {
-                continue;
-            }
-            if (strtoupper((string) $schema[$table]['engine']) !== 'INNODB' && $this->targetHasRows($table, $conditions)) {
-                throw new RuntimeException('Deletion was stopped because a related table is not transactional: ' . $table);
-            }
-        }
-    }
-
-    private function targetHasRows($table, array $conditions)
-    {
-        foreach ($conditions as $column => $values) {
-            if ($column === '__issue_key_like') {
-                foreach ($values as $pattern) {
-                    if ((bool) $this->db->getValue(
-                        'SELECT 1 FROM `' . bqSQL($table) . '` WHERE issue_key LIKE \'' . pSQL($pattern) . '\' LIMIT 1',
-                        false
-                    )) {
-                        return true;
-                    }
-                }
-                continue;
-            }
-            if ((bool) $this->db->getValue(
-                'SELECT 1 FROM `' . bqSQL($table) . '` WHERE `' . bqSQL($column) . '` IN (' .
-                implode(',', array_map('intval', $values)) . ') LIMIT 1',
-                false
-            )) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private function deleteValues($table, $column, array $values)
-    {
-        if ($column === '__issue_key_like') {
-            foreach ($values as $pattern) {
-                if (!$this->db->execute(
-                    'DELETE FROM `' . bqSQL($table) . '` WHERE issue_key LIKE \'' . pSQL($pattern) . '\''
-                )) {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-        if (!$values) {
-            return true;
-        }
-
         return $this->db->execute(
-            'DELETE FROM `' . bqSQL($table) . '` WHERE `' . bqSQL($column) . '` IN (' .
-            implode(',', array_map('intval', $values)) . ')'
+            'DELETE FROM `' . bqSQL($this->prefix . $step['table']) . '` WHERE ' . $this->stepWhere($step)
         );
     }
 
-    private function deletePaymentReference($reference)
+    private function stepHasRows(array $step)
     {
-        if ($reference === '' || !isset($this->getSchema()[$this->prefix . 'order_payment'])) {
-            return true;
-        }
-
-        return $this->db->execute(
-            'DELETE FROM `' . $this->prefix . 'order_payment`
-             WHERE order_reference = \'' . pSQL($reference) . '\''
+        return WmDb::exists(
+            'SELECT 1 FROM `' . bqSQL($this->prefix . $step['table']) . '` WHERE ' . $this->stepWhere($step)
         );
     }
 
-    private function verifyDeletion(
-        $idOrder,
-        array $directTables,
-        array $targets,
-        $idCart,
-        $cartIsExclusive,
-        $reference,
-        $referenceIsExclusive
-    )
+    private function assertTransactional(array $plan, $touchesStock)
     {
-        foreach ($directTables as $table => $engine) {
-            if ((bool) $this->db->getValue(
-                'SELECT 1 FROM `' . bqSQL($table) . '` WHERE id_order = ' . (int) $idOrder . ' LIMIT 1',
-                false
-            )) {
-                throw new RuntimeException('A related order record remains in ' . $table . '.');
+        $tables = array('orders' => true);
+        foreach ($plan as $step) {
+            if ($this->stepHasRows($step)) {
+                $tables[$step['table']] = true;
             }
         }
-        foreach ($targets as $table => $conditions) {
-            if ($this->targetHasRows($table, $conditions)) {
-                throw new RuntimeException('An indirect order relation remains in ' . $table . '.');
+        if ($touchesStock) {
+            $tables['stock_available'] = true;
+            $tables['stock_mvt'] = true;
+        }
+        $engines = $this->getEngines();
+        foreach (array_keys($tables) as $table) {
+            $fullName = $this->prefix . $table;
+            if (isset($engines[$fullName]) && strtoupper($engines[$fullName]) !== 'INNODB') {
+                throw new RuntimeException('Deletion was stopped because a related table is not transactional: ' . $fullName);
             }
         }
-        if ($cartIsExclusive && $idCart > 0) {
-            foreach ($this->findTablesWithColumn('id_cart') as $table => $engine) {
-                if ($table === $this->prefix . 'orders') {
-                    continue;
-                }
-                if ((bool) $this->db->getValue(
-                    'SELECT 1 FROM `' . bqSQL($table) . '` WHERE id_cart = ' . (int) $idCart . ' LIMIT 1',
-                    false
-                )) {
-                    throw new RuntimeException('A related cart record remains in ' . $table . '.');
-                }
-            }
-        }
-        if ($referenceIsExclusive && $reference !== '' && (bool) $this->db->getValue(
-            'SELECT 1 FROM `' . $this->prefix . 'order_payment`
-             WHERE order_reference = \'' . pSQL($reference) . '\' LIMIT 1',
+    }
+
+    /**
+     * Product lines captured before deletion, with the quantity still out of stock.
+     */
+    private function getStockLines($idOrder)
+    {
+        $rows = $this->db->executeS(
+            'SELECT product_id, product_attribute_id, product_quantity, product_quantity_reinjected
+             FROM `' . $this->prefix . 'order_detail`
+             WHERE id_order = ' . (int) $idOrder,
+            true,
             false
+        );
+        $lines = array();
+        foreach ((array) $rows as $row) {
+            $idProduct = (int) $row['product_id'];
+            if ($idProduct <= 0) {
+                continue;
+            }
+            $lines[] = array(
+                'id_product' => $idProduct,
+                'id_product_attribute' => (int) $row['product_attribute_id'],
+                'quantity' => max(0, (int) $row['product_quantity'] - (int) $row['product_quantity_reinjected']),
+            );
+        }
+
+        return $lines;
+    }
+
+    /**
+     * none     -> setting disabled
+     * disabled -> setting enabled but shop stock management is off
+     * already  -> order is cancelled or in error; PrestaShop already reinjected
+     * reinject -> stock will be returned
+     */
+    private function resolveStockAction($reinjectStock, $currentState)
+    {
+        if (!$reinjectStock) {
+            return 'none';
+        }
+        if (!Configuration::get('PS_STOCK_MANAGEMENT')) {
+            return 'disabled';
+        }
+        $finalStates = array_filter(array(
+            (int) Configuration::get('PS_OS_CANCELED'),
+            (int) Configuration::get('PS_OS_ERROR'),
+        ));
+        if (in_array((int) $currentState, $finalStates, true)) {
+            return 'already';
+        }
+
+        return 'reinject';
+    }
+
+    private function reinjectStock(array $lines, $idShop)
+    {
+        $reason = (int) Configuration::get('PS_STOCK_MVT_INC_EMPLOYEE_EDITION');
+        $units = 0;
+        foreach ($lines as $line) {
+            if ($line['quantity'] <= 0 || !Product::existsInDatabase($line['id_product'], 'product')) {
+                continue;
+            }
+            if ($line['id_product_attribute'] > 0
+                && !Combination::existsInDatabase($line['id_product_attribute'], 'product_attribute')
+            ) {
+                continue;
+            }
+            $params = $reason > 0 ? array('id_stock_mvt_reason' => $reason) : array();
+            $updated = StockAvailable::updateQuantity(
+                $line['id_product'],
+                $line['id_product_attribute'],
+                $line['quantity'],
+                (int) $idShop,
+                $reason > 0,
+                $params
+            );
+            if ($updated === false) {
+                throw new RuntimeException('Stock could not be reinjected for one of the products.');
+            }
+            $units += $line['quantity'];
+        }
+
+        return $units;
+    }
+
+    /**
+     * Recomputes reserved and physical quantities now that the order is gone.
+     */
+    private function recalculateStockCache(array $lines, $idShop)
+    {
+        if (!$lines || !class_exists('\PrestaShop\PrestaShop\Adapter\StockManager')) {
+            return;
+        }
+        $manager = new \PrestaShop\PrestaShop\Adapter\StockManager();
+        if (!method_exists($manager, 'updatePhysicalProductQuantity')) {
+            return;
+        }
+        $done = array();
+        foreach ($lines as $line) {
+            if (isset($done[$line['id_product']])) {
+                continue;
+            }
+            $done[$line['id_product']] = true;
+            $manager->updatePhysicalProductQuantity(
+                (int) $idShop,
+                (int) Configuration::get('PS_OS_ERROR'),
+                (int) Configuration::get('PS_OS_CANCELED'),
+                (int) $line['id_product']
+            );
+        }
+    }
+
+    private function verifyDeletion($idOrder, array $plan)
+    {
+        if (WmDb::exists(
+            'SELECT 1 FROM `' . $this->prefix . 'orders` WHERE id_order = ' . (int) $idOrder
         )) {
-            throw new RuntimeException('A related payment record remains.');
+            throw new RuntimeException('The order record remains.');
+        }
+        foreach ($plan as $step) {
+            if ($this->stepHasRows($step)) {
+                throw new RuntimeException('A related order record remains in ' . $this->prefix . $step['table'] . '.');
+            }
         }
     }
 
     private function getIds($table, $idColumn, $where)
     {
-        $fullTable = $this->prefix . $table;
-        if (!isset($this->getSchema()[$fullTable]) || !isset($this->getSchema()[$fullTable]['columns'][$idColumn])) {
+        if (!$this->columnExists($table, $idColumn)) {
             return array();
         }
         $rows = $this->db->executeS(
-            'SELECT `' . bqSQL($idColumn) . '` FROM `' . bqSQL($fullTable) . '` WHERE ' . $where,
+            'SELECT `' . bqSQL($idColumn) . '` FROM `' . bqSQL($this->prefix . $table) . '` WHERE ' . $where,
             true,
             false
         );
@@ -398,61 +488,89 @@ class WmOrderDeletionService
         }, (array) $rows))));
     }
 
-    private function findTablesWithColumn($column)
+    private function tableExists($table)
     {
-        $tables = array();
-        foreach ($this->getSchema() as $table => $metadata) {
-            if (isset($metadata['columns'][$column])) {
-                $tables[$table] = $metadata['engine'];
-            }
-        }
+        $engines = $this->getEngines();
 
-        return $tables;
+        return isset($engines[$this->prefix . $table]);
     }
 
-    private function getSchema()
+    private function columnExists($table, $column)
     {
-        if ($this->schema !== null) {
-            return $this->schema;
+        if (!$this->tableExists($table)) {
+            return false;
         }
-        $this->schema = array();
-        $tables = $this->db->executeS(
+
+        return WmDb::exists(
+            'SELECT 1 FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE()
+               AND TABLE_NAME = \'' . pSQL($this->prefix . $table) . '\'
+               AND COLUMN_NAME = \'' . pSQL($column) . '\''
+        );
+    }
+
+    /**
+     * Engines of the known tables only, matched by exact name. No LIKE pattern is
+     * used, so tables of other installations sharing the database never match.
+     */
+    private function getEngines()
+    {
+        if ($this->engines !== null) {
+            return $this->engines;
+        }
+        $names = array();
+        foreach (self::knownTables() as $table) {
+            $names[] = '\'' . pSQL($this->prefix . $table) . '\'';
+        }
+        $rows = $this->db->executeS(
             'SELECT TABLE_NAME, ENGINE
              FROM information_schema.TABLES
              WHERE TABLE_SCHEMA = DATABASE()
-               AND TABLE_NAME LIKE \'' . pSQL($this->prefix) . '%\'',
+               AND TABLE_NAME IN (' . implode(',', $names) . ')',
             true,
             false
         );
-        foreach ((array) $tables as $table) {
-            $name = (string) $table['TABLE_NAME'];
-            if (!preg_match('/^[a-zA-Z0-9_]+$/', $name)) {
-                continue;
-            }
-            $this->schema[$name] = array(
-                'engine' => (string) $table['ENGINE'],
-                'columns' => array(),
-            );
+        $this->engines = array();
+        foreach ((array) $rows as $row) {
+            $this->engines[(string) $row['TABLE_NAME']] = (string) $row['ENGINE'];
         }
-        if (!$this->schema) {
+        if (!isset($this->engines[$this->prefix . 'orders'])) {
             throw new RuntimeException('The database schema could not be inspected.');
         }
-        $columns = $this->db->executeS(
-            'SELECT TABLE_NAME, COLUMN_NAME
-             FROM information_schema.COLUMNS
-             WHERE TABLE_SCHEMA = DATABASE()
-               AND TABLE_NAME LIKE \'' . pSQL($this->prefix) . '%\'',
-            true,
-            false
-        );
-        foreach ((array) $columns as $column) {
-            $table = (string) $column['TABLE_NAME'];
-            $name = (string) $column['COLUMN_NAME'];
-            if (isset($this->schema[$table])) {
-                $this->schema[$table]['columns'][$name] = true;
-            }
-        }
 
-        return $this->schema;
+        return $this->engines;
+    }
+
+    private static function knownTables()
+    {
+        return array(
+            'orders',
+            'order_detail',
+            'order_detail_tax',
+            'order_history',
+            'order_carrier',
+            'order_cart_rule',
+            'order_invoice',
+            'order_invoice_tax',
+            'order_invoice_payment',
+            'order_payment',
+            'order_return',
+            'order_return_detail',
+            'order_slip',
+            'message',
+            'customer_thread',
+            'customer_message',
+            'cart',
+            'cart_product',
+            'cart_cart_rule',
+            'customization',
+            'customized_data',
+            'specific_price',
+            'stock_available',
+            'stock_mvt',
+            'wilden_manager_order_note',
+            'wilden_manager_audit',
+            'wilden_manager_integrity_review',
+        );
     }
 }

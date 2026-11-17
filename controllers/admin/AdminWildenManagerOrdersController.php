@@ -203,7 +203,7 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         try {
             $this->ajaxDie(json_encode(array(
                 'success' => true,
-                'orders' => $service->inspectMany($ids, (int) $this->context->shop->id),
+                'orders' => $service->inspectMany($ids, Shop::getContextListShopID()),
             ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
         } catch (Exception $exception) {
             $this->ajaxDie(json_encode(array('success' => false, 'error' => $exception->getMessage())));
@@ -231,14 +231,21 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         try {
             $result = (new WmOrderDeletionService())->delete(
                 $idOrder,
-                (int) $this->context->shop->id
+                Shop::getContextListShopID(),
+                WmOrderDeletionService::isStockReinjectionEnabled()
             );
             WmAuditLogger::log('order_deleted_anonymously', array(
                 'id_shop' => (int) $result['id_shop'],
-                'stock_reinjected' => false,
+                'stock_action' => (string) $result['stock_action'],
+                'stock_reinjected' => (bool) $result['stock_reinjected'],
+                'stock_units_reinjected' => (int) $result['stock_units_reinjected'],
                 'order_identifier_retained' => false,
             ));
-            $this->ajaxDie(json_encode(array('success' => true), JSON_UNESCAPED_UNICODE));
+            $this->ajaxDie(json_encode(array(
+                'success' => true,
+                'stock_action' => (string) $result['stock_action'],
+                'stock_units_reinjected' => (int) $result['stock_units_reinjected'],
+            ), JSON_UNESCAPED_UNICODE));
         } catch (Exception $exception) {
             $this->ajaxDie(json_encode(array('success' => false, 'error' => $exception->getMessage())));
         } catch (Throwable $throwable) {
@@ -802,13 +809,7 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
                 $issue['review_employee'],
                 $issue['review_date'],
             );
-            foreach ($row as &$value) {
-                $value = (string) $value;
-                if ($value !== '' && preg_match('/^[\x00-\x20]*[=+\-@]/', $value)) {
-                    $value = "'" . $value;
-                }
-            }
-            unset($value);
+            $row = WmSpreadsheet::neutralizeRow($row);
             fputcsv($stream, $row, ';');
         }
         fclose($stream);
@@ -850,13 +851,7 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
                 $issue['review_employee'],
                 $issue['review_date'],
             );
-            foreach ($row as &$value) {
-                $value = (string) $value;
-                if ($value !== '' && preg_match('/^[\x00-\x20]*[=+\-@]/', $value)) {
-                    $value = "'" . $value;
-                }
-            }
-            unset($value);
+            $row = WmSpreadsheet::neutralizeRow($row);
             fputcsv($stream, $row, ';');
         }
         fclose($stream);
@@ -1020,12 +1015,7 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
 
     private function safeSpreadsheetValue($value)
     {
-        $value = (string) $value;
-        if ($value !== '' && in_array($value[0], array('=', '+', '-', '@'), true)) {
-            return "'" . $value;
-        }
-
-        return $value;
+        return WmSpreadsheet::neutralize($value);
     }
 
     private function formatAddressText(Address $address)

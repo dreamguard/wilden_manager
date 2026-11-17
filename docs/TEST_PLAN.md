@@ -93,13 +93,24 @@
 - Confirm an order with either `invoice_number > 0` or a numbered `order_invoice` row shows a disabled control and clicking it displays the reason.
 - Confirm an order whose only `order_invoice` rows have number `0` remains eligible and those technical rows are removed transactionally.
 - Attempt the delete endpoint manually for an invoiced order and confirm the server rejects it.
-- Confirm the modal requires the exact order ID and clearly states that stock is not reinjected.
+- Confirm an order with a credit slip shows a disabled control with the credit-slip reason and the server rejects it.
+- Confirm a paid order (with `order_payment` rows) without a numbered invoice is eligible and its payment rows are removed.
+- Confirm the modal requires the exact order ID and states whether stock will be reinjected according to the setting.
 - Delete one disposable non-invoiced order and confirm it disappears from the list and direct URL.
-- Search every table containing `id_order` and confirm no row remains for the deleted ID.
+- Confirm no row remains for the deleted ID in the core order tables and module tables listed in `WmOrderDeletionService::knownTables()`.
+- Confirm rows in third-party module tables and `stock_mvt` are left untouched.
+- Create a second installation in the same database with a prefix such as `ps2_` holding an order with the same ID and confirm it is not modified.
+- In an all-shops multistore context, confirm an order from a non-default shop can be deleted.
 - For an exclusive cart and payment reference, confirm cart relations, customizations and payment rows are gone.
 - Confirm shared carts or payment references belonging to another order are preserved.
 - Confirm related order-detail tax, return, slip, message, module-note, diagnostic-review and historical audit rows are gone.
 - Attach temporary listeners to the native Order delete-before and delete-after hooks and confirm both execute once.
 - Confirm the new audit row contains employee, store and action but no order ID, reference, customer or order content.
 - Add a related row to a non-transactional test table and confirm deletion is refused without changing any row.
-- Confirm product sellable stock is unchanged after deletion.
+- With the stock option disabled, confirm sellable stock is unchanged and reserved/physical quantities are recalculated.
+- With the stock option enabled, delete an unshipped order and confirm sellable stock increases by the ordered quantity while physical stock stays equal.
+- With the stock option enabled, delete a shipped order and confirm sellable and physical stock both increase.
+- With the stock option enabled, delete a cancelled order and confirm stock is unchanged.
+- With a partial refund that reinjected units, confirm only the remaining units are returned.
+- Confirm packs follow the shop's pack stock type when reinjected.
+- Confirm changing the option is SuperAdmin-only and recorded in the audit log.
