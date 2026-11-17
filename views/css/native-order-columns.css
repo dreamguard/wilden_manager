@@ -1,11 +1,3 @@
-.wm-native-columns-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  margin-right: 8px;
-}
-
-.wm-native-columns-button .material-icons,
 .wm-native-column-order .material-icons {
   font-size: 18px;
   line-height: 1;
@@ -46,25 +38,6 @@
   margin-bottom: 0;
 }
 
-.wm-export-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  margin-right: 8px;
-}
-
-.wm-document-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  margin-right: 8px;
-}
-
-.wm-document-button .material-icons {
-  font-size: 18px;
-  line-height: 1;
-}
-
 .wm-document-table {
   max-height: 360px;
   margin: 12px 0;
@@ -73,11 +46,6 @@
 
 .wm-document-message {
   margin-bottom: 0;
-}
-
-.wm-export-button .material-icons {
-  font-size: 18px;
-  line-height: 1;
 }
 
 .wm-export-columns {

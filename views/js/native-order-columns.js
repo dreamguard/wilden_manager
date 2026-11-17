@@ -141,14 +141,8 @@
       });
     }
 
-    var $button = $('<button type="button" class="btn btn-outline-secondary wm-native-columns-button"><i class="material-icons">view_column</i> <span></span></button>');
-    $button.find('span').text(config.button);
     var $actions = $panel.find('.grid-actions').first();
-    if ($actions.length) {
-      $actions.prepend($button);
-    } else {
-      $panel.find('.card-header').first().append($button);
-    }
+    var $columnsMenuItem = $panel.find('.js-wm_columns-grid-action').first();
 
     var $filterForm = $('#order_filter_form');
     if (!$filterForm.length) {
@@ -489,23 +483,17 @@
       });
       }
 
-      var $exportButton = $('<button type="button" class="btn btn-outline-secondary wm-export-button"><i class="material-icons">download</i> <span></span></button>');
-      $exportButton.find('span').text(config.exportButton);
-      if ($actions.length) {
-        $actions.prepend($exportButton);
-      } else {
-        $panel.find('.card-header').first().append($exportButton);
-      }
+      var $exportButton = $panel.find('.wm-export-button').first();
 
       $exportButton.on('click', function () {
       var ids = getSelectedOrderIds();
       if (!ids.length) {
-        window.alert(config.bulkNoSelection);
+        window.alert(config.selectionRequired);
         return;
       }
       renderExportColumns();
       $exportModal.data('order-ids', ids);
-      $exportModal.find('.wm-export-selection').text(ids.length + ' ' + config.bulkSelected);
+      $exportModal.find('.wm-export-selection').text(ids.length + ' ' + config.selectedOrders);
       $exportModal.find('.wm-export-error').prop('hidden', true).text('');
       $exportModal.modal('show');
       });
@@ -568,27 +556,21 @@
         .text(message || '');
     }
 
-    var $documentButton = $('<button type="button" class="btn btn-outline-secondary wm-document-button"><i class="material-icons">picture_as_pdf</i> <span></span></button>');
-    $documentButton.find('span').text(config.documentButton);
-    if ($actions.length) {
-      $actions.prepend($documentButton);
-    } else {
-      $panel.find('.card-header').first().append($documentButton);
-    }
+    var $documentButton = $panel.find('.wm-document-button').first();
 
     $documentButton.on('click', function () {
       var ids = getSelectedOrderIds();
       if (!ids.length) {
-        window.alert(config.bulkNoSelection);
+        window.alert(config.selectionRequired);
         return;
       }
-      if (ids.length > parseInt(config.maxBulk, 10)) {
-        window.alert(config.bulkTooMany + ' ' + config.maxBulk + '.');
+      if (ids.length > parseInt(config.maxDocuments, 10)) {
+        window.alert(config.tooManyDocuments + ' ' + config.maxDocuments + '.');
         return;
       }
 
       $documentModal.data('order-ids', ids);
-      $documentModal.find('.wm-document-selection').text(ids.length + ' ' + config.bulkSelected);
+      $documentModal.find('.wm-document-selection').text(ids.length + ' ' + config.selectedOrders);
       $documentModal.find('.wm-document-table').empty();
       $documentModal.find('.wm-document-type-group').prop('hidden', true);
       $documentModal.find('.wm-document-download').prop('disabled', true);
@@ -646,7 +628,7 @@
       $documentModal.modal('hide');
     });
 
-    $button.on('click', function () {
+    $columnsMenuItem.on('click', function () {
       renderColumns(config.selected);
       $modal.find('.wm-native-columns-error').prop('hidden', true).text('');
       $modal.modal('show');

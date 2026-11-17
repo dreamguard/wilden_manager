@@ -26,7 +26,7 @@ require_once __DIR__ . '/classes/WmProfilePermission.php';
 
 class Wilden_manager extends Module
 {
-    const VERSION = '1.13.1';
+    const VERSION = '1.13.2';
     const TAB_CLASS = 'AdminWildenManagerOrders';
     const MAX_EXPORT_ORDERS = 1000;
     const MAX_DOCUMENT_ORDERS = 100;
@@ -261,6 +261,28 @@ class Wilden_manager extends Module
         $columns = $definition->getColumns();
         $filters = $definition->getFilters();
 
+        $definition->getGridActions()->add(
+            (new \PrestaShop\PrestaShop\Core\Grid\Action\Type\SimpleGridAction('wm_columns'))
+                ->setName($this->l('Columns'))
+                ->setIcon('view_column')
+        );
+
+        $bulkActions = $definition->getBulkActions();
+        if ($this->canCurrentEmployeeExport()) {
+            $bulkActions->add(
+                (new \PrestaShop\PrestaShop\Core\Grid\Action\Bulk\Type\ButtonBulkAction('wm_export'))
+                    ->setName($this->l('Export selection'))
+                    ->setIcon('download')
+                    ->setOptions(array('class' => 'wm-export-button'))
+            );
+        }
+        $bulkActions->add(
+            (new \PrestaShop\PrestaShop\Core\Grid\Action\Bulk\Type\ButtonBulkAction('wm_documents'))
+                ->setName($this->l('Documents'))
+                ->setIcon('picture_as_pdf')
+                ->setOptions(array('class' => 'wm-document-button'))
+        );
+
         $columns->addAfter(
             'customer',
             (new \PrestaShop\PrestaShop\Core\Grid\Column\Type\DataColumn('customer_email'))
@@ -467,8 +489,8 @@ class Wilden_manager extends Module
                 'documentPreviewUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=previewDocuments',
                 'documentDownloadUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=downloadDocuments',
                 'documentZipAvailable' => class_exists('ZipArchive'),
+                'maxDocuments' => self::MAX_DOCUMENT_ORDERS,
                 'title' => $this->l('Configure order columns'),
-                'button' => $this->l('Columns'),
                 'save' => $this->l('Save and reload'),
                 'reset' => $this->l('Restore defaults'),
                 'cancel' => $this->l('Cancel'),
@@ -490,7 +512,6 @@ class Wilden_manager extends Module
                 'viewsDeleted' => $this->l('The view has been deleted.'),
                 'viewsError' => $this->l('The saved view operation could not be completed.'),
                 'viewsDefaultSuffix' => $this->l('default'),
-                'exportButton' => $this->l('Export selection'),
                 'exportTitle' => $this->l('Export selected orders'),
                 'exportFormat' => $this->l('File format'),
                 'exportFields' => $this->l('Columns to export'),
@@ -498,7 +519,6 @@ class Wilden_manager extends Module
                 'exportNoColumns' => $this->l('Select at least one export column.'),
                 'exportCsv' => $this->l('CSV (UTF-8, semicolon separated)'),
                 'exportXlsx' => $this->l('Excel XLSX'),
-                'documentButton' => $this->l('Documents'),
                 'documentTitle' => $this->l('Combined order documents'),
                 'documentType' => $this->l('Document type'),
                 'documentPreview' => $this->l('Check documents'),
@@ -512,6 +532,9 @@ class Wilden_manager extends Module
                 'documentInvoicesCount' => $this->l('Invoices available'),
                 'documentDeliveriesCount' => $this->l('Delivery slips available'),
                 'documentError' => $this->l('The documents could not be checked or generated.'),
+                'selectionRequired' => $this->l('Select at least one order in the native list.'),
+                'selectedOrders' => $this->l('selected orders'),
+                'tooManyDocuments' => $this->l('The maximum number of orders per document operation is'),
             ),
         ));
     }

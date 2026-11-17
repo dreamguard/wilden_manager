@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.13.2
+
+- Moved order exports and combined documents into PrestaShop's native bulk-actions menu.
+- Moved configurable columns into the native grid settings menu.
+- Kept saved-view controls in the order header and removed the three standalone action buttons.
+
 ## 1.13.1
 
 - Removed **Safe status change** from the native and legacy order interfaces.

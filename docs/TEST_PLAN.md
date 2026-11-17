@@ -4,7 +4,9 @@
 
 1. Back up the staging database and files.
 2. Install the current `wilden_manager` ZIP.
-3. Confirm the native **Orders** page shows the module action buttons.
+3. Confirm the native **Orders** page shows the module controls.
+   **Columns** must be inside the settings gear; **Export selection** and
+   **Documents** must be inside **Bulk actions**.
 4. Confirm the `wilden_manager_*` tables were created.
 5. Test with an administrator and a restricted employee profile.
 
