@@ -1,14 +1,6 @@
 {* Wilden Manager - native-style order grid *}
 
 <div class="wm-manager">
-  {if $wm_saved_views}<div class="wm-saved-views">
-    <strong>{l s='Saved views:' mod='wilden_manager'}</strong>
-    {foreach from=$wm_saved_views item=view}<span class="wm-saved-view{if $wm_active_view_id == $view.id_wilden_manager_saved_view} active{/if}">
-      <a href="{$wm_base_url|escape:'htmlall':'UTF-8'}&amp;id_wm_view={$view.id_wilden_manager_saved_view|intval}">{$view.name|escape:'htmlall':'UTF-8'}</a>
-      <form method="post" action="{$wm_base_url|escape:'htmlall':'UTF-8'}" class="wm-delete-view-form"><input type="hidden" name="id_wm_view" value="{$view.id_wilden_manager_saved_view|intval}"><button type="submit" name="deleteWmView" value="1" class="wm-delete-view" data-confirm="{l s='Delete this saved view?' mod='wilden_manager'}">&times;</button></form>
-    </span>{/foreach}
-  </div>{/if}
-
   <form method="post" action="{$wm_base_url|escape:'htmlall':'UTF-8'}" id="wm-orders-form">
     <input type="hidden" name="wm_filter_submitted" value="1"><input type="hidden" name="sort" value="{$wm_sort|escape:'htmlall':'UTF-8'}"><input type="hidden" name="direction" value="{$wm_direction|escape:'htmlall':'UTF-8'}">
     <div class="card wm-grid-card">
@@ -27,8 +19,6 @@
           <a href="{$wm_base_url|escape:'htmlall':'UTF-8'}" class="btn btn-outline-secondary" title="{l s='Refresh list' mod='wilden_manager'}"><i class="material-icons">refresh</i></a>
         </div>
       </div>
-
-      <div class="wm-view-toolbar"><input type="text" name="wm_view_name" maxlength="128" placeholder="{l s='Name this view' mod='wilden_manager'}" class="form-control"><label><input type="checkbox" name="wm_view_default" value="1"> {l s='Default view' mod='wilden_manager'}</label><button type="submit" name="submitWmSaveView" value="1" class="btn btn-outline-secondary"><i class="material-icons">bookmark_border</i> {l s='Save current view' mod='wilden_manager'}</button></div>
 
       <div class="table-responsive"><table class="table grid-table wm-orders-table">
         <thead>

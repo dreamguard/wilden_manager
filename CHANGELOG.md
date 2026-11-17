@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.13.3
+
+- Removed saved order views from the native Orders interface and module administration.
+- Removed the create, apply, edit, default and delete workflows and their server endpoints.
+- Preserved existing saved-view table rows during upgrades to avoid destructive data loss.
+
 ## 1.13.2
 
 - Moved order exports and combined documents into PrestaShop's native bulk-actions menu.

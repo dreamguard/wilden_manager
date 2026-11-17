@@ -3,19 +3,15 @@
 Private order-management module developed from scratch for PrestaShop 8.2 and
 Wilden Militaria S.L.
 
-## Version 1.13.2
+## Version 1.13.3
 
 The initial version provides:
 
 - Advanced order filters with multishop scoping.
 - Employee-selectable columns.
-- Personal saved views and an optional default view.
 - Paginated order list and quick view.
 - The real PrestaShop 8.2 Orders grid remains in use.
 - Native order columns can be shown, hidden and reordered per employee and shop.
-- Native order filters, sorting and columns can be stored as named views per employee and shop.
-- Saved views can be applied, renamed, updated, deleted and optionally marked as the default.
-- SuperAdmin can review and remove obsolete employee views from the module configuration page.
 - Customer email and shipping method columns, including native-grid filters and sorting.
 - Configurable CSV and XLSX exports from the native order selection.
 - Independent export and diagnostics/audit permissions for each employee profile.

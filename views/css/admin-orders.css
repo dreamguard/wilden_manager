@@ -69,51 +69,6 @@
   min-width: 92px;
 }
 
-.wm-save-view {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-}
-
-.wm-save-view .form-control {
-  width: 190px;
-}
-
-.wm-saved-views {
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid #e5e5e5;
-}
-
-.wm-saved-view {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin: 3px 4px;
-  padding: 4px 8px;
-  border: 1px solid #cfd7df;
-  border-radius: 12px;
-}
-
-.wm-saved-view.active {
-  background: #e7f5ff;
-  border-color: #25b9d7;
-}
-
-.wm-delete-view {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #c00;
-  font-weight: 700;
-}
-
-.wm-delete-view-form {
-  display: inline;
-  margin: 0;
-}
-
 .wm-orders-table th,
 .wm-orders-table td {
   vertical-align: middle !important;
@@ -191,11 +146,6 @@
 }
 
 @media (max-width: 991px) {
-  .wm-save-view {
-    width: 100%;
-    margin-left: 0;
-  }
-
   .wm-table-footer {
     align-items: stretch;
     flex-direction: column;
@@ -212,7 +162,6 @@
 .wm-grid-header,
 .wm-grid-title,
 .wm-grid-actions,
-.wm-view-toolbar,
 .wm-grid-footer {
   display: flex;
   align-items: center;
@@ -238,7 +187,6 @@
 
 .wm-grid-title .material-icons,
 .wm-grid-actions .material-icons,
-.wm-view-toolbar .material-icons,
 .wm-actions .material-icons,
 .wm-pagination .material-icons {
   font-size: 18px;
@@ -275,21 +223,6 @@
 
 .wm-apply-columns {
   width: 100%;
-}
-
-.wm-view-toolbar {
-  padding: 10px 16px;
-  border-bottom: 1px solid #dbe1e8;
-  background: #f8f9fa;
-}
-
-.wm-view-toolbar .form-control {
-  width: 210px;
-}
-
-.wm-view-toolbar label {
-  margin: 0;
-  font-weight: 400;
 }
 
 .wm-orders-table {

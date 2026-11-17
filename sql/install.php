@@ -57,20 +57,6 @@ return array(
         KEY `idx_wm_note_employee` (`id_employee`)
     ) ENGINE={$engine} DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
 
-    "CREATE TABLE IF NOT EXISTS `{$prefix}wilden_manager_saved_view` (
-        `id_wilden_manager_saved_view` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-        `id_employee` INT UNSIGNED NOT NULL,
-        `id_shop` INT UNSIGNED NOT NULL,
-        `name` VARCHAR(128) NOT NULL,
-        `filters_json` TEXT NOT NULL,
-        `columns_json` TEXT NOT NULL,
-        `is_default` TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
-        `date_add` DATETIME NOT NULL,
-        `date_upd` DATETIME NOT NULL,
-        PRIMARY KEY (`id_wilden_manager_saved_view`),
-        KEY `idx_wm_view_owner` (`id_employee`, `id_shop`)
-    ) ENGINE={$engine} DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
-
     "CREATE TABLE IF NOT EXISTS `{$prefix}wilden_manager_audit` (
         `id_wilden_manager_audit` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
         `id_employee` INT UNSIGNED NOT NULL,

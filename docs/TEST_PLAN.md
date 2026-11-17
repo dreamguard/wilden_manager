@@ -7,6 +7,7 @@
 3. Confirm the native **Orders** page shows the module controls.
    **Columns** must be inside the settings gear; **Export selection** and
    **Documents** must be inside **Bulk actions**.
+   There must be no saved-view selector or save/edit controls.
 4. Confirm the `wilden_manager_*` tables were created.
 5. Test with an administrator and a restricted employee profile.
 

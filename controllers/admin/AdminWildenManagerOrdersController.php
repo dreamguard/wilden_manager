@@ -32,8 +32,6 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
     {
         $mutatingActions = array(
             'submitWmSaveNote',
-            'submitWmSaveView',
-            'deleteWmView',
         );
         foreach ($mutatingActions as $action) {
             if (Tools::isSubmit($action) && (!isset($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] !== 'POST')) {
@@ -49,12 +47,6 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         if (Tools::isSubmit('submitWmSaveNote')) {
             $this->saveNote();
         }
-        if (Tools::isSubmit('submitWmSaveView')) {
-            $this->saveView();
-        }
-        if (Tools::isSubmit('deleteWmView')) {
-            $this->deleteView();
-        }
         parent::postProcess();
     }
 
@@ -68,30 +60,11 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
 
         $filters = $this->getFilters();
         $columns = $this->getSelectedColumns();
-        $savedView = $this->getRequestedSavedView();
-        $savedSort = 'date_add';
-        $savedDirection = 'DESC';
-        $savedLimit = 25;
-
-        if ($savedView && !Tools::isSubmit('wm_filter_submitted')) {
-            $loadedFilters = json_decode($savedView['filters_json'], true);
-            $loadedColumns = json_decode($savedView['columns_json'], true);
-            if (is_array($loadedFilters)) {
-                $savedSort = isset($loadedFilters['_sort']) ? (string) $loadedFilters['_sort'] : $savedSort;
-                $savedDirection = isset($loadedFilters['_direction']) ? (string) $loadedFilters['_direction'] : $savedDirection;
-                $savedLimit = isset($loadedFilters['_limit']) ? (int) $loadedFilters['_limit'] : $savedLimit;
-                unset($loadedFilters['_sort'], $loadedFilters['_direction'], $loadedFilters['_limit']);
-                $filters = array_merge($filters, $loadedFilters);
-            }
-            if (is_array($loadedColumns)) {
-                $columns = $this->sanitizeColumns($loadedColumns);
-            }
-        }
 
         $page = max(1, (int) Tools::getValue('page', 1));
-        $limit = max(10, min(100, (int) Tools::getValue('limit', $savedLimit)));
-        $sort = (string) Tools::getValue('sort', $savedSort);
-        $direction = strtoupper((string) Tools::getValue('direction', $savedDirection)) === 'ASC' ? 'ASC' : 'DESC';
+        $limit = max(10, min(100, (int) Tools::getValue('limit', 25)));
+        $sort = (string) Tools::getValue('sort', 'date_add');
+        $direction = strtoupper((string) Tools::getValue('direction', 'DESC')) === 'ASC' ? 'ASC' : 'DESC';
         $orders = $this->repository->getOrders($filters, $page, $limit, $sort, $direction);
         $total = $this->repository->countOrders($filters);
 
@@ -123,11 +96,6 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
             'wm_columns' => $columns,
             'wm_available_columns' => $this->getAvailableColumns(),
             'wm_order_states' => OrderState::getOrderStates((int) $this->context->language->id),
-            'wm_saved_views' => WmSavedView::getForEmployee(
-                (int) $this->context->employee->id,
-                (int) $this->context->shop->id
-            ),
-            'wm_active_view_id' => $savedView ? (int) $savedView['id_wilden_manager_saved_view'] : 0,
             'wm_total' => $total,
             'wm_page' => $page,
             'wm_limit' => $limit,
@@ -218,114 +186,6 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
 
         WmAuditLogger::log('native_order_columns_updated', array('columns' => $columns));
         $this->ajaxDie(json_encode(array('success' => true, 'columns' => $storedColumns)));
-    }
-
-    public function ajaxProcessSaveNativeView()
-    {
-        if (!$this->access('view')) {
-            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'Access denied.')));
-        }
-        if (!isset($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
-            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'POST required.')));
-        }
-
-        $name = trim((string) Tools::getValue('name'));
-        if ($name === '' || Tools::strlen($name) > 128 || !Validate::isGenericName($name)) {
-            $this->ajaxDie(json_encode(array(
-                'success' => false,
-                'error' => $this->module->l('Enter a valid saved-view name.', 'AdminWildenManagerOrdersController'),
-            )));
-        }
-
-        $availableColumns = array_keys($this->module->getNativeOrderColumns());
-        $idView = (int) Tools::getValue('id_view');
-        $existing = $idView > 0 ? WmSavedView::getNative(
-            $idView,
-            (int) $this->context->employee->id,
-            (int) $this->context->shop->id
-        ) : false;
-        if ($idView > 0 && !$existing) {
-            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'Saved view not found.')));
-        }
-        if ($existing && !(bool) Tools::getValue('replace_state')) {
-            $state = json_decode((string) $existing['filters_json'], true);
-            $columns = json_decode((string) $existing['columns_json'], true);
-            $columns = is_array($columns) ? $columns : $availableColumns;
-        } else {
-            $state = json_decode((string) Tools::getValue('state'), true);
-            $state = $this->sanitizeNativeViewState(is_array($state) ? $state : array());
-            $columns = array_values(array_unique(array_intersect(
-                (array) Tools::getValue('columns', array()),
-                $availableColumns
-            )));
-            if (!$columns) {
-                $columns = $availableColumns;
-            }
-        }
-        $savedId = WmSavedView::saveNative(
-            $idView,
-            $name,
-            $state,
-            $columns,
-            (int) $this->context->employee->id,
-            (int) $this->context->shop->id,
-            (bool) Tools::getValue('is_default')
-        );
-        if (!$savedId) {
-            $this->ajaxDie(json_encode(array(
-                'success' => false,
-                'error' => $this->module->l(
-                    'The view could not be saved. The maximum is 25 views per employee and store.',
-                    'AdminWildenManagerOrdersController'
-                ),
-            )));
-        }
-
-        WmAuditLogger::log($idView ? 'saved_view_updated' : 'saved_view_created', array(
-            'id_view' => (int) $savedId,
-            'name' => $name,
-            'is_default' => (bool) Tools::getValue('is_default'),
-        ));
-        $this->ajaxDie(json_encode(array(
-            'success' => true,
-            'id_view' => (int) $savedId,
-            'views' => WmSavedView::getNativeForEmployee(
-                (int) $this->context->employee->id,
-                (int) $this->context->shop->id
-            ),
-        ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
-    }
-
-    public function ajaxProcessDeleteNativeView()
-    {
-        if (!$this->access('view')) {
-            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'Access denied.')));
-        }
-        if (!isset($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
-            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'POST required.')));
-        }
-
-        $idView = (int) Tools::getValue('id_view');
-        if ($idView <= 0 || !WmSavedView::getNative(
-            $idView,
-            (int) $this->context->employee->id,
-            (int) $this->context->shop->id
-        ) || !WmSavedView::delete(
-            $idView,
-            (int) $this->context->employee->id,
-            (int) $this->context->shop->id
-        )) {
-            $this->ajaxDie(json_encode(array('success' => false, 'error' => 'The view could not be deleted.')));
-        }
-
-        WmAuditLogger::log('saved_view_deleted', array('id_view' => $idView));
-        $this->ajaxDie(json_encode(array(
-            'success' => true,
-            'views' => WmSavedView::getNativeForEmployee(
-                (int) $this->context->employee->id,
-                (int) $this->context->shop->id
-            ),
-        ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
     }
 
     public function ajaxProcessExportSelectedOrders()
@@ -670,55 +530,6 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         );
     }
 
-    private function sanitizeNativeViewState(array $state)
-    {
-        $allowed = array_keys($this->module->getNativeOrderColumns());
-        $filters = array();
-        foreach (array_slice((array) (isset($state['filters']) ? $state['filters'] : array()), 0, 30) as $filter) {
-            if (!is_array($filter) || empty($filter['path'])) {
-                continue;
-            }
-            $path = (string) $filter['path'];
-            if (!preg_match('/^[a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+){0,2}$/', $path)) {
-                continue;
-            }
-            $parts = explode('.', $path);
-            if (!in_array($parts[0], $allowed, true)) {
-                continue;
-            }
-            $values = array();
-            foreach (array_slice((array) (isset($filter['values']) ? $filter['values'] : array()), 0, 25) as $value) {
-                $value = Tools::substr(trim((string) $value), 0, 255);
-                if ($value !== '' && strpos($value, "\0") === false) {
-                    $values[] = $value;
-                }
-            }
-            if ($values) {
-                $filters[] = array(
-                    'path' => $path,
-                    'values' => array_values(array_unique($values)),
-                    'multiple' => !empty($filter['multiple']),
-                );
-            }
-        }
-
-        $orderBy = isset($state['order_by']) ? (string) $state['order_by'] : 'date_add';
-        if (!in_array($orderBy, $allowed, true)) {
-            $orderBy = 'date_add';
-        }
-        $limit = (int) (isset($state['limit']) ? $state['limit'] : 50);
-
-        return array(
-            'native_grid' => 1,
-            'filters' => $filters,
-            'order_by' => $orderBy,
-            'sort_order' => strtolower((string) (isset($state['sort_order']) ? $state['sort_order'] : 'desc')) === 'asc'
-                ? 'asc'
-                : 'desc',
-            'limit' => max(10, min(100, $limit)),
-        );
-    }
-
     private function prepareIntegrityIssues(array $issues)
     {
         $labels = $this->module->getIntegrityIssueTypes();
@@ -1025,47 +836,6 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         }
     }
 
-    private function saveView()
-    {
-        $name = trim((string) Tools::getValue('wm_view_name'));
-        if ($name === '' || Tools::strlen($name) > 128 || !Validate::isGenericName($name)) {
-            $this->errors[] = $this->module->l('Enter a valid saved-view name.', 'AdminWildenManagerOrdersController');
-            return;
-        }
-
-        $viewFilters = $this->getFilters();
-        $viewFilters['_sort'] = (string) Tools::getValue('sort', 'date_add');
-        $viewFilters['_direction'] = (string) Tools::getValue('direction', 'DESC');
-        $viewFilters['_limit'] = (int) Tools::getValue('limit', 25);
-
-        if (WmSavedView::save(
-            $name,
-            $viewFilters,
-            $this->getSelectedColumns(),
-            (int) $this->context->employee->id,
-            (int) $this->context->shop->id,
-            (bool) Tools::getValue('wm_view_default')
-        )) {
-            WmAuditLogger::log('saved_view_created', array('name' => $name));
-            $this->confirmations[] = $this->module->l('The view was saved.', 'AdminWildenManagerOrdersController');
-        } else {
-            $this->errors[] = $this->module->l('The view could not be saved.', 'AdminWildenManagerOrdersController');
-        }
-    }
-
-    private function deleteView()
-    {
-        $idView = (int) Tools::getValue('id_wm_view');
-        if (WmSavedView::delete(
-            $idView,
-            (int) $this->context->employee->id,
-            (int) $this->context->shop->id
-        )) {
-            WmAuditLogger::log('saved_view_deleted', array('id_view' => $idView));
-            $this->confirmations[] = $this->module->l('The saved view was deleted.', 'AdminWildenManagerOrdersController');
-        }
-    }
-
     private function exportOrders()
     {
         if (!$this->access('view') || !$this->module->canCurrentEmployeeExport()) {
@@ -1168,27 +938,6 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         $columns = array_values(array_intersect($allowed, $columns));
 
         return $columns ?: array('id_order', 'reference', 'new', 'country', 'customer', 'total', 'payment', 'state', 'date_add');
-    }
-
-    private function getRequestedSavedView()
-    {
-        $idView = (int) Tools::getValue('id_wm_view');
-        if (!$idView) {
-            if (Tools::isSubmit('wm_filter_submitted')) {
-                return false;
-            }
-
-            return WmSavedView::getDefault(
-                (int) $this->context->employee->id,
-                (int) $this->context->shop->id
-            );
-        }
-
-        return WmSavedView::get(
-            $idView,
-            (int) $this->context->employee->id,
-            (int) $this->context->shop->id
-        );
     }
 
     private function buildPersistentQuery(array $filters, array $columns, $limit, $sort, $direction)

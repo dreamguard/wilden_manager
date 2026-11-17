@@ -9,7 +9,6 @@ Orders page; diagnostics and future settings live in the module control centre.
 - `WmOrderRepository`: read-only order queries, filters, pagination and shop
   scoping.
 - `WmOrderNote`: storage for private order notes owned by this module.
-- `WmSavedView`: per-employee, per-shop filters and visible columns.
 - `WmAuditLogger`: append-only record of module actions.
 - `WmGridPreference`: per-employee and per-shop native-grid column settings.
 - `WmExportService`: safe CSV and XLSX output for selected orders.
