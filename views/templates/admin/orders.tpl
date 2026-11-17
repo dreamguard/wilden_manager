@@ -1,29 +1,6 @@
 {* Wilden Manager - native-style order grid *}
 
 <div class="wm-manager">
-  {if $wm_bulk_preview}
-    <div class="panel wm-preview-panel">
-      <div class="panel-heading"><i class="icon-eye"></i> {l s='Operation preview' mod='wilden_manager'}</div>
-      <p class="alert alert-warning">{l s='Review the changes below. Nothing has been modified yet.' mod='wilden_manager'}</p>
-      <div class="table-responsive"><table class="table">
-        <thead><tr><th>ID</th><th>{l s='Reference' mod='wilden_manager'}</th><th>{l s='Current state' mod='wilden_manager'}</th><th>{l s='New state' mod='wilden_manager'}</th></tr></thead>
-        <tbody>{foreach from=$wm_bulk_preview.orders item=previewOrder}<tr>
-          <td>{$previewOrder.id_order|intval}</td><td>{$previewOrder.reference|escape:'htmlall':'UTF-8'}</td>
-          <td>{$previewOrder.state_name|escape:'htmlall':'UTF-8'}</td><td><strong>{$wm_bulk_preview.target_state.name|escape:'htmlall':'UTF-8'}</strong></td>
-        </tr>{/foreach}</tbody>
-      </table></div>
-      <form method="post" action="{$wm_base_url|escape:'htmlall':'UTF-8'}" class="wm-confirm-bulk">
-        {foreach from=$wm_bulk_preview.ids item=previewId}<input type="hidden" name="order_ids[]" value="{$previewId|intval}">{/foreach}
-        <input type="hidden" name="bulk_state" value="{$wm_bulk_preview.target_state.id|intval}">
-        <input type="hidden" name="preview_timestamp" value="{$wm_bulk_preview.timestamp|intval}">
-        <input type="hidden" name="preview_snapshot" value="{$wm_bulk_preview.snapshot|escape:'htmlall':'UTF-8'}">
-        <input type="hidden" name="preview_signature" value="{$wm_bulk_preview.signature|escape:'htmlall':'UTF-8'}">
-        <label><input type="checkbox" name="send_email" value="1"> {l s='Send the state email to customers' mod='wilden_manager'}</label>
-        <button type="submit" name="submitWmBulkExecute" value="1" class="btn btn-danger wm-confirm-action" data-confirm="{l s='Apply this state to the selected orders?' mod='wilden_manager'}"><i class="icon-check"></i> {l s='Confirm and execute' mod='wilden_manager'}</button>
-      </form>
-    </div>
-  {/if}
-
   {if $wm_saved_views}<div class="wm-saved-views">
     <strong>{l s='Saved views:' mod='wilden_manager'}</strong>
     {foreach from=$wm_saved_views item=view}<span class="wm-saved-view{if $wm_active_view_id == $view.id_wilden_manager_saved_view} active{/if}">
@@ -100,7 +77,6 @@
       </table></div>
 
       <div class="wm-grid-footer"><div class="wm-pagination"><label>{l s='Items per page' mod='wilden_manager'} <select name="limit" class="form-control" onchange="this.form.submit()">{foreach from=$wm_limits item=rowLimit}<option value="{$rowLimit|intval}"{if $wm_limit == $rowLimit} selected{/if}>{$rowLimit|intval}</option>{/foreach}</select></label><span>{l s='Page' mod='wilden_manager'} {$wm_page|intval} / {$wm_total_pages|intval}</span>{if $wm_page > 1}<a class="btn btn-outline-secondary btn-sm" href="{$wm_base_url|escape:'htmlall':'UTF-8'}&amp;{$wm_query|escape:'htmlall':'UTF-8'}&amp;page={$wm_page-1}"><i class="material-icons">chevron_left</i></a>{/if}{if $wm_page < $wm_total_pages}<a class="btn btn-outline-secondary btn-sm" href="{$wm_base_url|escape:'htmlall':'UTF-8'}&amp;{$wm_query|escape:'htmlall':'UTF-8'}&amp;page={$wm_page+1}"><i class="material-icons">chevron_right</i></a>{/if}</div>
-        {if $wm_can_edit}<div class="wm-bulk-controls"><span class="wm-selected-count">0 {l s='selected' mod='wilden_manager'}</span><select name="bulk_state" class="form-control"><option value="0">{l s='Change order status' mod='wilden_manager'}</option>{foreach from=$wm_order_states item=state}<option value="{$state.id_order_state|intval}">{$state.name|escape:'htmlall':'UTF-8'}</option>{/foreach}</select><button type="submit" name="submitWmBulkPreview" value="1" class="btn btn-warning wm-bulk-preview-button"><i class="material-icons">preview</i> {l s='Preview' mod='wilden_manager'}</button></div>{/if}
       </div>
     </div>
   </form>
@@ -108,4 +84,4 @@
 
 <div class="modal fade" id="wm-quick-view-modal" tabindex="-1" role="dialog" aria-hidden="true"><div class="modal-dialog modal-lg" role="document"><div class="modal-content"><div class="modal-header"><h4 class="modal-title">{l s='Order quick view' mod='wilden_manager'}</h4><button type="button" class="close" data-dismiss="modal">&times;</button></div><div class="modal-body"><div class="wm-loading"><i class="icon-refresh icon-spin"></i> {l s='Loading…' mod='wilden_manager'}</div></div></div></div></div>
 
-<script>window.wildenManagerConfig={ajaxUrl:'{$wm_ajax_url|escape:'javascript':'UTF-8'}',maxBulk:{$wm_max_bulk|intval},loadingText:'{l s='Loading…' mod='wilden_manager' js=1}',errorText:'{l s='The order could not be loaded.' mod='wilden_manager' js=1}',selectOrderText:'{l s='Select at least one order.' mod='wilden_manager' js=1}',selectStateText:'{l s='Choose a new state.' mod='wilden_manager' js=1}',tooManyText:'{l s='Too many orders selected.' mod='wilden_manager' js=1}'};</script>
+<script>window.wildenManagerConfig={ajaxUrl:'{$wm_ajax_url|escape:'javascript':'UTF-8'}',loadingText:'{l s='Loading…' mod='wilden_manager' js=1}',errorText:'{l s='The order could not be loaded.' mod='wilden_manager' js=1}'};</script>

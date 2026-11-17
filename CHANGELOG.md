@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.13.1
+
+- Removed **Safe status change** from the native and legacy order interfaces.
+- Removed the status-change endpoints and service so the discontinued operation cannot be invoked manually.
+- Preserved historical status-change audit records as read-only history.
+
 ## 1.13.0
 
 - Split the module control centre into Order integrity, Stock and refunds, Audit, and Administration tabs.

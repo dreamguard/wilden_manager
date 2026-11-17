@@ -26,20 +26,6 @@
 - Confirm XLSX IDs and totals are numeric, and that header filters work.
 - Confirm a restricted employee cannot export orders outside the active shop context.
 
-## Bulk state changes
-
-- Select one order in the native grid, open **Safe status change**, preview a
-  harmless state change and execute without email.
-- Repeat with customer email enabled and verify receipt.
-- Preview multiple orders and confirm the displayed current and target states.
-- Change one selected order in another tab before execution; the signed preview
-  must be rejected.
-- Wait more than 15 minutes after a preview; execution must be rejected.
-- Try zero orders, no target state and more than 100 orders.
-- Verify stock and other normal PrestaShop side effects for the tested states.
-- Verify a failed email is shown as a warning while the applied state remains
-  recorded as successful.
-
 ## Combined documents
 
 - Select orders with and without invoices and delivery slips.

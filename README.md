@@ -3,7 +3,7 @@
 Private order-management module developed from scratch for PrestaShop 8.2 and
 Wilden Militaria S.L.
 
-## Version 1.13.0
+## Version 1.13.1
 
 The initial version provides:
 
@@ -23,9 +23,6 @@ The initial version provides:
 - Spreadsheet-formula injection protection for exported text values.
 - Combined native invoice and delivery-slip PDFs from the selected orders.
 - Optional ZIP download containing both document batches.
-- Bulk order-state changes with a mandatory preview, signed confirmation,
-  15-minute expiry and a maximum of 100 orders per operation.
-- Optional customer email when applying a bulk state.
 - Read-only order-integrity diagnostics with severity and issue filters.
 - Detection of missing history, state mismatches, missing related records,
   incomplete customers and invalid document dates.
@@ -58,9 +55,6 @@ or any other third-party module. Stock diagnostics may read the optional
 3. Open the native **Orders** page for selection-based order actions.
 4. Choose and order the visible columns; the preference is saved per employee and shop.
 5. Open **Configure** from the module manager for integrity diagnostics and module settings.
-
-Always test state changes and customer emails in staging before deploying a
-new release to production.
 
 Reviewing or classifying an incident never changes shop data. The only repair
 available is an individual SuperAdmin action for a confirmed standard-product

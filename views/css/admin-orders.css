@@ -44,9 +44,7 @@
 
 .wm-filter-actions,
 .wm-table-footer,
-.wm-bulk-controls,
 .wm-pagination,
-.wm-confirm-bulk,
 .wm-qv-header,
 .wm-qv-footer {
   display: flex;
@@ -149,18 +147,6 @@
   padding-top: 14px;
 }
 
-.wm-bulk-controls select {
-  width: 250px;
-}
-
-.wm-preview-panel {
-  border-left: 4px solid #f0ad4e;
-}
-
-.wm-confirm-bulk {
-  justify-content: flex-end;
-}
-
 .wm-loading {
   padding: 40px;
   text-align: center;
@@ -210,14 +196,9 @@
     margin-left: 0;
   }
 
-  .wm-table-footer,
-  .wm-bulk-controls {
+  .wm-table-footer {
     align-items: stretch;
     flex-direction: column;
-  }
-
-  .wm-bulk-controls select {
-    width: 100%;
   }
 }
 
@@ -259,8 +240,7 @@
 .wm-grid-actions .material-icons,
 .wm-view-toolbar .material-icons,
 .wm-actions .material-icons,
-.wm-pagination .material-icons,
-.wm-bulk-controls .material-icons {
+.wm-pagination .material-icons {
   font-size: 18px;
   line-height: 1;
   vertical-align: middle;

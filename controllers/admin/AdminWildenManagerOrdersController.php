@@ -7,8 +7,6 @@ if (!defined('_PS_VERSION_')) {
 class AdminWildenManagerOrdersController extends ModuleAdminController
 {
     private $repository;
-    private $bulkPreview;
-    private $bulkResults;
 
     public function __construct()
     {
@@ -36,8 +34,6 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
             'submitWmSaveNote',
             'submitWmSaveView',
             'deleteWmView',
-            'submitWmBulkPreview',
-            'submitWmBulkExecute',
         );
         foreach ($mutatingActions as $action) {
             if (Tools::isSubmit($action) && (!isset($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] !== 'POST')) {
@@ -59,13 +55,6 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         if (Tools::isSubmit('deleteWmView')) {
             $this->deleteView();
         }
-        if (Tools::isSubmit('submitWmBulkPreview')) {
-            $this->previewBulkAction();
-        }
-        if (Tools::isSubmit('submitWmBulkExecute')) {
-            $this->executeBulkAction();
-        }
-
         parent::postProcess();
     }
 
@@ -147,11 +136,7 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
             'wm_sort' => $sort,
             'wm_direction' => $direction,
             'wm_query' => $this->buildPersistentQuery($filters, $columns, $limit, $sort, $direction),
-            'wm_bulk_preview' => $this->bulkPreview,
-            'wm_bulk_results' => $this->bulkResults,
             'wm_selected_order_ids' => array_map('intval', (array) Tools::getValue('order_ids', array())),
-            'wm_can_edit' => $this->canEdit(),
-            'wm_max_bulk' => Wilden_manager::MAX_BULK_ORDERS,
         ));
 
         $this->setTemplate('orders.tpl');
@@ -341,52 +326,6 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
                 (int) $this->context->shop->id
             ),
         ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
-    }
-
-    public function ajaxProcessPreviewBulkStatus()
-    {
-        if (!$this->canEdit()) {
-            $this->ajaxDie(json_encode(array(
-                'success' => false,
-                'error' => $this->module->l('You do not have permission to change order states.', 'AdminWildenManagerOrdersController'),
-            )));
-        }
-
-        try {
-            $service = new WmBulkOrderService($this->context, $this->repository);
-            $preview = $service->preview(
-                (array) Tools::getValue('order_ids', array()),
-                (int) Tools::getValue('target_state')
-            );
-            $this->ajaxDie(json_encode(array('success' => true, 'preview' => $preview)));
-        } catch (Exception $exception) {
-            $this->ajaxDie(json_encode(array('success' => false, 'error' => $exception->getMessage())));
-        }
-    }
-
-    public function ajaxProcessExecuteBulkStatus()
-    {
-        if (!$this->canEdit()) {
-            $this->ajaxDie(json_encode(array(
-                'success' => false,
-                'error' => $this->module->l('You do not have permission to change order states.', 'AdminWildenManagerOrdersController'),
-            )));
-        }
-
-        try {
-            $service = new WmBulkOrderService($this->context, $this->repository);
-            $results = $service->execute(
-                (array) Tools::getValue('order_ids', array()),
-                (int) Tools::getValue('target_state'),
-                (int) Tools::getValue('preview_timestamp'),
-                (string) Tools::getValue('preview_snapshot'),
-                (string) Tools::getValue('preview_signature'),
-                (bool) Tools::getValue('send_email')
-            );
-            $this->ajaxDie(json_encode(array('success' => true, 'results' => $results)));
-        } catch (Exception $exception) {
-            $this->ajaxDie(json_encode(array('success' => false, 'error' => $exception->getMessage())));
-        }
     }
 
     public function ajaxProcessExportSelectedOrders()
@@ -1124,56 +1063,6 @@ class AdminWildenManagerOrdersController extends ModuleAdminController
         )) {
             WmAuditLogger::log('saved_view_deleted', array('id_view' => $idView));
             $this->confirmations[] = $this->module->l('The saved view was deleted.', 'AdminWildenManagerOrdersController');
-        }
-    }
-
-    private function previewBulkAction()
-    {
-        if (!$this->canEdit()) {
-            $this->errors[] = $this->module->l('You do not have permission to change order states.', 'AdminWildenManagerOrdersController');
-            return;
-        }
-
-        try {
-            $service = new WmBulkOrderService($this->context, $this->repository);
-            $this->bulkPreview = $service->preview(
-                (array) Tools::getValue('order_ids', array()),
-                (int) Tools::getValue('bulk_state')
-            );
-        } catch (Exception $exception) {
-            $this->errors[] = $exception->getMessage();
-        }
-    }
-
-    private function executeBulkAction()
-    {
-        if (!$this->canEdit()) {
-            $this->errors[] = $this->module->l('You do not have permission to change order states.', 'AdminWildenManagerOrdersController');
-            return;
-        }
-
-        try {
-            $service = new WmBulkOrderService($this->context, $this->repository);
-            $this->bulkResults = $service->execute(
-                (array) Tools::getValue('order_ids', array()),
-                (int) Tools::getValue('bulk_state'),
-                (int) Tools::getValue('preview_timestamp'),
-                (string) Tools::getValue('preview_snapshot'),
-                (string) Tools::getValue('preview_signature'),
-                (bool) Tools::getValue('send_email')
-            );
-            $this->confirmations[] = sprintf(
-                $this->module->l('%d orders processed successfully.', 'AdminWildenManagerOrdersController'),
-                count($this->bulkResults['success'])
-            );
-            foreach ($this->bulkResults['errors'] as $error) {
-                $this->errors[] = sprintf('#%d: %s', (int) $error['id_order'], $error['error']);
-            }
-            foreach ($this->bulkResults['warnings'] as $warning) {
-                $this->warnings[] = sprintf('#%d: %s', (int) $warning['id_order'], $warning['warning']);
-            }
-        } catch (Exception $exception) {
-            $this->errors[] = $exception->getMessage();
         }
     }
 

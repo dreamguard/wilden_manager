@@ -5,24 +5,14 @@
 (function ($) {
   'use strict';
 
-  function updateSelectionCount() {
-    var count = $('.wm-order-checkbox:checked').length;
-    $('.wm-selected-count').each(function () {
-      var current = $(this).text();
-      $(this).text(current.replace(/^\d+/, count));
-    });
-  }
-
   $(document).on('change', '#wm-select-all', function () {
     $('.wm-order-checkbox').prop('checked', this.checked);
-    updateSelectionCount();
   });
 
   $(document).on('change', '.wm-order-checkbox', function () {
     var all = $('.wm-order-checkbox').length;
     var checked = $('.wm-order-checkbox:checked').length;
     $('#wm-select-all').prop('checked', all > 0 && checked === all);
-    updateSelectionCount();
   });
 
   $(document).on('click', '.wm-delete-view, .wm-confirm-action', function (event) {
@@ -30,19 +20,6 @@
     if (message && !window.confirm(message)) {
       event.preventDefault();
       event.stopImmediatePropagation();
-    }
-  });
-
-  $(document).on('click', '.wm-bulk-preview-button', function (event) {
-    var $form = $(this).closest('form');
-    var selected = $('.wm-order-checkbox:checked').length;
-    var state = parseInt($form.find('select[name="bulk_state"]').val(), 10) || 0;
-    var config = window.wildenManagerConfig || {};
-    var max = parseInt(config.maxBulk, 10) || 100;
-
-    if (!selected || !state || selected > max) {
-      event.preventDefault();
-      window.alert(!selected ? config.selectOrderText : (!state ? config.selectStateText : config.tooManyText));
     }
   });
 
@@ -77,5 +54,4 @@
     });
   });
 
-  $(updateSelectionCount);
 })(window.jQuery);

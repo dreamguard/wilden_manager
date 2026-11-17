@@ -16,7 +16,6 @@ require_once __DIR__ . '/classes/WmOrderNote.php';
 require_once __DIR__ . '/classes/WmSavedView.php';
 require_once __DIR__ . '/classes/WmGridPreference.php';
 require_once __DIR__ . '/classes/WmOrderRepository.php';
-require_once __DIR__ . '/classes/WmBulkOrderService.php';
 require_once __DIR__ . '/classes/WmExportService.php';
 require_once __DIR__ . '/classes/WmDocumentService.php';
 require_once __DIR__ . '/classes/WmIntegrityService.php';
@@ -27,9 +26,8 @@ require_once __DIR__ . '/classes/WmProfilePermission.php';
 
 class Wilden_manager extends Module
 {
-    const VERSION = '1.13.0';
+    const VERSION = '1.13.1';
     const TAB_CLASS = 'AdminWildenManagerOrders';
-    const MAX_BULK_ORDERS = 100;
     const MAX_EXPORT_ORDERS = 1000;
     const MAX_DOCUMENT_ORDERS = 100;
     const MAX_INTEGRITY_EXPORT = 10000;
@@ -452,10 +450,6 @@ class Wilden_manager extends Module
                 'storageKey' => 'wilden_manager_order_columns_' . self::VERSION . '_' .
                     (int) $this->context->employee->id . '_' . (int) $this->context->shop->id,
                 'saveUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=saveNativeColumns',
-                'bulkPreviewUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=previewBulkStatus',
-                'bulkExecuteUrl' => $this->context->link->getAdminLink(self::TAB_CLASS) . '&ajax=1&action=executeBulkStatus',
-                'orderStates' => OrderState::getOrderStates((int) $this->context->language->id),
-                'maxBulk' => self::MAX_BULK_ORDERS,
                 'savedViews' => WmSavedView::getNativeForEmployee(
                     (int) $this->context->employee->id,
                     (int) $this->context->shop->id
@@ -496,24 +490,6 @@ class Wilden_manager extends Module
                 'viewsDeleted' => $this->l('The view has been deleted.'),
                 'viewsError' => $this->l('The saved view operation could not be completed.'),
                 'viewsDefaultSuffix' => $this->l('default'),
-                'bulkButton' => $this->l('Safe status change'),
-                'bulkTitle' => $this->l('Bulk order status change'),
-                'bulkState' => $this->l('New status'),
-                'bulkSelectState' => $this->l('Select a status'),
-                'bulkSendEmail' => $this->l('Send the status email to customers'),
-                'bulkPreview' => $this->l('Preview changes'),
-                'bulkExecute' => $this->l('Apply changes'),
-                'bulkReload' => $this->l('Reload orders'),
-                'bulkSelected' => $this->l('selected orders'),
-                'bulkNoSelection' => $this->l('Select at least one order in the native list.'),
-                'bulkTooMany' => $this->l('The maximum number of orders per operation is'),
-                'bulkPreviewHelp' => $this->l('No changes are made during preview. Execution is enabled only for the exact previewed selection.'),
-                'bulkPreviewReady' => $this->l('Preview ready. Review every order before applying the change.'),
-                'bulkSuccess' => $this->l('Orders updated successfully'),
-                'bulkSkipped' => $this->l('Already in the selected status'),
-                'bulkWarnings' => $this->l('Warnings'),
-                'bulkErrors' => $this->l('Errors'),
-                'bulkError' => $this->l('The bulk operation could not be completed.'),
                 'exportButton' => $this->l('Export selection'),
                 'exportTitle' => $this->l('Export selected orders'),
                 'exportFormat' => $this->l('File format'),
