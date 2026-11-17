@@ -6,6 +6,9 @@ if (!defined('_PS_VERSION_')) {
 
 function upgrade_module_1_14_2($module)
 {
-    return $module->registerHook('actionAdminControllerSetMedia')
-        && $module->registerHook('actionGetAdminOrderButtons');
+    return $module instanceof Wilden_manager
+        && $module->registerHook('actionGetAdminOrderButtons')
+        && $module->registerHook('actionOrderGridDefinitionModifier')
+        && $module->registerHook('actionOrderGridQueryBuilderModifier')
+        && $module->registerHook('displayBackOfficeHeader');
 }

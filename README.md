@@ -3,7 +3,7 @@
 Private order-management module developed from scratch for PrestaShop 8.2 and
 Wilden Militaria S.L.
 
-## Version 1.14.1
+## Version 1.14.2
 
 The initial version provides:
 
