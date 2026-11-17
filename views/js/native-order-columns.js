@@ -43,6 +43,7 @@
       event.preventDefault();
       var $trigger = $(this);
       if ($trigger.hasClass('disabled') || $trigger.attr('aria-disabled') === 'true') {
+        window.alert(config.deleteInvoiceBlocked);
         return;
       }
       initializeDeleteModal();

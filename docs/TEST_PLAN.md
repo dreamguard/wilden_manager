@@ -90,7 +90,8 @@
 
 - Use only a disposable staging order and take a database backup first.
 - Confirm only SuperAdmin sees the delete control on the order page and in the native actions column.
-- Confirm an order with either `invoice_number > 0` or an `order_invoice` row shows a disabled control.
+- Confirm an order with either `invoice_number > 0` or a numbered `order_invoice` row shows a disabled control and clicking it displays the reason.
+- Confirm an order whose only `order_invoice` rows have number `0` remains eligible and those technical rows are removed transactionally.
 - Attempt the delete endpoint manually for an invoiced order and confirm the server rejects it.
 - Confirm the modal requires the exact order ID and clearly states that stock is not reinjected.
 - Delete one disposable non-invoiced order and confirm it disappears from the list and direct URL.

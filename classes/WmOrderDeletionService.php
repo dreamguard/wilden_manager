@@ -31,7 +31,7 @@ class WmOrderDeletionService
             'SELECT o.id_order, o.id_shop, o.reference, o.invoice_number,
                     EXISTS(
                         SELECT 1 FROM `' . $this->prefix . 'order_invoice` oi
-                        WHERE oi.id_order = o.id_order
+                        WHERE oi.id_order = o.id_order AND oi.number > 0
                     ) AS has_invoice
              FROM `' . $this->prefix . 'orders` o
              WHERE o.id_order = ' . $idOrder,
@@ -120,9 +120,6 @@ class WmOrderDeletionService
                 'id_order_detail IN (' . implode(',', array_map('intval', $relations['id_order_detail'])) . ')'
             )
             : array();
-        if ($relations['id_order_invoice']) {
-            throw new RuntimeException('Orders with an invoice cannot be deleted.');
-        }
         if ($cartIsExclusive) {
             $relations['id_cart'] = array($idCart);
             $relations['id_customization'] = $this->getIds(
@@ -174,7 +171,8 @@ class WmOrderDeletionService
                 throw new RuntimeException('The order changed and can no longer be deleted.');
             }
             if ((bool) $this->db->getValue(
-                'SELECT 1 FROM `' . $this->prefix . 'order_invoice` WHERE id_order = ' . $idOrder,
+                'SELECT 1 FROM `' . $this->prefix . 'order_invoice`
+                 WHERE id_order = ' . $idOrder . ' AND number > 0',
                 false
             )) {
                 throw new RuntimeException('The order acquired an invoice and cannot be deleted.');

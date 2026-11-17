@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.14.2
+
+- Distinguished issued invoices from unnumbered technical `order_invoice` rows.
+- Allowed a non-invoiced order to be deleted when its only invoice rows have number `0`; those rows remain part of the transactional cleanup.
+- Added visible feedback when an actually invoiced order has its delete control disabled.
+
 ## 1.14.1
 
 - Replaced the direct deletion of the main `orders` row with PrestaShop's native `Order->delete()` method.

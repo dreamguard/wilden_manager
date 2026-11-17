@@ -32,6 +32,7 @@ Orders page; diagnostics and future settings live in the module control centre.
 - Stock diagnostics classify uncertain cancellation, refund and pack evidence as informational rather than errors.
 - Notes are rendered escaped and limited to 5,000 characters.
 - The module contains no third-party integrations or inherited source.
-- Permanent deletion rechecks invoice eligibility under lock, refuses affected
+- Permanent deletion treats only numbered invoice records as issued invoices,
+  rechecks that eligibility under lock, refuses affected
   non-transactional tables, removes the main entity through `Order->delete()`,
   verifies cleanup before commit and never reinjects stock.

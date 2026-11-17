@@ -70,9 +70,11 @@ reconstructed because PrestaShop does not preserve product-level stock movement
 evidence indefinitely.
 
 Permanent order deletion is intentionally conservative. It is disabled when an
-invoice exists, requires the exact order ID as confirmation, does not reinject
-stock and refuses to run when an affected table cannot participate in the
-transaction. Prior order-linked audit rows are removed with the order. A new
+issued, numbered invoice exists; an unnumbered technical `order_invoice` row is
+not treated as an issued invoice and is removed with the other relations. The
+operation requires the exact order ID as confirmation, does not reinject stock
+and refuses to run when an affected table cannot participate in the transaction.
+Prior order-linked audit rows are removed with the order. A new
 anonymous audit event retains only the employee, store, time and the fact that a
 deletion occurred; it stores no order ID, reference, customer or order content.
 The main entity is removed through PrestaShop's native `Order->delete()` method
